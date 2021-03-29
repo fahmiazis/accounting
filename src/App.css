@@ -1,3 +1,9 @@
+@font-face{
+  font-family: Metropolis;
+  src: url("assets/font/Metropolis-Regular.woff") format("woff"),   
+  url("assets/font/Metropolis-Regular.woff2") format("woff2");
+}
+
 .App {
   text-align: center;
 }
@@ -35,4 +41,97 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+html,body{
+  height: 100%;
+}
+
+.body {
+  color: #fafafa;
+  display: flex;
+  flex-direction: row;
+  width: 850px;
+  justify-content: space-between;
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.textLogin {
+  color: black;
+  font-size: 21px;
+  font-weight: 600;
+  margin-left: 10px;
+}
+.img {
+  width: auto;
+  height: 500px;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.input1 {
+  width: 110%;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid #9b9b9b;
+  border-radius: 4px;
+  margin-top: 20%;
+}
+.input2 {
+  width: 110%;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid #9b9b9b;
+  border-radius: 4px;
+  margin-top: 10%;
+}
+.title1 {
+  color: black;
+  text-align: center;
+  font-size: 28px;
+  margin-top: 10%;
+  margin-bottom: 3%;
+}
+.title {
+  color: black;
+  text-align: center;
+  font-size: 28px;
+}
+.blockTitle {
+  color: #9b9b9b;
+  height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.btn {
+  width: 110%;
+  height: 48px;
+  border-radius: 25px;
+  border-width: 0;
+  background-color: #D83022;
+  color: #ffffff;
+  font-size: 14px;
+  text-transform: uppercase;
+  margin-top: 20%;
+}
+.icon {
+  color: black;
+  align-items: center;
+  position: absolute;
+  margin-top: 70%;
+  display: flex;
+  width: 14%;
+  justify-content: space-between;
+  flex-direction: row;
+  color: #D83022;
 }
