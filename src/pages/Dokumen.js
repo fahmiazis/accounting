@@ -20,6 +20,7 @@ import {connect} from 'react-redux'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
+import auth from '../redux/actions/auth'
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -166,6 +167,8 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         this.setState({fileName: value.path, appAct: value.active})
         await this.props.showDokumen(token, value.path.id)
+        const download = value.path.path.split('/')
+        this.props.download(download[2])
         const {isShow} = this.props.dashboard
         if (isShow) {
             this.openModalPdf()
@@ -178,7 +181,7 @@ class Dokumen extends Component {
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token)
             await this.props.getActivity(token)   
-        } else if (level === '3') {
+        } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token)
         }
     }
@@ -204,7 +207,7 @@ class Dokumen extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload, isGet, isApprove, isReject} = this.props.dashboard
+        const {isError, isUpload, isGetPic, isApprove, isReject} = this.props.dashboard
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -218,7 +221,7 @@ class Dokumen extends Component {
 
                 this.openModalProses()
              }, 2100)
-        } else if (isGet) {
+        } else if (isGetPic) {
             this.prepareDokumen()
             this.props.resetError()
         } else if (isApprove) {
@@ -290,9 +293,11 @@ class Dokumen extends Component {
                             </NavItem>
                         </Nav>
                         <UncontrolledDropdown>
-                            <DropdownToggle nav caret>Super Admin</DropdownToggle>
+                            <DropdownToggle nav caret>
+                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            </DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -376,7 +381,7 @@ class Dokumen extends Component {
                                             <th>Persentase</th>
                                             <th>Status</th>
                                         </tr>
-                                        ): level === '6' || level === '3' ? (
+                                        ): level === '6' || level === '3' || level === '1' || level === '2' ? (
                                         <tr>
                                             <th>No</th>
                                             <th>Kode Plant</th>
@@ -471,7 +476,7 @@ class Dokumen extends Component {
                                             )
                                         })}
                                 </tbody>
-                                ): level === '6' || level === '3' ? (
+                                ): level === '6' || level === '3' || level === '2' || level === '1' ? (
                                 <tbody>
                                         {dataSa !== undefined && dataSa.map(x => {
                                             return (
@@ -753,7 +758,7 @@ class Dokumen extends Component {
                                 </div>
                             </div>
                     </ModalBody>
-                    ) : level === '3' || level === '6' ? (
+                    ) : level === '3' || level === '1' || level === '2' ? (
                         <ModalBody>
                             <div className="modal-dashboard">
                             {doc !== undefined && doc.map(item => {
@@ -945,7 +950,10 @@ const mapDispatchToProps = {
     reject: dashboard.reject,
     showDokumen: dashboard.showDokumen,
     getDashboardPic: dashboard.getDashboardPic,
-    sendEmail: dashboard.sendEmail
+    sendEmail: dashboard.sendEmail,
+    getAlasan: alasan.getAlasan,
+    logout: auth.logout,
+    download: dashboard.download
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)

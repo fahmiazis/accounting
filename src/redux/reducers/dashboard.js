@@ -4,6 +4,7 @@ const divisiState = {
     isUpload: false,
     isUpdate: false,
     isGet: false,
+    isGetPic: false,
     isDetail: false,
     token: '',
     isLoading: false,
@@ -62,7 +63,7 @@ export default (state=divisiState, action) => {
                 return {
                     ...state,
                     isLoading: false,
-                    isGet: true,
+                    isGetPic: true,
                     isError: false,
                     dataSa: action.payload.data.sa,
                     dataKasir: action.payload.data.kasir,
@@ -73,7 +74,7 @@ export default (state=divisiState, action) => {
                 return {
                     ...state,
                     isLoading: false,
-                    isAdd: false,
+                    isGetPic: false,
                     isError: true,
                     alertMsg: "Unable connect to server"
                 };
@@ -265,7 +266,7 @@ export default (state=divisiState, action) => {
                     ...state,
                     isError: false,
                     isUpload: false,
-                    isGet: false,
+                    isGetPic: false,
                     isApprove: false,
                     isReject: false
                 }

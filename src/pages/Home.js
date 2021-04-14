@@ -80,8 +80,10 @@ class Home extends Component {
                             </NavItem>
                         </Nav>
                         <UncontrolledDropdown>
-                            <DropdownToggle nav caret>Super Admin</DropdownToggle>
-                            <DropdownMenu right>
+                            <DropdownToggle nav caret>
+                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            </DropdownToggle>
+                            <DropdownMenu>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>

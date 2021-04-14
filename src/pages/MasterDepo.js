@@ -193,7 +193,7 @@ class MasterDepo extends Component {
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
-                            {level === 1 ? (
+                            {level === "1" ? (
                             <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
                                     Master

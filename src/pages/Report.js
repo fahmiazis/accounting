@@ -6,6 +6,8 @@ import { Container, Collapse, Nav, Navbar,
     } from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
+import auth from '../redux/actions/auth'
+import {connect} from 'react-redux'
 
 class Report extends Component {
     state = {
@@ -98,9 +100,11 @@ class Report extends Component {
                             </NavItem>
                         </Nav>
                         <UncontrolledDropdown>
-                            <DropdownToggle nav caret>Super Admin</DropdownToggle>
+                            <DropdownToggle nav caret>
+                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            </DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                            <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -181,5 +185,13 @@ class Report extends Component {
     }
 }
 
-export default  Report
+const mapStateToProps = state => ({
+    auth: state.auth
+})
+
+const mapDispatchToProps = {
+    logout: auth.logout,
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Report)
 	

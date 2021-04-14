@@ -39,6 +39,10 @@ export default {
         type: 'SEND',
         payload: http(token).post(`/dashboard/send/${id}`)
     }),
+    download: (data) => ({
+        type: 'DOWNLOAD',
+        payload: http().get(`/uploads/${data}`)
+    }),
     resetError: () => ({
         type: 'RESET'
     })
