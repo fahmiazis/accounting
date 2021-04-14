@@ -3,11 +3,13 @@ import { Container, Collapse, Nav, Navbar,
 NavbarToggler, NavbarBrand, NavItem, NavLink,
 UncontrolledDropdown, DropdownToggle, DropdownMenu,
 DropdownItem, Dropdown} from 'reactstrap'
-
+import auth from '../redux/actions/auth'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
+import {connect} from 'react-redux'
+import dashboard from '../redux/actions/dashboard'
 
-export default class Home extends Component {
+class Home extends Component {
 
     state = {
         isOpen: false,
@@ -24,6 +26,7 @@ export default class Home extends Component {
 
     render() {
         const {isOpen, dropOpenNum} = this.state
+        const level = localStorage.getItem('level')
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -32,7 +35,7 @@ export default class Home extends Component {
                     <Collapse isOpen={isOpen} navbar>
                         <Nav className="mr-auto" navbar>
                             <NavItem>
-                                <NavLink href="/home" className="navHome">Home</NavLink>
+                                <NavLink href="/" className="navHome">Home</NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
@@ -40,6 +43,7 @@ export default class Home extends Component {
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            {level === '1' ? (
                             <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
                                     Master
@@ -68,6 +72,9 @@ export default class Home extends Component {
                                     </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
+                            ) : (
+                                <div></div>
+                            )}
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
@@ -75,7 +82,7 @@ export default class Home extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -93,3 +100,14 @@ export default class Home extends Component {
         )
     }
 }
+
+const mapStateToProps = state => ({
+    auth: state.auth
+})
+
+const mapDispatchToProps = {
+    logout: auth.logout,
+    getDashboard: dashboard.getDashboard
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home)

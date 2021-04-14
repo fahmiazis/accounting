@@ -10,7 +10,6 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Dokumen from './pages/Dokumen'
-import tes from './pages/tes'
 import MasterEmail from './pages/MasterEmail'
 import MasterPic from './pages/MasterPic'
 import MasterDokumen from './pages/MasterDokumen'
@@ -19,6 +18,7 @@ import MasterUser from './pages/MasterUser'
 import MasterDepo from './pages/MasterDepo'
 import MasterDivisi from './pages/MasterDivisi'
 import Report from './pages/Report'
+import tes from './pages/tes'
 
 class App extends Component {
 
@@ -32,22 +32,41 @@ class App extends Component {
         return (
         <BrowserRouter>
             <Switch>
-                <Route path='/' exact component={Login} />
-                <Route path='/home' exact component={Home} />
-                <Route path='/dashboard' component={Dashboard} />
-                <Route path='/dokumen' component={Dokumen} />
-                <Route path="/tes" component={tes} />
-                <Route path="/email" component={MasterEmail} />
-                <Route path="/pic" component={MasterPic} />
-                <Route path="/master/dokumen" component={MasterDokumen} />
-                <Route path="/alasan" component={MasterAlasan} />
-                <Route path="/user" component={MasterUser} />
-                <Route path="/depo" component={MasterDepo} />
-                <Route path="/divisi" component={MasterDivisi} />
-                <Route path="/report" component={Report} />
-                {/* <PrivateRoute path='/dokumen'>
+                <Route path='/login' exact component={Login} />
+                <Route path='/tes' exact component={tes} />
+                <PrivateRoute path='/' exact>
+                    <Home />
+                </PrivateRoute>
+                <PrivateRoute path='/dashboard'>
+                    <Dashboard />
+                </PrivateRoute>
+                <PrivateRoute path='/dokumen'>
                     <Dokumen />
-                </PrivateRoute> */}
+                </PrivateRoute>
+                <PrivateRoute path="/email">
+                    <MasterEmail />
+                </PrivateRoute>
+                <PrivateRoute path="/pic">
+                    <MasterPic />
+                </PrivateRoute>
+                <PrivateRoute path="/master/dokumen">
+                    <MasterDokumen />
+                </PrivateRoute>
+                <PrivateRoute path="/alasan">
+                    <MasterAlasan />
+                </PrivateRoute>
+                <PrivateRoute path="/user">
+                    <MasterUser />
+                </PrivateRoute>
+                <PrivateRoute path="/depo">
+                    <MasterDepo />
+                </PrivateRoute>
+                <PrivateRoute path="/divisi">
+                    <MasterDivisi />
+                </PrivateRoute>
+                <PrivateRoute path="/report">
+                    <Report />
+                </PrivateRoute>
             </Switch>
         </BrowserRouter>
         )

@@ -6,6 +6,7 @@ const authState = {
     isLoading: false,
     isError: false,
     alertMsg: '',
+    level: 0
 };
 
 export default (state=authState, action) => {
@@ -18,8 +19,11 @@ export default (state=authState, action) => {
                 };
             }
             case 'AUTH_USER_FULFILLED': {
+                localStorage.setItem('token', action.payload.data.Token)
+                localStorage.setItem('level', action.payload.data.user.user_level)
                 return {
                     ...state,
+                    level: action.payload.data.user.user_level,
                     isLogin: true,
                     isError: false,
                     token: action.payload.data.Token,
@@ -42,13 +46,9 @@ export default (state=authState, action) => {
                 }
               }
             case 'LOGOUT': {
-                return {
-                    ...state,
-                    isLoading: false,
-                    isLogin: false,
-                    token: '',
-                    alertMsg: 'Logout success'
-                };
+                localStorage.removeItem('token')
+                localStorage.removeItem('level')
+                return authState
             }
             default: {
                 return state;

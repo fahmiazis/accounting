@@ -15,7 +15,7 @@ class PrivateRoute extends Component {
           if (localStorage.getItem('token')) {
             return childWithProps
           } else {
-            return <Redirect to={{ pathname: '/' }} />
+            return <Redirect to={{ pathname: '/login' }} />
           }
         }
       }

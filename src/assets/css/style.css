@@ -189,7 +189,7 @@
   border-radius: 4px;
 }
 .secHeadDashboard {
-  margin-top: 50px;
+  margin-top: 30px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -440,4 +440,43 @@
 }
 .titleReport {
   margin-bottom: 100px;
+}
+.txtError {
+  color: red;
+}
+.alertWrong {
+  text-align: center;
+}
+.spin {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  align-items: center;
+  margin-top: 5%;
+  margin-bottom: 5%;
+}
+.cekUpdate {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.sucUpdate {
+  font-size: 20px;
+  margin-top: 20px;
+}
+.bodyDepo {
+  display: flex;
+  flex-direction: column;
+}
+.searchDash {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.dropButton {
+  width: 100%;
+  text-align: start;
+  color: #ffffff;
 }

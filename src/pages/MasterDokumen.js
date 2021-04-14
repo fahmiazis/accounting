@@ -3,14 +3,31 @@ import { Container, Collapse, Nav, Navbar,
     NavbarToggler, NavbarBrand, NavItem, NavLink,
     UncontrolledDropdown, DropdownToggle, DropdownMenu, Dropdown,
     DropdownItem, Table, ButtonDropdown, Input, Button,
-    Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap'
+    Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner} from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import {FaSearch} from 'react-icons/fa'
-import {AiOutlineMail, AiOutlineMenu, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
+import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
+import {Formik} from 'formik'
+import * as Yup from 'yup'
+import dokumen from '../redux/actions/dokumen'
+import divisi from '../redux/actions/divisi'
+import {connect} from 'react-redux'
+import moment from 'moment'
+
+const dokumenSchema = Yup.object().shape({
+    nama_dokumen: Yup.string().required(),
+    jenis_dokumen: Yup.string().required(),
+    divisi: Yup.string().required(),
+    uploadedBy: Yup.string().required(),
+    status_depo: Yup.string().required(),
+    status: Yup.string().required(),
+});
 
 class MasterDokumen extends Component {
     state = {
+        alert: false,
+        confirm: "",
         isOpen: false,
         dropOpen: false,
         dropOpenNum: false,
@@ -20,11 +37,41 @@ class MasterDokumen extends Component {
         modalAdd: false,
         modalEdit: false,
         modalUpload: false,
-        modalDownload: false
+        modalDownload: false,
+        modalConfirm: false,
+        detail: {},
+        dataDivisi: [],
+        upload: false,
+        errMsg: '',
+        fileUpload: ''
+    }
+
+    showAlert = () => {
+        this.setState({alert: true, modalEdit: false, modalAdd: false, modalUpload: false })
+       
+         setTimeout(() => {
+            this.setState({
+                alert: false
+            })
+         }, 10000)
+    }
+
+    uploadAlert = () => {
+        this.setState({upload: true, modalUpload: false })
+       
+         setTimeout(() => {
+            this.setState({
+                upload: false
+            })
+         }, 10000)
     }
 
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
+    }
+
+    openConfirm = () => {
+        this.setState({modalConfirm: !this.state.modalConfirm})
     }
 
     dropDown = () => {
@@ -49,8 +96,86 @@ class MasterDokumen extends Component {
         this.setState({modalUpload: !this.state.modalUpload})
     }
 
+    addDokumen = async (values) => {
+        const token = localStorage.getItem("token")
+        await this.props.addDokumen(token, values)
+        const {isAdd} = this.props.dokumen
+        if (isAdd) {
+            this.setState({confirm: 'add'})
+            this.openConfirm()
+            this.getDataDokumen()
+            this.openModalAdd()
+        }
+    }
+
+    onChangeHandler = e => {
+        const {size, type} = e.target.files[0]
+        if (size >= 5120000) {
+            this.setState({errMsg: "Maximum upload size 5 MB"})
+            this.uploadAlert()
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
+            this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
+            this.uploadAlert()
+        } else {
+            this.setState({fileUpload: e.target.files[0]})
+        }
+    }
+
+    uploadMaster = async () => {
+        const token = localStorage.getItem('token')
+        const data = new FormData()
+        data.append('master', this.state.fileUpload)
+        await this.props.uploadMaster(token, data)
+    }
+
+    editDokumen = async (values, id) => {
+        const token = localStorage.getItem("token")
+        await this.props.updateDokumen(token, id, values)
+        const {isUpdate} = this.props.dokumen
+        if (isUpdate) {
+            this.setState({confirm: 'edit'})
+            this.openConfirm()
+            this.getDataDokumen()
+            this.openModalEdit()
+        }
+    }
+
+    componentDidUpdate() {
+        const {isError, isUpload} = this.props.dokumen
+        if (isError) {
+            this.props.resetError()
+            this.showAlert()
+        } else if (isUpload) {
+            setTimeout(() => {
+                this.props.resetError()
+                this.setState({modalUpload: false})
+             }, 2000)
+             setTimeout(() => {
+                this.getDataDokumen()
+             }, 2100)
+        }
+    }
+
+    componentDidMount() {
+        this.getDataDokumen()
+        this.getDataDivisi()
+    }
+
+    getDataDokumen = async () => {
+        const token = localStorage.getItem("token")
+        await this.props.getDokumen(token)
+    }
+
+    getDataDivisi = async () => {
+        const token = localStorage.getItem("token")
+        await this.props.getDivisi(token)
+    }
+
+
     render() {
-        const {isOpen, dropOpen, dropOpenNum} = this.state
+        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
+        const {dataDokumen, isGet, alertM, alertMsg, alertUpload} = this.props.dokumen
+        const {dataDivisi} = this.props.divisi
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -108,6 +233,18 @@ class MasterDokumen extends Component {
                     </Collapse>
                 </Navbar>
                 <Container fluid={true} className="background-logo">
+                    <Alert color="danger" className="alertWrong" isOpen={alert}>
+                        <div>{alertMsg}</div>
+                        <div>{alertM}</div>
+                        {alertUpload !== undefined && alertUpload.map(item => {
+                            return (
+                                <div>{item}</div>
+                            )
+                        })}
+                    </Alert>
+                    <Alert color="danger" className="alertWrong" isOpen={upload}>
+                        <div>{errMsg}</div>
+                    </Alert>
                     <div className="bodyDashboard">
                         <div className="headMaster">
                             <div className="titleDashboard col-md-12">Master Dokumen</div>
@@ -137,7 +274,8 @@ class MasterDokumen extends Component {
                                 <Input className="search"><FaSearch size={20} /></Input>
                             </div>
                         </div>
-                        <div className="tableDashboard">
+                        {isGet === false ? (
+                            <div className="tableDashboard">
                             <Table bordered responsive hover className="tab">
                                 <thead>
                                     <tr>
@@ -150,28 +288,41 @@ class MasterDokumen extends Component {
                                         <th>Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr onClick={this.openModalEdit}>
-                                        <th scope="row">1</th>
-                                        <td>Rekening Koran Bank Collection</td>
-                                        <td>Daily</td>
-                                        <td>Accounting</td>
-                                        <td>Cabang - SAP</td>
-                                        <td>01 Januari 2021</td>
-                                        <td>Active</td>
-                                    </tr>
+                            </Table>
+                            </div>                    
+                        ) : (
+                            <div className="tableDashboard">
+                            <Table bordered responsive hover className="tab">
+                                <thead>
                                     <tr>
-                                        <th scope="row">2</th>
-                                        <td>Rekening Koran Bank Operasional</td>
-                                        <td>Daily</td>
-                                        <td>Accounting</td>
-                                        <td>Cabang - Scylla</td>
-                                        <td>01 Januari 2021</td>
-                                        <td>Active</td>			
+                                        <th>No</th>
+                                        <th>Nama Dokumen</th>
+                                        <th>Jenis</th>
+                                        <th>Divisi</th>
+                                        <th>Status Depo</th>
+                                        <th>Diupload oleh</th>
+                                        <th>Create Date</th>
+                                        <th>Status</th>
                                     </tr>
+                                </thead>
+                                <tbody>
+                                {dataDokumen.length !== 0 && dataDokumen.map(item => {
+                                        return (
+                                    <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                        <th scope="row">{(dataDokumen.indexOf(item) + 1)}</th>
+                                        <td>{item.nama_dokumen}</td>
+                                        <td>{item.jenis_dokumen}</td>
+                                        <td>{item.divisi}</td>
+                                        <td>{item.status_depo}</td>
+                                        <td>{item.uploadedBy}</td>
+                                        <td>{moment(item.createdAt).format('DD MMMM, YYYY')}</td>
+                                        <td>{item.status}</td>
+                                    </tr>
+                                        )})}
                                 </tbody>
                             </Table>
-                        </div>
+                            </div>
+                        )}
                         <div>
                             <div className="infoPageEmail">
                                 <text>Showing 1 to 3 of entries</text>
@@ -186,116 +337,334 @@ class MasterDokumen extends Component {
                         </div>
                     </div>
                 </Container>
-                <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
+                <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd} size="lg">
                     <ModalHeader toggle={this.openModalAdd}>Add Master Dokumen</ModalHeader>
+                    <Formik
+                    initialValues={{
+                        nama_dokumen: "", 
+                        jenis_dokumen: "",
+                        divisi: "",
+                        status_depo: "",
+                        uploadedBy: "",
+                        status: ""
+                    }}
+                    validationSchema={dokumenSchema}
+                    onSubmit={(values) => {this.addDokumen(values)}}
+                    >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                     <ModalBody>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Nama Dokumen
                             </text>
-                            <Input type="textarea" name="nama_pic" className="col-md-9"/>
+                            <div className="col-md-9">
+                                <Input 
+                                type="textarea" 
+                                name="nama_pic"
+                                value={values.nama_dokumen}
+                                onChange={handleChange("nama_dokumen")}
+                                onBlur={handleBlur("nama_dokumen")}
+                                />
+                                {errors.nama_dokumen ? (
+                                    <text className="txtError">{errors.nama_dokumen}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Jenis Dokumen
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>-Pilih Jenis Dokumen-</option>
-                                <option>Daily</option>
-                                <option>Monthly</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select" 
+                                name="select"
+                                value={values.jenis_dokumen}
+                                onChange={handleChange("jenis_dokumen")}
+                                onBlur={handleBlur("jenis_dokumen")}
+                                >
+                                    <option>-Pilih Jenis Dokumen-</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="monthly">Monthly</option>
+                                </Input>
+                                {errors.jenis_dokumen ? (
+                                        <text className="txtError">{errors.jenis_dokumen}</text>
+                                    ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Divisi
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>-Pilih Divisi-</option>
-                                <option>Accounting</option>
-                                <option>Finance</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input
+                                type="select" 
+                                name="select"
+                                value={values.divisi}
+                                onChange={handleChange("divisi")}
+                                onBlur={handleBlur("divisi")}
+                                >
+                                    <option>-Pilih Divisi-</option>
+                                    {dataDivisi.length !== 0 && dataDivisi.map(item =>{
+                                        return (
+                                        <option value={item.divisi}>{item.divisi}</option>
+                                        )
+                                    })}
+                                </Input>
+                                {errors.divisi ? (
+                                    <text className="txtError">{errors.divisi}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Status Depo
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>-Pilih Status Depo-</option>
-                                <option>Cabang - SAP</option>
-                                <option>Cabang - Scylla</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select" 
+                                name="select"
+                                value={values.status_depo}
+                                onChange={handleChange("status_depo")}
+                                onBlur={handleBlur("status_depo")}
+                                >
+                                    <option>-Pilih Status Depo-</option>
+                                    <option value="Cabang SAP">Cabang SAP</option>
+                                    <option value="Cabang Scylla">Cabang Scylla</option>
+                                    <option value="Depo SAP">Depo SAP</option>
+                                    <option value="Depo Scylla">Depo Scylla</option>
+                                </Input>
+                                {errors.status_depo ? (
+                                    <text className="txtError">{errors.status_depo}</text>
+                                ) : null}
+                            </div>
                         </div>
+                        <div className="addModalDepo">
+                            <text className="col-md-3">
+                                Diupload oleh
+                            </text>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select"
+                                name="select"
+                                value={values.uploadedBy}
+                                onChange={handleChange("uploadedBy")}
+                                onBlur={handleBlur("uploadedBy")}
+                                >
+                                    <option>-Pilih-</option>
+                                    <option value="sa">SA</option>
+                                    <option value="kasir">Kasir</option>
+                                </Input>
+                                {errors.uploadedBy ? (
+                                    <text className="txtError">{errors.uploadedBy}</text>
+                                ) : null}
+                            </div>
+                        </div>
+
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Status
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>Active</option>
-                                <option>Inactive</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select"
+                                name="select"
+                                value={values.status}
+                                onChange={handleChange("status")}
+                                onBlur={handleBlur("status")}
+                                >   
+                                    <option>-Pilih Status-</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </Input>
+                                {errors.status ? (
+                                    <text className="txtError">{errors.status}</text>
+                                ) : null}
+                            </div>
+                        </div>
+                        <hr/>
+                        <div className="foot">
+                            <div></div>
+                            <div>
+                                <Button className="mr-2" onClick={handleSubmit} color="primary">Save</Button>
+                                <Button className="mr-5" onClick={this.openModalAdd}>Cancel</Button>
+                            </div>
                         </div>
                     </ModalBody>
-                    <ModalFooter>
-                        <Button onClick={this.openModalAdd} color="primary">Save</Button>
-                        <Button onClick={this.openModalAdd}>Cancel</Button>
-                    </ModalFooter>
+                    )}
+                    </Formik>
                 </Modal>
-                <Modal toggle={this.openModalEdit} isOpen={this.state.modalEdit}>
+                <Modal toggle={this.openModalEdit} isOpen={this.state.modalEdit} size="lg">
                     <ModalHeader toggle={this.openModalEdit}>Edit Master Dokumen</ModalHeader>
+                    <Formik
+                    initialValues={{
+                        nama_dokumen: detail.nama_dokumen, 
+                        jenis_dokumen: detail.jenis_dokumen,
+                        divisi: detail.divisi,
+                        status_depo: detail.status_depo,
+                        uploadedBy: detail.uploadedBy,
+                        createdAt: moment(detail.createdAt).format('YYYY-DD-MM'),
+                        status: detail.status
+                    }}
+                    validationSchema={dokumenSchema}
+                    onSubmit={(values) => {this.editDokumen(values, detail.id)}}
+                    >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                     <ModalBody>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Nama Dokumen
                             </text>
-                            <Input type="textarea" name="nama_pic" value="Rekening Koran Bank Collection" className="col-md-9"/>
+                            <div className="col-md-9">
+                                <Input 
+                                type="textarea" 
+                                name="nama_pic"
+                                value={values.nama_dokumen}
+                                onChange={handleChange("nama_dokumen")}
+                                onBlur={handleBlur("nama_dokumen")}
+                                />
+                                {errors.nama_dokumen ? (
+                                    <text className="txtError">{errors.nama_dokumen}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Jenis Dokumen
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>Daily</option>
-                                <option>Monthly</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select" 
+                                name="select"
+                                value={values.jenis_dokumen}
+                                onChange={handleChange("jenis_dokumen")}
+                                onBlur={handleBlur("jenis_dokumen")}
+                                >
+                                    <option>-Pilih Jenis Dokumen-</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="monthly">Monthly</option>
+                                </Input>
+                                {errors.jenis_dokumen ? (
+                                        <text className="txtError">{errors.jenis_dokumen}</text>
+                                    ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Divisi
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>Accounting</option>
-                                <option>Finance</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input
+                                type="select" 
+                                name="select"
+                                value={values.divisi}
+                                onChange={handleChange("divisi")}
+                                onBlur={handleBlur("divisi")}
+                                >
+                                    <option>-Pilih Divisi-</option>
+                                    {dataDivisi.length !== 0 && dataDivisi.map(item =>{
+                                        return (
+                                        <option value={item.divisi}>{item.divisi}</option>
+                                        )
+                                    })}
+                                </Input>
+                                {errors.divisi ? (
+                                    <text className="txtError">{errors.divisi}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Status Depo
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>Cabang - SAP</option>
-                                <option>Cabang - Scylla</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select" 
+                                name="select"
+                                value={values.status_depo}
+                                onChange={handleChange("status_depo")}
+                                onBlur={handleBlur("status_depo")}
+                                >
+                                    <option>-Pilih Status Depo-</option>
+                                    <option value="Cabang SAP">Cabang SAP</option>
+                                    <option value="Cabang Scylla">Cabang Scylla</option>
+                                    <option value="Depo SAP">Depo SAP</option>
+                                    <option value="Depo Scylla">Depo Scylla</option>
+                                </Input>
+                                {errors.status_depo ? (
+                                    <text className="txtError">{errors.status_depo}</text>
+                                ) : null}
+                            </div>
+                        </div>
+                        <div className="addModalDepo">
+                            <text className="col-md-3">
+                                Diupload oleh
+                            </text>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select"
+                                name="select"
+                                value={values.uploadedBy}
+                                onChange={handleChange("uploadedBy")}
+                                onBlur={handleBlur("uploadedBy")}
+                                >
+                                    <option>-Pilih-</option>
+                                    <option value="sa">SA</option>
+                                    <option value="kasir">Kasir</option>
+                                </Input>
+                                {errors.uploadedBy ? (
+                                    <text className="txtError">{errors.uploadedBy}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Create Date
                             </text>
-                            <Input type="date" value="2021-01-01" name="nama_pic" className="col-md-9"/>
+                            <div className="col-md-9">
+                                <Input 
+                                type="datetime-local"
+                                name="createdAt"
+                                value={values.createdAt}
+                                onChange={handleChange('createdAt')}
+                                onBlur={handleBlur('createdAt')}
+                                />
+                                {errors.createdAt ? (
+                                    <text className="txtError">{errors.createdAt}</text>
+                                ) : null}
+                            </div>
                         </div>
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 Status
                             </text>
-                            <Input type="select" name="select" className="col-md-9">
-                                <option>Active</option>
-                                <option>Inactive</option>
-                            </Input>
+                            <div className="col-md-9">
+                                <Input 
+                                type="select"
+                                name="select"
+                                value={values.status}
+                                onChange={handleChange("status")}
+                                onBlur={handleBlur("status")}
+                                >   
+                                    <option>-Pilih Status-</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </Input>
+                                {errors.status ? (
+                                    <text className="txtError">{errors.status}</text>
+                                ) : null}
+                            </div>
+                        </div>
+                        <hr/>
+                        <div className="foot">
+                            <div></div>
+                            <div>
+                                <Button className="mr-2" onClick={handleSubmit} color="primary">Save</Button>
+                                <Button className="mr-5" onClick={this.openModalEdit}>Cancel</Button>
+                            </div>
                         </div>
                     </ModalBody>
-                    <ModalFooter>
-                        <Button onClick={this.openModalEdit} color="primary">Save</Button>
-                        <Button onClick={this.openModalEdit}>Cancel</Button>
-                    </ModalFooter>
+                    )}
+                    </Formik>
                 </Modal>
                 <Modal toggle={this.openModalUpload} isOpen={this.state.modalUpload} >
                     <ModalHeader>Upload Master Dokumen</ModalHeader>
@@ -303,21 +672,85 @@ class MasterDokumen extends Component {
                         <div className="titleModalUpload">
                             <text>Upload File: </text>
                             <div className="uploadFileInput ml-4">
-                                <AiOutlineFilePdf size={35} />
-                                <Input type="file" name="file" className="ml-3" />
+                                <AiOutlineFileExcel size={35} />
+                                <div className="ml-3">
+                                    <Input
+                                    type="file"
+                                    name="file"
+                                    accept=".xls,.xlsx"
+                                    onChange={this.onChangeHandler}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="btnUpload">
                             <Button color="info">Download Template</Button>
-                            <Button color="primary">Upload</Button>
+                            <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
                     </ModalBody>
+                </Modal>
+                <Modal isOpen={this.state.modalConfirm} toggle={this.openConfirm} size="sm">
+                    <ModalBody>
+                        {this.state.confirm === 'edit' ? (
+                        <div className="cekUpdate">
+                            <AiFillCheckCircle size={80} className="green" />
+                            <div className="sucUpdate green">Berhasil Update Dokumen</div>
+                        </div>
+                        ) : this.state.confirm === 'add' ? (
+                            <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Menambah Dokumen</div>
+                            </div>
+                        ) : this.state.confirm === 'upload' ?(
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Mengupload Master Dokumen</div>
+                            </div>
+                            </div>
+                        ) : (
+                            <div></div>
+                        )}
+                    </ModalBody>
+                </Modal>
+                <Modal isOpen={this.props.dokumen.isLoading ? true: false} size="sm">
+                        <ModalBody>
+                        <div>
+                            <div className="cekUpdate">
+                                <Spinner />
+                                <div sucUpdate>Waiting....</div>
+                            </div>
+                        </div>
+                        </ModalBody>
+                </Modal>
+                <Modal isOpen={this.props.dokumen.isUpload ? true: false} size="sm">
+                        <ModalBody>
+                        <div>
+                            <div className="cekUpdate">
+                                <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Mengupload Master</div>
+                            </div>
+                        </div>
+                        </ModalBody>
                 </Modal>
             </>
         )
     }
 }
 
-export default  MasterDokumen
-	
+const mapStateToProps = state => ({
+    dokumen: state.dokumen,
+    divisi: state.divisi
+})
+
+const mapDispatchToProps = {
+    addDokumen: dokumen.addDokumen,
+    updateDokumen: dokumen.updateDokumen,
+    getDokumen: dokumen.getDokumen,
+    resetError: dokumen.resetError,
+    getDivisi: divisi.getDivisi,
+    uploadMaster: dokumen.uploadMaster
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MasterDokumen)

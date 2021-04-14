@@ -2,12 +2,10 @@ import React, { Component } from 'react'
 import { Container, Collapse, Nav, Navbar,
     NavbarToggler, NavbarBrand, NavItem, NavLink,
     UncontrolledDropdown, DropdownToggle, DropdownMenu, Dropdown,
-    DropdownItem, Table, ButtonDropdown, Input, Button,
-    Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap'
+    DropdownItem, Input, Button, ButtonDropdown,
+    } from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
-import {AiOutlineMail, AiOutlineMenu, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
 
 class Report extends Component {
     state = {
@@ -20,7 +18,9 @@ class Report extends Component {
         modalAdd: false,
         modalEdit: false,
         modalUpload: false,
-        modalDownload: false
+        modalDownload: false,
+        type: "Daily",
+        openType: false,
     }
 
     toggle = () => {
@@ -34,17 +34,26 @@ class Report extends Component {
         this.setState({dropOpenNum: !this.state.dropOpenNum})
     }
 
+    componentDidUpdate() {
+        console.log(this.state.type === "")
+    }
+
+    openTypeFunc = () => {
+        this.setState({openType: !this.state.openType})
+    }
+
     render() {
-        const {isOpen, dropOpen, dropOpenNum} = this.state
+        const {isOpen, dropOpenNum, type} = this.state
+        const level = localStorage.getItem('level')
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
+                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
                         <Nav className="mr-auto" navbar>
                             <NavItem>
-                                <NavLink href="/home" className="navHome">Home</NavLink>
+                                <NavLink href="/" className="navHome">Home</NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
@@ -52,6 +61,7 @@ class Report extends Component {
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            {level === '1' ? (
                             <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
                                     Master
@@ -80,6 +90,9 @@ class Report extends Component {
                                     </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
+                            ) : (
+                                <div></div>
+                            )}
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
@@ -99,12 +112,22 @@ class Report extends Component {
                             <text className="col-md-2 fontReport">Jenis</text>
                             <div className="optionType col-md-4">
                                 <text className="colon">:</text>
-                                <Input type="select" name="select" className="optionList">
-                                    <option>Daily</option>
-                                    <option>Monthly</option>
-                                </Input>
+                                <ButtonDropdown isOpen={this.state.openType} toggle={this.openTypeFunc} className="dropButton">
+                                    <DropdownToggle caret>
+                                        {type}
+                                    </DropdownToggle>
+                                    <DropdownMenu>
+                                        <DropdownItem onClick={() => this.setState({type: 'Daily'})}>
+                                            Daily
+                                        </DropdownItem>
+                                        <DropdownItem onClick={() => this.setState({type: 'Monthly'})}>
+                                            Monthly
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                </ButtonDropdown>
                             </div>
                         </div>
+                        {type === "Daily" ? (
                         <div className="headReport">
                             <text className="col-md-2 fontReport">Tanggal Dokumen</text>
                             <div className="optionType col-md-4">
@@ -115,6 +138,21 @@ class Report extends Component {
                                 <Input type="date" name="creeatedAt"/>
                             </div>
                         </div>
+                        ) : type === "Monthly" ?(
+                        <div className="headReport">
+                            <text className="col-md-2 fontReport">Periode Dokumen</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <Input type="select" name="select">
+                                    <option>-Pilih Period-</option>
+                                    <option>Januari</option>
+                                    <option>Februari</option>
+                                </Input>
+                            </div>
+                        </div>
+                        ): (
+                            <div></div>
+                        )}
                         <div className="headReport">
                             <text className="col-md-2 fontReport">PIC</text>
                             <div className="optionType col-md-4">
