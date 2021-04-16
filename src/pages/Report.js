@@ -117,7 +117,7 @@ class Report extends Component {
                             <div className="optionType col-md-4">
                                 <text className="colon">:</text>
                                 <ButtonDropdown isOpen={this.state.openType} toggle={this.openTypeFunc} className="dropButton">
-                                    <DropdownToggle caret>
+                                    <DropdownToggle caret color="light">
                                         {type}
                                     </DropdownToggle>
                                     <DropdownMenu>

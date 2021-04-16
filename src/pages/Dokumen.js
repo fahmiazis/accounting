@@ -52,7 +52,7 @@ class Dokumen extends Component {
         aktif: {},
         act: [],
         totalDoc: [],
-        tipe: '',
+        tipe: 'daily',
         appAct: {}
     }
 
@@ -166,23 +166,37 @@ class Dokumen extends Component {
     showDok = async (value) => {
         const token = localStorage.getItem('token')
         this.setState({fileName: value.path, appAct: value.active})
-        await this.props.showDokumen(token, value.path.id)
         const download = value.path.path.split('/')
         this.props.download(download[2])
+        await this.props.showDokumen(token, value.path.id)
         const {isShow} = this.props.dashboard
         if (isShow) {
             this.openModalPdf()
         }
     }
 
-    getDataDashboard = async () => {
+    next = async () => {
+        const { page } = this.props.dashboard
+        const token = localStorage.getItem('token')
+        await this.props.nextDashboard(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.dashboard
+        const token = localStorage.getItem('token')
+        await this.props.nextDashboard(token, page.prevLink)
+    }
+
+
+    getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token)
             await this.props.getActivity(token)   
         } else if (level === '3' || level === '1' || level === '2') {
-            await this.props.getDashboardPic(token)
+            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value )
+            this.setState({tipe: value === undefined ? 'daily' : value})
         }
     }
 
@@ -191,12 +205,12 @@ class Dokumen extends Component {
         const data = []
         dataSa.map(x => {
             return (
-                data.push(x.dokumen.length)
+                data.push(x !== null ? x.dokumen.length : 0)
             )
         })
         dataKasir.map(x => {
             return (
-                data.push(x.dokumen.length)
+                data.push(x !== null ? x.dokumen.length : 0)
             )
         })
         const res = []
@@ -239,7 +253,7 @@ class Dokumen extends Component {
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
-        const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo} = this.props.dashboard
+        const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         return (
             <>
                 <Navbar color="light" light expand='lg' className="navbar">
@@ -317,13 +331,15 @@ class Dokumen extends Component {
                                 <text>Jenis: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
                                 <DropdownToggle caret color="light">
-                                    Daily
+                                    {this.state.tipe}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>Monthly</DropdownItem>
+                                    <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                    <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                             </div>
+                            {this.state.tipe === 'daily' ? (
                             <div className="dateDash">
                                 <div>Tanggal Dokumen: </div>
                                 <div className="inputCalendar">
@@ -335,6 +351,27 @@ class Dokumen extends Component {
                                 onChange={this.state.onChange}
                                 /> */}
                             </div>
+                            ) : (
+                            <div className="dateDash">
+                                <div>Periode Dokumen: </div>
+                                {/* <div className="inputCalendar">
+                                    <Input  type="date"/>
+                                </div> */}
+                                <Input
+                                    type="select"
+                                    name="select"
+                                    >   
+                                    <option>Februari</option>
+                                    <option>Maret</option>
+                                    <option>April</option>
+                                </Input>
+                                {/* <div><FaCalendarAlt size={22} /></div> */}
+                                {/* <Calendar
+                                value={this.state.value}
+                                onChange={this.state.onChange}
+                                /> */}
+                            </div>
+                            )}
                         </div>
                         <div className="secHeadDashboard">
                             <div className="searchDash">
@@ -468,7 +505,7 @@ class Dokumen extends Component {
                                                     <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
                                                 )}
                                                 {x.doc.length > 0 ? (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.progress/dataDash.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
@@ -480,9 +517,10 @@ class Dokumen extends Component {
                                 <tbody>
                                         {dataSa !== undefined && dataSa.map(x => {
                                             return (
+                                            x !== null ? (
                                             <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataSa[dataSa.indexOf(x)].dokumen, act: dataSa[dataSa.indexOf(x)].active}))}>
                                                 <th scope="row">{(dataSa.indexOf(x) + 1)}</th>
-                                                <td>{x.kode_plant}</td>
+                                                <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
@@ -560,10 +598,14 @@ class Dokumen extends Component {
                                                 )}
                                                 <td>SA</td>
                                             </tr>
+                                            ) : (
+                                                <div></div>
+                                            )
                                             )
                                         })}
                                         {dataKasir !== undefined && dataKasir.map(x => {
                                             return (
+                                            x !== null ? (
                                             <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active}))}>
                                                 <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + 1)}</th>
                                                 <td>{x.kode_plant}</td>
@@ -644,6 +686,9 @@ class Dokumen extends Component {
                                                 )}
                                                 <td>Kasir</td>
                                             </tr>
+                                            ) : (
+                                                <div></div>
+                                            )
                                             )
                                         })}
                                 </tbody>
@@ -680,13 +725,10 @@ class Dokumen extends Component {
                         </div>
                         <div>
                             <div className="infoPage">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -953,7 +995,8 @@ const mapDispatchToProps = {
     sendEmail: dashboard.sendEmail,
     getAlasan: alasan.getAlasan,
     logout: auth.logout,
-    download: dashboard.download
+    download: dashboard.download,
+    nextDashboard: dashboard.nextDashboard
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)

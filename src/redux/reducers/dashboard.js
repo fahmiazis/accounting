@@ -22,7 +22,8 @@ const divisiState = {
     dataDepo: [],
     dataSa: [],
     dataKasir: [],
-    isSend: false
+    isSend: false,
+    page: {}
 };
 
 export default (state=divisiState, action) => {
@@ -67,10 +68,39 @@ export default (state=divisiState, action) => {
                     isError: false,
                     dataSa: action.payload.data.sa,
                     dataKasir: action.payload.data.kasir,
-                    dataDepo: action.payload.data.results.rows
+                    dataDepo: action.payload.data.results.rows,
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_DASHBOARD_PIC_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetPic: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetPic: true,
+                    isError: false,
+                    dataSa: action.payload.data.sa,
+                    dataKasir: action.payload.data.kasir,
+                    dataDepo: action.payload.data.results.rows,
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,
@@ -233,7 +263,7 @@ export default (state=divisiState, action) => {
                     isLoading: false,
                     isShow: false,
                     isError: true,
-                    alertMsg: action.payload.response.message,
+                    alertMsg: action.payload.response,
                 };
             }
             case 'SEND_PENDING': {

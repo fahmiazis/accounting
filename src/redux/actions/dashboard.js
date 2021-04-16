@@ -11,9 +11,13 @@ export default {
         type: 'GET_DASHBOARD',
         payload: http(token).get(`/dashboard/get`)
     }),
-    getDashboardPic: (token) => ({
+    nextDashboard: (token, link) => ({
+        type: 'NEXT_DATA',
+        payload: http(token).get(`${link}`)
+    }),
+    getDashboardPic: (token, tipe) => ({
         type: 'GET_DASHBOARD_PIC',
-        payload: http(token).get(`/dashboard/get`)
+        payload: http(token).get(`/dashboard/get?tipe=${tipe}`)
     }),
     getActivity: (token) => ({
         type: 'GET_ACTIVITY',
