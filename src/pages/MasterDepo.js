@@ -14,7 +14,7 @@ import depo from '../redux/actions/depo'
 import {connect} from 'react-redux'
 
 const depoSchema = Yup.object().shape({
-    kode_depo: Yup.string().required('must be filled with number'),
+    kode_depo: Yup.string().required(),
     nama_depo: Yup.string().required('must be filled'),
     home_town: Yup.string().required('must be filled'),
     channel: Yup.string().required('must be filled'),
