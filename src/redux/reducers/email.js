@@ -13,7 +13,8 @@ const emailState = {
     dataEmail: [],
     detailEmail: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=emailState, action) => {
@@ -44,6 +45,33 @@ export default (state=emailState, action) => {
                     alertM: action.payload.response.data.error
                 };
             }
+            case 'NEXT_DATA_EMAIL_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_EMAIL_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetPic: true,
+                    isError: false,
+                    dataEmail: action.payload.data.result.rows,
+                    alertMsg: 'next data email Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_EMAIL_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetPic: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
             case 'GET_EMAIL_PENDING': {
                 return {
                     ...state,
@@ -59,7 +87,8 @@ export default (state=emailState, action) => {
                     isError: false,
                     isGet: true,
                     dataEmail: action.payload.data.result.rows,
-                    alertMsg: 'add email Succesfully'
+                    alertMsg: 'add email Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_EMAIL_REJECTED': {

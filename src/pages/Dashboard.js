@@ -21,6 +21,7 @@ import {connect} from 'react-redux'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
+import {BsBell} from 'react-icons/bs'
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -190,7 +191,7 @@ class Dokumen extends Component {
         const level = localStorage.getItem('level')
         const { tipe } = this.state
         if (level === '4' || level === '5') {
-            await this.props.getDashboard(token)
+            await this.props.getDashboard(token, value === undefined ? 'daily' : value)
             await this.props.getActivity(token)   
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value )
@@ -229,8 +230,6 @@ class Dokumen extends Component {
              }, 2000)
              setTimeout(() => {
                 this.getDataDashboard()
-
-
                 this.openModalProses()
              }, 2100)
         } else if (isGetPic) {
@@ -251,10 +250,11 @@ class Dokumen extends Component {
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
         const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         return (
             <>
-                <Navbar color="light" light expand='lg' className="navbar">
+                <Navbar color="light" light expand='md' className="navbar">
                     <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
@@ -306,10 +306,18 @@ class Dokumen extends Component {
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
-                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                                {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names : 'User'}
                             </DropdownToggle>
                             <DropdownMenu>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
+                            </DropdownMenu>
+                        </UncontrolledDropdown>
+                        <UncontrolledDropdown>
+                            <DropdownToggle nav>
+                                <BsBell size={20} />
+                            </DropdownToggle>
+                            <DropdownMenu right>
+                                <DropdownItem >Reject Dokumen</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -341,7 +349,9 @@ class Dokumen extends Component {
                             <div className="dateDash">
                                 <div>Tanggal Dokumen: </div>
                                 <div className="inputCalendar">
-                                    <Input  type="date"/>
+                                    <Input  
+                                    type="date"
+                                    />
                                 </div>
                                 {/* <div><FaCalendarAlt size={22} /></div> */}
                                 {/* <Calendar
@@ -465,7 +475,7 @@ class Dokumen extends Component {
                                 <tbody>
                                         {active !== undefined && active.map(x => {
                                             return (
-                                            <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)]}))}>
+                                            <tr className="danger">
                                                 <th scope="row">{(active.indexOf(x) + 1)}</th>
                                                 <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
@@ -523,7 +533,7 @@ class Dokumen extends Component {
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
-                                                    <td>{moment(x.dokumen[0].postDokumen).format('DD MMMM, YYYY')}</td>
+                                                    <td>{moment().subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
@@ -604,14 +614,14 @@ class Dokumen extends Component {
                                         {dataKasir !== undefined && dataKasir.map(x => {
                                             return (
                                             x !== null ? (
-<tr className="danger">
+                                            <tr className="danger">
                                                 <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + 1)}</th>
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
-                                                    <td>{moment(x.dokumen[0].postDokumen).format('DD MMMM, YYYY')}</td>
+                                                    <td>{moment().subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>

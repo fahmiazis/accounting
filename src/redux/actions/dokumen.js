@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_DOKUMEN',
         payload: http(token).patch(`/dokumen/update/${id}`, qs.stringify(data)),
     }),
-    getDokumen: (token) => ({
+    getDokumen: (token, limit, search) => ({
         type: 'GET_DOKUMEN',
-        payload: http(token).get(`/dokumen/get`)
+        payload: http(token).get(`/dokumen/get?limit=${limit}&search=${search}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',
@@ -26,6 +26,10 @@ export default {
     deleteDokumen: (token, id) => ({
         type: 'DELETE_DOKUMEN',
         payload: http(token).delete(`/dokumen/delete/${id}`)
+    }),
+    nextPage: (token, link) => ({
+        type: 'NEXT_DATA_DOKUMEN',
+        payload: http(token).get(`${link}`)
     }),
     resetError: () => ({
         type: 'RESET'

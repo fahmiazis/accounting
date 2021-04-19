@@ -8,6 +8,7 @@ import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import {connect} from 'react-redux'
 import dashboard from '../redux/actions/dashboard'
+import {BsBell} from 'react-icons/bs'
 
 class Home extends Component {
 
@@ -27,6 +28,7 @@ class Home extends Component {
     render() {
         const {isOpen, dropOpenNum} = this.state
         const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -81,10 +83,18 @@ class Home extends Component {
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
-                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names : 'User'}
                             </DropdownToggle>
                             <DropdownMenu>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
+                            </DropdownMenu>
+                        </UncontrolledDropdown>
+                        <UncontrolledDropdown>
+                            <DropdownToggle nav>
+                                <BsBell size={20} />
+                            </DropdownToggle>
+                            <DropdownMenu right>
+                                <DropdownItem >Reject Dokumen</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>

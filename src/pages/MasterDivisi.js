@@ -12,6 +12,7 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import divisi from '../redux/actions/divisi'
 import {connect} from 'react-redux'
+import auth from '../redux/actions/auth'
 
 const divisiSchema = Yup.object().shape({
     divisi: Yup.string().required('must be filled'),
@@ -36,7 +37,9 @@ class MasterDivisi extends Component {
         detail: {},
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     showAlert = () => {
@@ -149,18 +152,40 @@ class MasterDivisi extends Component {
         }
     }
 
+    next = async () => {
+        const { page } = this.props.divisi
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.divisi
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
+    }
+
     componentDidMount() {
         this.getDataDivisi()
     }
 
-    getDataDivisi = async () => {
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataDivisi({limit: 10, search: this.state.search})
+        }
+    }
+
+    getDataDivisi = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getDivisi(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getDivisi(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataDivisi, isGet, alertM, alertMsg, alertUpload} = this.props.divisi
+        const {dataDivisi, isGet, alertM, alertMsg, alertUpload, page} = this.props.divisi
         const level = localStorage.getItem('level')
         return (
             <>
@@ -217,7 +242,7 @@ class MasterDivisi extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                            <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -244,10 +269,12 @@ class MasterDivisi extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDivisi({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDivisi({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDivisi({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -261,7 +288,14 @@ class MasterDivisi extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                 className="search"
+                                 onChange={this.onSearch}
+                                 value={this.state.search}
+                                 onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -297,7 +331,7 @@ class MasterDivisi extends Component {
                                     {dataDivisi.length !== 0 && dataDivisi.map(item => {
                                         return (
                                         <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataDivisi.indexOf(item) + 1)}</th>
+                                            <th scope="row">{(dataDivisi.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                             <td>{item.divisi}</td>
                                             <td>{item.status}</td>
                                         </tr>
@@ -308,13 +342,10 @@ class MasterDivisi extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -516,11 +547,13 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addDivisi: divisi.addDivisi,
     updateDivisi: divisi.updateDivisi,
     getDivisi: divisi.getDivisi,
     resetError: divisi.resetError,
-    uploadMaster: divisi.uploadMaster
+    uploadMaster: divisi.uploadMaster,
+    nextPage: divisi.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDivisi)

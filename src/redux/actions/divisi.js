@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_DIVISI',
         payload: http(token).patch(`/divisi/update/${id}`, qs.stringify(data)),
     }),
-    getDivisi: (token) => ({
+    getDivisi: (token, limit, search) => ({
         type: 'GET_DIVISI',
-        payload: http(token).get(`/divisi/get`)
+        payload: http(token).get(`/divisi/get?limit=${limit}&search=${search}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',
@@ -22,6 +22,10 @@ export default {
     deleteDivisi: (token, id) => ({
         type: 'DELETE_DIVISI',
         payload: http(token).delete(`/divisi/delete/${id}`)
+    }),
+    nextPage: (token, link) => ({
+        type: 'NEXT_DATA_DIVISI',
+        payload: http(token).get(`${link}`)
     }),
     resetError: () => ({
         type: 'RESET'

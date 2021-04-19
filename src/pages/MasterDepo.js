@@ -12,6 +12,7 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import depo from '../redux/actions/depo'
 import {connect} from 'react-redux'
+import auth from '../redux/actions/auth'
 
 const depoSchema = Yup.object().shape({
     kode_depo: Yup.string().required(),
@@ -51,7 +52,21 @@ class MasterDepo extends Component {
         detail: {},
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
+    }
+
+    next = async () => {
+        const { page } = this.props.depo
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.depo
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
     }
 
     showAlert = () => {
@@ -168,14 +183,24 @@ class MasterDepo extends Component {
         this.getDataDepo()
     }
 
-    getDataDepo = async () => {
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataDepo({limit: 10, search: this.state.search})
+        }
+    }
+
+    getDataDepo = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getDepo(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getDepo(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataDepo, isGet, alertM, alertMsg, alertUpload} = this.props.depo
+        const {dataDepo, isGet, alertM, alertMsg, alertUpload, page} = this.props.depo
         const level = localStorage.getItem('level')
         return (
             <>
@@ -232,7 +257,7 @@ class MasterDepo extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -259,10 +284,12 @@ class MasterDepo extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -276,7 +303,14 @@ class MasterDepo extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -342,7 +376,7 @@ class MasterDepo extends Component {
                                     {dataDepo.length !== 0 && dataDepo.map(item => {
                                         return (
                                         <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataDepo.indexOf(item) + 1)}</th>
+                                            <th scope="row">{(dataDepo.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                             <td>{item.kode_depo}</td>
                                             <td>{item.nama_depo}</td>
                                             <td>{item.home_town}</td>
@@ -368,13 +402,10 @@ class MasterDepo extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -1154,11 +1185,13 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addDepo: depo.addDepo,
     updateDepo: depo.updateDepo,
     getDepo: depo.getDepo,
     resetError: depo.resetError,
-    uploadMaster: depo.uploadMaster
+    uploadMaster: depo.uploadMaster,
+    nextPage: depo.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDepo)

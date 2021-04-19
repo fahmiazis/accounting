@@ -21,6 +21,8 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
 import auth from '../redux/actions/auth'
+import {BsBell} from 'react-icons/bs'
+import {default as axios} from 'axios'
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -53,7 +55,8 @@ class Dokumen extends Component {
         act: [],
         totalDoc: [],
         tipe: 'daily',
-        appAct: {}
+        appAct: {},
+        date: ''
     }
 
     showAlert = () => {
@@ -166,12 +169,59 @@ class Dokumen extends Component {
     showDok = async (value) => {
         const token = localStorage.getItem('token')
         this.setState({fileName: value.path, appAct: value.active})
-        const download = value.path.path.split('/')
-        this.props.download(download[2])
+        // this.props.download(download[2])
         await this.props.showDokumen(token, value.path.id)
+        this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
         if (isShow) {
+            this.downloadData(value)
             this.openModalPdf()
+        }
+    }
+
+    downloadData = (value) => {
+        const download = value.path.path.split('/')
+        const cek = download[2].split('.')
+        console.log(cek)
+        if (cek[1] === 'xls') {
+            axios({
+                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                method: 'GET',
+                responseType: 'blob', // important
+              }).then((response) => {
+                 const url = window.URL.createObjectURL(new Blob([response.data]));
+                 const link = document.createElement('a');
+                 link.href = url;
+                 link.setAttribute('download', 'dokumen.xls'); //or any other extension
+                 document.body.appendChild(link);
+                 link.click();
+              });
+        } else if (cek[1] === 'pdf') {
+            axios({
+                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                method: 'GET',
+                responseType: 'blob', // important
+              }).then((response) => {
+                 const url = window.URL.createObjectURL(new Blob([response.data]));
+                 const link = document.createElement('a');
+                 link.href = url;
+                 link.setAttribute('download', 'dokumen.pdf'); //or any other extension
+                 document.body.appendChild(link);
+                 link.click();
+              });
+        } else if (cek[1] === 'xlsx') {
+            axios({
+                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                method: 'GET',
+                responseType: 'blob', // important
+              }).then((response) => {
+                 const url = window.URL.createObjectURL(new Blob([response.data]));
+                 const link = document.createElement('a');
+                 link.href = url;
+                 link.setAttribute('download', 'dokumen.xlsx'); //or any other extension
+                 document.body.appendChild(link);
+                 link.click();
+              });
         }
     }
 
@@ -192,7 +242,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
         if (level === '4' || level === '5') {
-            await this.props.getDashboard(token)
+            await this.props.getDashboard(token, this.state.tipe)
             await this.props.getActivity(token)   
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value )
@@ -254,6 +304,7 @@ class Dokumen extends Component {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
         const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const names = localStorage.getItem('name')
         return (
             <>
                 <Navbar color="light" light expand='lg' className="navbar">
@@ -308,10 +359,18 @@ class Dokumen extends Component {
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
-                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
                             </DropdownToggle>
                             <DropdownMenu right>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
+                            </DropdownMenu>
+                        </UncontrolledDropdown>
+                        <UncontrolledDropdown>
+                            <DropdownToggle nav>
+                                <BsBell size={20} />
+                            </DropdownToggle>
+                            <DropdownMenu right>
+                                <DropdownItem >Reject Dokumen</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -884,16 +943,32 @@ class Dokumen extends Component {
                         <div className="readPdf">
                             <Pdf pdf={REACT_APP_BACKEND_URL + dataShow} />
                         </div>
+                        <hr/>
+                        <div className="foot">
+                            <div>
+                                <div>{moment(this.state.date).format('LLL')}</div>
+                            </div>
+                        {level === '1' || level === '2' || level === '3' ? (
+                            <div>
+                                <Button color="danger" onClick={this.openModalReject}>Reject</Button>
+                                <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
+                            </div>
+                            ) : (
+                                <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
+                            )}
+                        </div>
                     </ModalBody>
-                    {level === '1' || level === '2' || level === '3' ? (
+                    {/* {level === '1' || level === '2' || level === '3' ? (
+                    
                     <ModalFooter>
+                        <div>{moment(this.state.date).format('LL')}</div>
                         <Button color="danger" onClick={this.openModalReject}>Reject</Button>
                         <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
                     </ModalFooter>
                     ) : (
                     <ModalFooter>
                         <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
-                    </ModalFooter>)}
+                    </ModalFooter>)} */}
                 </Modal>
                 <Modal isOpen={openApprove} toggle={this.openModalApprove} centered={true}>
                     <ModalBody>

@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_PIC',
         payload: http(token).patch(`/pic/update/${id}`, qs.stringify(data)),
     }),
-    getPic: (token) => ({
+    getPic: (token, limit, search) => ({
         type: 'GET_PIC',
-        payload: http(token).get(`/pic/get`)
+        payload: http(token).get(`/pic/get?limit=${limit}&search=${search}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',
@@ -22,6 +22,10 @@ export default {
     getDetailPic: (token, id) => ({
         type: 'GET_DETAIL_PIC',
         payload: http(token).get(`/pic/detail/${id}`)
+    }),
+    nextPage: (token, link) => ({
+        type: 'NEXT_DATA_PIC',
+        payload: http(token).get(`${link}`)
     }),
     deletePic: (token, id) => ({
         type: 'DELETE_PIC',

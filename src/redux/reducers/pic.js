@@ -13,7 +13,8 @@ const picState = {
     dataPic: [],
     detailPic: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=picState, action) => {
@@ -59,10 +60,39 @@ export default (state=picState, action) => {
                     isError: false,
                     isGet: true,
                     dataPic: action.payload.data.result.rows,
-                    alertMsg: 'add pic Succesfully'
+                    alertMsg: 'get pic Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_PIC_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_PIC_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_PIC_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataPic: action.payload.data.result.rows,
+                    alertMsg: 'get pic Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_PIC_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,

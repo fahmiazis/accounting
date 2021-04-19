@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import { BrowserRouter, Switch, Route } from 'react-router-dom'
+import { BrowserRouter, Switch, Route, Redirect } from 'react-router-dom'
 import {connect} from "react-redux"
-
+import dashboard from './redux/actions/dashboard'
 import auth from './redux/actions/auth'
 
 import PrivateRoute from './components/PrivateRoute'
@@ -24,7 +24,7 @@ class App extends Component {
 
     componentDidMount(){
         if (localStorage.getItem('token')) {
-            this.props.setToken(localStorage.getItem('token'))     
+            this.props.setToken(localStorage.getItem('token'))  
         }
     }
 
@@ -75,10 +75,13 @@ class App extends Component {
 
 const mapStateToProps = state => ({
     auth: state.auth,
+    dashboard: state.dashboard
   })
   
   const mapDispatchToProps = {
-    setToken: auth.setToken
+    setToken: auth.setToken,
+    getDashboard: dashboard.getDashboard,
+    getDashboardPic: dashboard.getDashboardPic
   }
   
   export default connect(mapStateToProps, mapDispatchToProps)(App)

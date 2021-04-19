@@ -23,12 +23,20 @@ class Login extends Component {
         }
     }
 
-    componentDidMount(){
-        if (localStorage.getItem('token')) {
-            this.props.setToken(localStorage.getItem('token'))
-            this.props.history.push('/')  
+    componentDidUpdate() {
+        const {isLogin} = this.props.auth
+        if (isLogin) {
+            this.props.history.push('/')
+            this.props.resetError()
         }
     }
+
+    // componentDidMount(){
+    //     if (localStorage.getItem('token')) {
+    //         this.props.setToken(localStorage.getItem('token'))
+    //         this.props.history.push('/')  
+    //     }
+    // }
 
     render() {
         const {isError} = this.props.auth
@@ -95,7 +103,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = {
     login: auth.login,
-    setToken: auth.setToken
+    setToken: auth.setToken,
+    resetError: auth.resetError
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login)

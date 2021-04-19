@@ -8,6 +8,11 @@ import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import auth from '../redux/actions/auth'
 import {connect} from 'react-redux'
+import dashboard from '../redux/actions/dashboard'
+import {BsBell} from 'react-icons/bs'
+import depo from '../redux/actions/depo'
+import downloadFile from 'js-file-download'
+import {default as axios} from 'axios'
 
 class Report extends Component {
     state = {
@@ -23,6 +28,11 @@ class Report extends Component {
         modalDownload: false,
         type: "Daily",
         openType: false,
+        depo: [],
+        kode: '',
+        pic: '',
+        from: '',
+        to: ''
     }
 
     toggle = () => {
@@ -40,13 +50,133 @@ class Report extends Component {
         console.log(this.state.type === "")
     }
 
+    chooseFrom = (e) => {
+        this.setState({from: e.target.value})
+    }
+
+    chooseTo = (e) => {
+        this.setState({to: e.target.value})
+    }
+    
+    chooseDepo = (e) => {
+        this.setState({kode: e.target.value})
+    }
+
+    choosePic = (e) => {
+        this.setState({pic: e.target.value})
+    }
+
     openTypeFunc = () => {
         this.setState({openType: !this.state.openType})
     }
 
-    render() {
-        const {isOpen, dropOpenNum, type} = this.state
+    componentDidMount() {
+        this.getDataDepo()
+    }
+
+    createReport = async () => {
+        const {kode, pic, from, to} = this.state
         const level = localStorage.getItem('level')
+        const token = localStorage.getItem("token")
+        let data = {}
+        const datas = {
+            kode_plant: kode
+        }
+        if (level === '1' || level === '2') {
+            if (kode === '') {
+                data = {
+                    pic: pic
+                }
+                await this.props.report(token, from, to, data)
+            } else if (pic === '') {
+                data = {
+                    kode_plant: kode
+                }
+                await this.props.report(token, from, to, data)
+            }
+        } else if (level === '4' || level === '5') {
+            await this.props.report(token, from, to, data)
+        } else if (level === '3') {
+            await this.props.report(token, from, to, datas)
+        }
+    }
+
+    componentDidUpdate(){
+        const level = localStorage.getItem('level')
+        const { isGet } = this.props.depo
+        const { isReport, isDownload } = this.props.dashboard
+        if (level === "1" && isGet) {
+          this.preparePic()
+          this.props.resetError()
+        } else if (level === "2" && isGet) {
+            this.preparePic()
+            this.props.resetError()
+        } else if (isReport) {
+            this.downloadResultReport()
+            this.props.resetErrorReport()
+        } else if (isDownload) {
+            this.download()
+            this.props.resetErrorReport()
+        }
+        console.log(this.state.from)
+        console.log(this.state.to)
+        console.log(this.state.pic)
+        console.log(this.state.kode)
+    }
+
+    downloadResultReport = async () => {
+        const {dataReport} = this.props.dashboard
+        // this.props.downloadReport(dataReport)
+        axios({
+            url: `${dataReport}`,
+            method: 'GET',
+            responseType: 'blob', // important
+          }).then((response) => {
+             const url = window.URL.createObjectURL(new Blob([response.data]));
+             const link = document.createElement('a');
+             link.href = url;
+             link.setAttribute('download', 'report.xls'); //or any other extension
+             document.body.appendChild(link);
+             link.click();
+          });
+    }
+
+    download = async () => {
+        const {dataDownload} = this.props.dashboard
+        downloadFile(dataDownload, 'report.xls')
+    }
+
+    getDataDepo = async () => {
+        const token = localStorage.getItem("token")
+        const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
+        if (level === "1") {
+            await this.props.getDepo(token, 1000, '')
+        } else if (level === '2' || level === '3') {
+            await this.props.getDepo(token, 1000, names)
+        }
+    }
+
+    preparePic = () => {
+        const { dataDepo } = this.props.depo
+        const temp = []
+        if (dataDepo.length !== 0) {
+            dataDepo.map(item => {
+                return (
+                    temp.push(item.nama_pic_1)
+                )
+            })
+            const set = new Set(temp)
+            const newData = [...set]
+            this.setState({depo: newData})
+        }
+    }
+
+    render() {
+        const {isOpen, dropOpenNum, type, depo} = this.state
+        const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
+        const {dataDepo} = this.props.depo
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -101,10 +231,18 @@ class Report extends Component {
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
-                                {level === '1' ? 'Super Admin': level === '2' ? 'SPV': level === '3' ? 'PIC': level === '4' ? 'SA' :level === '5' ? 'Kasir' : 'User'}
+                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names : 'User'}
                             </DropdownToggle>
                             <DropdownMenu right>
                             <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
+                            </DropdownMenu>
+                        </UncontrolledDropdown>
+                        <UncontrolledDropdown>
+                            <DropdownToggle nav>
+                                <BsBell size={20} />
+                            </DropdownToggle>
+                            <DropdownMenu right>
+                                <DropdownItem >Reject Dokumen</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -116,7 +254,7 @@ class Report extends Component {
                             <text className="col-md-2 fontReport">Jenis</text>
                             <div className="optionType col-md-4">
                                 <text className="colon">:</text>
-                                <ButtonDropdown isOpen={this.state.openType} toggle={this.openTypeFunc} className="dropButton">
+                                <ButtonDropdown isOpen={this.state.openType} toggle={this.openTypeFunc}>
                                     <DropdownToggle caret color="light">
                                         {type}
                                     </DropdownToggle>
@@ -136,10 +274,10 @@ class Report extends Component {
                             <text className="col-md-2 fontReport">Tanggal Dokumen</text>
                             <div className="optionType col-md-4">
                                 <text className="colon">:</text>
-                                <Input type="date" name="creeatedAt"/>
+                                <Input type="date" name="creeatedAt" onChange={this.chooseFrom}/>
                                 <text className="toColon">To</text>
                                 <text className="colon">:</text>
-                                <Input type="date" name="creeatedAt"/>
+                                <Input type="date" name="creeatedAt" onChange={this.chooseTo} />
                             </div>
                         </div>
                         ) : type === "Monthly" ?(
@@ -157,28 +295,98 @@ class Report extends Component {
                         ): (
                             <div></div>
                         )}
-                        <div className="headReport">
-                            <text className="col-md-2 fontReport">PIC</text>
-                            <div className="optionType col-md-4">
-                                <text className="colon">:</text>
-                                <Input type="select" name="select">
-                                    <option>-Pilih PIC-</option>
-                                    <option>Anjar</option>
-                                </Input>
+                        {level === '3' ? (
+                        <div>
+                            <div className="headReport">
+                                <text className="col-md-2 fontReport">Depo</text>
+                                <div className="optionType col-md-4">
+                                    <text className="colon">:</text>
+                                    <Input 
+                                        type="select" 
+                                        name="select"
+                                        onChange={this.chooseDepo}
+                                        >
+                                        <option value=''>-Pilih Depo-</option>
+                                        {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                        })}
+                                    </Input>
+                                </div>
                             </div>
-                        </div>
-                        <div className="headReport">
-                            <text className="col-md-2 fontReport">Depo</text>
-                            <div className="optionType col-md-4">
-                                <text className="colon">:</text>
-                                <Input type="select" name="select">
-                                    <option>-Pilih Depo-</option>
-                                    <option>178 - Kranji</option>
-                                </Input>
+                            <Button
+                            onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : this.state.kode === '' ? true : false }
+                                >
+                                    Download
+                                </Button>
+                        </div>   
+                        ) : level === '4' || level === '5' ? (
+                                <Button
+                                onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : false }
+                                >
+                                    Download
+                                </Button>
+                        ) : (
+                            <div>
+                                <div className="headReport">
+                                    <text className="col-md-2 fontReport">PIC</text>
+                                    <div className="optionType col-md-4">
+                                        <text className="colon">:</text>
+                                        <Input 
+                                        type="select" 
+                                        name="select"
+                                        onChange={this.choosePic}
+                                        disabled={this.state.kode === '' ? false : true}
+                                        >
+                                            <option value=''>-Pilih PIC-</option>
+                                            {depo.length !== 0 && depo.map(item => {
+                                                return (
+                                                    <option value={item}>{item}</option>
+                                                )
+                                            })}
+                                        </Input>
+                                    </div>
+                                </div>
+                                <div className="headReport">
+                                    <text className="col-md-2 fontReport">Depo</text>
+                                    <div className="optionType col-md-4">
+                                        <text className="colon">:</text>
+                                        <Input 
+                                        type="select" 
+                                        name="select"
+                                        onChange={this.chooseDepo}
+                                        disabled={this.state.pic === '' ? false : true}
+                                        >
+                                            <option value=''>-Pilih Depo-</option>
+                                            {dataDepo.length !== 0 && dataDepo.map(item => {
+                                                return (
+                                                    <option value={item.kode_plant}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                                )
+                                            })}
+                                        </Input>
+                                    </div>
+                                </div>
+                                <Button
+                                onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : this.state.pic === '' && this.state.kode !== '' ? false : this.state.pic !== '' && this.state.kode === '' ? false : true }
+                                >
+                                    Download
+                                </Button>
                             </div>
-                        </div>
+                        )}
                     </div>
-                    <Button color="primary" size="lg" className="ml-3 mt-3 col-md-1">Download</Button>
                 </Container>
             </>
         )
@@ -186,11 +394,18 @@ class Report extends Component {
 }
 
 const mapStateToProps = state => ({
-    auth: state.auth
+    auth: state.auth,
+    depo: state.depo,
+    dashboard: state.dashboard
 })
 
 const mapDispatchToProps = {
     logout: auth.logout,
+    getDepo: depo.getDepo,
+    resetError: depo.resetError,
+    report: dashboard.report,
+    resetErrorReport: dashboard.resetErrorReport,
+    downloadReport: dashboard.downloadReport
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Report)

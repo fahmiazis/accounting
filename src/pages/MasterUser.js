@@ -13,6 +13,7 @@ import user from '../redux/actions/user'
 import {connect} from 'react-redux'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
+import auth from '../redux/actions/auth'
 
 const userSchema = Yup.object().shape({
     username: Yup.string().required(),
@@ -49,7 +50,9 @@ class MasterUser extends Component {
         level: "",
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     showAlert = () => {
@@ -122,6 +125,25 @@ class MasterUser extends Component {
         }
     }
 
+    next = async () => {
+        const { page } = this.props.user
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.user
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
+    }
+
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataUser({limit: 10, search: this.state.search})
+        }
+    }
+
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         if (size >= 5120000) {
@@ -184,19 +206,22 @@ class MasterUser extends Component {
         this.getDataDepo()
     }
 
-    getDataUser = async () => {
+    getDataUser = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getUser(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getUser(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     getDataDepo = async () => {
         const token = localStorage.getItem("token")
-        await this.props.getDepo(token)
+        await this.props.getDepo(token, 1000, '')
     }
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, level, upload, errMsg} = this.state
-        const {dataUser, isGet, alertM, alertMsg, alertUpload} = this.props.user
+        const {dataUser, isGet, alertM, alertMsg, alertUpload, page} = this.props.user
         const { dataDepo } = this.props.depo
         return (
             <>
@@ -249,7 +274,7 @@ class MasterUser extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                            <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -276,10 +301,12 @@ class MasterUser extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -293,7 +320,14 @@ class MasterUser extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -335,7 +369,7 @@ class MasterUser extends Component {
                                 {dataUser.length !== 0 && dataUser.map(item => {
                                         return (
                                         <tr onClick={()=>this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataUser.indexOf(item) + 1)}</th>
+                                            <th scope="row">{(dataUser.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                             <td>{item.username}</td>
                                             <td>{item.kode_depo === 0 ? "" : item.kode_depo}</td>
                                             <td>{item.nama_depo === "null" || item.nama_depo === null ? "" : item.nama_depo}</td>
@@ -349,13 +383,10 @@ class MasterUser extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -448,9 +479,11 @@ class MasterUser extends Component {
                                 onBlur={handleBlur("depo")}
                                 >
                                     <option value="">-Pilih Depo-</option>
-                                    <option value="178-KRANJI">178-KRANJI</option>
-                                    <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
-                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
                                 </Input>
                                 {errors.depo ? (
                                     <text className="txtError">{errors.depo}</text>
@@ -551,9 +584,13 @@ class MasterUser extends Component {
                                 onBlur={handleBlur("depo")}
                                 >
                                     <option>-Pilih Depo-</option>
-                                    <option value="178-KRANJI">178-KRANJI</option>
-                                    <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
-                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
+                                    {/* <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
+                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option> */}
                                 </Input>
                                 {errors.depo ? (
                                     <text className="txtError">{errors.depo}</text>
@@ -696,12 +733,14 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addUser: user.addUser,
     updateUser: user.updateUser,
     getUser: user.getUser,
     resetError: user.resetError,
     getDepo: depo.getDepo,
-    uploadMaster: user.uploadMaster
+    uploadMaster: user.uploadMaster,
+    nextPage: user.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterUser)

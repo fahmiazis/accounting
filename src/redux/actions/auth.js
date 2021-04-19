@@ -14,4 +14,7 @@ export default {
     logout: () => ({
         type: 'LOGOUT',
     }),
+    resetError: () => ({
+        type: 'RESET'
+    })
 }

@@ -13,7 +13,8 @@ const divisiState = {
     dataAlasan: [],
     detailAlasan: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=divisiState, action) => {
@@ -59,10 +60,39 @@ export default (state=divisiState, action) => {
                     isError: false,
                     isGet: true,
                     dataAlasan: action.payload.data.result.rows,
-                    alertMsg: 'add divisi Succesfully'
+                    alertMsg: 'get alasan Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_ALASAN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_ALASAN_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_ALASAN_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataAlasan: action.payload.data.result.rows,
+                    alertMsg: 'get alasan Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_ALASAN_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,

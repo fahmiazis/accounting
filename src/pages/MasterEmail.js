@@ -12,6 +12,8 @@ import {FaSearch} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
 import email from '../redux/actions/email'
 import {connect} from 'react-redux'
+import auth from '../redux/actions/auth'
+
 
 const emailSchema = Yup.object().shape({
     nama_depo: Yup.string().required('must be filled'),
@@ -48,7 +50,9 @@ class MasterEmail extends Component {
         detail: {},
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     toggle = () => {
@@ -63,6 +67,18 @@ class MasterEmail extends Component {
                 upload: false
             })
          }, 10000)
+    }
+
+    next = async () => {
+        const { page } = this.props.email
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.email
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
     }
 
     showAlert = () => {
@@ -110,6 +126,13 @@ class MasterEmail extends Component {
         this.getDataEmail()
     }
 
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataEmail({limit: 10, search: this.state.search})
+        }
+    }
+
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         if (size >= 5120000) {
@@ -152,9 +175,12 @@ class MasterEmail extends Component {
         }
     }
 
-    getDataEmail = async () => {
+    getDataEmail = async (value) => {
         const token = localStorage.getItem('token')
-        await this.props.getEmail(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getEmail(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     uploadMasterEmail = async () => {
@@ -211,16 +237,16 @@ class MasterEmail extends Component {
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataEmail, isGet, alertMsg, alertM, alertUpload} = this.props.email
+        const {dataEmail, isGet, alertMsg, alertM, alertUpload, page} = this.props.email
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
+                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
                         <Nav className="mr-auto" navbar>
                             <NavItem>
-                                <NavLink href="/home" className="navHome">Home</NavLink>
+                                <NavLink href="/" className="navHome">Home</NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
@@ -263,7 +289,7 @@ class MasterEmail extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -290,10 +316,12 @@ class MasterEmail extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                <DropdownMenu >
+                                    <DropdownItem className="item" onClick={() => this.getDataEmail({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataEmail({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataEmail({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -307,7 +335,14 @@ class MasterEmail extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         <div className="tableDashboard">
@@ -369,7 +404,7 @@ class MasterEmail extends Component {
                                     {dataEmail.length !== 0 && dataEmail.map(item => {
                                     return (
                                      <tr onClick={()=>this.openModalEdit(item.id, this.setState({detail: item}))}>
-                                        <th scope="row">{(dataEmail.indexOf(item) + 1)}</th>
+                                        <th scope="row">{(dataEmail.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                         <td>{item.kode_plant}</td>
                                         <td>{item.area}</td>
                                         <td>{item.email_sa_kasir}</td>
@@ -393,13 +428,10 @@ class MasterEmail extends Component {
                         </div>
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -1015,12 +1047,14 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addEmail: email.addEmail,
     updateEmail: email.updateEmail,
     getEmail: email.getEmail,
     getDetailEmail: email.getDetailEmail,
     resetError: email.resetError,
-    uploadMaster: email.uploadMaster
+    uploadMaster: email.uploadMaster,
+    nextPage: email.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterEmail)

@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_EMAIL',
         payload: http(token).patch(`/email/update/${id}`, qs.stringify(data)),
     }),
-    getEmail: (token) => ({
+    getEmail: (token, limit, search) => ({
         type: 'GET_EMAIL',
-        payload: http(token).get(`/email/get`)
+        payload: http(token).get(`/email/get?limit=${limit}&search=${search}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',
@@ -26,6 +26,10 @@ export default {
     deleteEmail: (token, id) => ({
         type: 'DELETE_EMAIL',
         payload: http(token).delete(`/email/delete/${id}`)
+    }),
+    nextPage: (token, link) => ({
+        type: 'NEXT_DATA_EMAIL',
+        payload: http(token).get(`${link}`)
     }),
     resetError: () => ({
         type: 'RESET'

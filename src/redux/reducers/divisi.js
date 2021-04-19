@@ -13,7 +13,8 @@ const divisiState = {
     dataDivisi: [],
     detailDivisi: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=divisiState, action) => {
@@ -44,6 +45,34 @@ export default (state=divisiState, action) => {
                     alertM: action.payload.response.data.error
                 };
             }
+            case 'NEXT_DATA_DIVISI_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_DIVISI_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataDivisi: action.payload.data.result.rows,
+                    alertMsg: 'get divisi Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_DIVISI_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
             case 'GET_DIVISI_PENDING': {
                 return {
                     ...state,
@@ -59,7 +88,8 @@ export default (state=divisiState, action) => {
                     isError: false,
                     isGet: true,
                     dataDivisi: action.payload.data.result.rows,
-                    alertMsg: 'get divisi Succesfully'
+                    alertMsg: 'get divisi Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_DIVISI_REJECTED': {

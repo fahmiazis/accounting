@@ -12,6 +12,7 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
 import {connect} from 'react-redux'
+import auth from '../redux/actions/auth'
 
 const alasanSchema = Yup.object().shape({
     kode_alasan: Yup.string().required('must be filled'),
@@ -37,7 +38,9 @@ class MasterAlasan extends Component {
         alert: false,
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     toggle = () => {
@@ -88,6 +91,18 @@ class MasterAlasan extends Component {
     }
     openModalDownload = () => {
         this.setState({modalUpload: !this.state.modalUpload})
+    }
+
+    next = async () => {
+        const { page } = this.props.alasan
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.alasan
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
     }
 
     addAlasan = async (values) => {
@@ -154,14 +169,24 @@ class MasterAlasan extends Component {
         this.getDataAlasan()
     }
 
-    getDataAlasan = async () => {
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataAlasan({limit: 10, search: this.state.search})
+        }
+    }
+
+    getDataAlasan = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getAlasan(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getAlasan(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataAlasan, isGet, alertM, alertMsg, alertUpload} = this.props.alasan
+        const {dataAlasan, isGet, alertM, alertMsg, alertUpload, page} = this.props.alasan
         const level = localStorage.getItem('level')
         return (
             <>
@@ -218,7 +243,7 @@ class MasterAlasan extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                            <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -245,10 +270,12 @@ class MasterAlasan extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -262,7 +289,14 @@ class MasterAlasan extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -300,7 +334,7 @@ class MasterAlasan extends Component {
                                     {dataAlasan.length !== 0 && dataAlasan.map(item => {
                                         return (
                                         <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataAlasan.indexOf(item) + 1)}</th>
+                                            <th scope="row">{(dataAlasan.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                             <td>{item.kode_alasan}</td>
                                             <td>{item.alasan}</td>
                                             <td>{item.status}</td>
@@ -312,13 +346,10 @@ class MasterAlasan extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -555,11 +586,13 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addAlasan: alasan.addAlasan,
     updateAlasan: alasan.updateAlasan,
     getAlasan: alasan.getAlasan,
     resetError: alasan.resetError,
-    uploadMaster: alasan.uploadMaster
+    uploadMaster: alasan.uploadMaster,
+    nextPage: alasan.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterAlasan)

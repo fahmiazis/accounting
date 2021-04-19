@@ -7,9 +7,9 @@ export default {
         type: 'UPDATE_UPLOAD_DOKUMEN',
         payload: http(token).patch(`/dashboard/upload/edit/${id}`, qs.stringify(data)),
     }),
-    getDashboard: (token) => ({
+    getDashboard: (token, tipe) => ({
         type: 'GET_DASHBOARD',
-        payload: http(token).get(`/dashboard/get`)
+        payload: http(token).get(`/dashboard/get?tipe=${tipe}`)
     }),
     nextDashboard: (token, link) => ({
         type: 'NEXT_DATA',
@@ -47,7 +47,18 @@ export default {
         type: 'DOWNLOAD',
         payload: http().get(`/uploads/${data}`)
     }),
+    report: (token, fr, to, data) => ({
+        type: 'REPORT',
+        payload: http(token).post(`/dashboard/report?from=${fr}&to=${to}`, qs.stringify(data))
+    }),
+    downloadReport: (link) => ({
+        type: 'DOWNLOAD_REPORT',
+        payload: http().get(link)
+    }),
     resetError: () => ({
         type: 'RESET'
+    }),
+    resetErrorReport: () => ({
+        type: 'RESET_REPORT'
     })
 }

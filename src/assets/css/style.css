@@ -485,3 +485,6 @@
   text-align: start;
   color: #ffffff;
 }
+.item {
+  width: max-content;
+}

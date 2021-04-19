@@ -13,7 +13,8 @@ const userState = {
     dataUser: [],
     detailUser: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=userState, action) => {
@@ -59,10 +60,39 @@ export default (state=userState, action) => {
                     isError: false,
                     isGet: true,
                     dataUser: action.payload.data.result.rows,
-                    alertMsg: 'add user Succesfully'
+                    alertMsg: 'get user Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_USER_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_USER_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_USER_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataUser: action.payload.data.result.rows,
+                    alertMsg: 'add user Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_USER_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,

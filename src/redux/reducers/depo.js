@@ -13,7 +13,8 @@ const depoState = {
     dataDepo: [],
     detailDepo: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=depoState, action) => {
@@ -59,10 +60,39 @@ export default (state=depoState, action) => {
                     isError: false,
                     isGet: true,
                     dataDepo: action.payload.data.result.rows,
-                    alertMsg: 'add depo Succesfully'
+                    alertMsg: 'add depo Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_DEPO_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGet: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_DEPO_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_DEPO_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataDepo: action.payload.data.result.rows,
+                    alertMsg: 'add depo Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_DEPO_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,
@@ -155,7 +185,8 @@ export default (state=depoState, action) => {
                 return {
                     ...state,
                     isError: false,
-                    isUpload: false
+                    isUpload: false,
+                    isGet: false
                 }
             }
             default: {

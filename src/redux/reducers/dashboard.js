@@ -23,7 +23,11 @@ const divisiState = {
     dataSa: [],
     dataKasir: [],
     isSend: false,
-    page: {}
+    page: {},
+    isReport: false,
+    dataReport: '',
+    isDownload: false,
+    dataDownload: ''
 };
 
 export default (state=divisiState, action) => {
@@ -50,7 +54,8 @@ export default (state=divisiState, action) => {
                     isLoading: false,
                     isAdd: false,
                     isError: true,
-                    alertMsg: "Unable connect to server"
+                    alertMsg: "Unable connect to server",
+                    alertM: action.payload.response.data.message
                 };
             }
             case 'GET_DASHBOARD_PIC_PENDING': {
@@ -78,7 +83,8 @@ export default (state=divisiState, action) => {
                     isLoading: false,
                     isGetPic: false,
                     isError: true,
-                    alertMsg: "Unable connect to server"
+                    alertMsg: "Unable connect to server",
+                    alertM: action.payload.response.data.message
                 };
             }
             case 'NEXT_DATA_PENDING': {
@@ -266,6 +272,32 @@ export default (state=divisiState, action) => {
                     alertMsg: action.payload.response,
                 };
             }
+            case 'REPORT_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'REPORT_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isReport: true,
+                    dataReport: action.payload.data.link,
+                    alertMsg: 'report dokumen Succesfully'
+                };
+            }
+            case 'REPORT_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isReport: false,
+                    isError: true,
+                    alertMsg: action.payload.response,
+                };
+            }
             case 'SEND_PENDING': {
                 return {
                     ...state,
@@ -291,6 +323,32 @@ export default (state=divisiState, action) => {
                     alertMsg: action.payload.response.message,
                 };
             }
+            case 'DOWNLOAD_REPORT_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'DOWNLOAD_REPORT_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isDownload: true,
+                    dataDownload: action.payload.data,
+                    alertMsg: 'report dokumen Succesfully'
+                };
+            }
+            case 'DOWNLOAD_REPORT_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isDownload: false,
+                    isError: true,
+                    alertMsg: action.payload.response,
+                };
+            }
             case 'RESET': {
                 return {
                     ...state,
@@ -298,7 +356,16 @@ export default (state=divisiState, action) => {
                     isUpload: false,
                     isGetPic: false,
                     isApprove: false,
-                    isReject: false
+                    isReject: false,
+                    alertM: '',
+                    isReport: false
+                }
+            }
+            case 'RESET_REPORT': {
+                return {
+                    ...state,
+                    isReport: false,
+                    isDownload: false
                 }
             }
             default: {

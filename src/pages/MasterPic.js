@@ -14,6 +14,7 @@ import divisi from '../redux/actions/divisi'
 import depo from '../redux/actions/depo'
 import pic from '../redux/actions/pic'
 import {connect} from 'react-redux'
+import auth from '../redux/actions/auth'
 
 const picSchema = Yup.object().shape({
     pic: Yup.string().required(),
@@ -41,7 +42,9 @@ class MasterPic extends Component {
         detail: {},
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     showAlert = () => {
@@ -52,6 +55,18 @@ class MasterPic extends Component {
                 alert: false
             })
          }, 10000)
+    }
+
+    next = async () => {
+        const { page } = this.props.pic
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.pic
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
     }
 
     uploadAlert = () => {
@@ -178,35 +193,45 @@ class MasterPic extends Component {
         this.getDataDivisi()
     }
 
-    getDataPic = async () => {
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataPic({limit: 10, search: this.state.search})
+        }
+    }
+
+    getDataPic = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getPic(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getPic(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     getDataDepo = async () => {
         const token = localStorage.getItem("token")
-        await this.props.getDepo(token)
+        await this.props.getDepo(token, 1000, '')
     }
 
     getDataDivisi = async () => {
         const token = localStorage.getItem("token")
-        await this.props.getDivisi(token)
+        await this.props.getDivisi(token, 1000, '')
     }
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataPic, isGet, alertM, alertMsg, alertUpload} = this.props.pic
+        const {dataPic, isGet, alertM, alertMsg, alertUpload, page} = this.props.pic
         const {dataDivisi} = this.props.divisi
         const {dataDepo} = this.props.depo
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
+                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
                         <Nav className="mr-auto" navbar>
                             <NavItem>
-                                <NavLink href="/home" className="navHome">Home</NavLink>
+                                <NavLink href="/" className="navHome">Home</NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
@@ -249,7 +274,7 @@ class MasterPic extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -276,10 +301,12 @@ class MasterPic extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                <DropdownItem className="item" onClick={() => this.getDataPic({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataPic({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataPic({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -293,7 +320,14 @@ class MasterPic extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -337,7 +371,7 @@ class MasterPic extends Component {
                                 {dataPic.length !== 0 && dataPic.map(item => {
                                         return (
                                         <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataPic.indexOf(item) + 1)}</th>
+                                            <th scope="row">{(dataPic.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                             <td>{item.pic}</td>
                                             <td>{item.spv}</td>
                                             <td>{item.divisi}</td>
@@ -352,13 +386,10 @@ class MasterPic extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -450,9 +481,11 @@ class MasterPic extends Component {
                                 onBlur={handleBlur("nama_depo")}
                                 >
                                     <option>-Pilih Depo-</option>
-                                    <option value="178-KRANJI">178-KRANJI</option>
-                                    <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
-                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
                                 </Input>
                                 {errors.nama_depo ? (
                                     <text className="txtError">{errors.nama_depo}</text>
@@ -578,9 +611,11 @@ class MasterPic extends Component {
                                 onBlur={handleBlur("nama_depo")}
                                 >
                                     <option>-Pilih Depo-</option>
-                                    <option value="178-KRANJI">178-KRANJI</option>
-                                    <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
-                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
                                 </Input>
                                 {errors.nama_depo ? (
                                     <text className="txtError">{errors.nama_depo}</text>
@@ -700,13 +735,15 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addPic: pic.addPic,
     updatePic: pic.updatePic,
     getPic: pic.getPic,
     resetError: pic.resetError,
     getDivisi: divisi.getDivisi,
     getDepo: depo.getDepo,
-    uploadMaster: pic.uploadMaster
+    uploadMaster: pic.uploadMaster,
+    nextPage: pic.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterPic)

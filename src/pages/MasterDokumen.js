@@ -14,6 +14,7 @@ import dokumen from '../redux/actions/dokumen'
 import divisi from '../redux/actions/divisi'
 import {connect} from 'react-redux'
 import moment from 'moment'
+import auth from '../redux/actions/auth'
 
 const dokumenSchema = Yup.object().shape({
     nama_dokumen: Yup.string().required(),
@@ -43,7 +44,9 @@ class MasterDokumen extends Component {
         dataDivisi: [],
         upload: false,
         errMsg: '',
-        fileUpload: ''
+        fileUpload: '',
+        limit: 10,
+        search: ''
     }
 
     showAlert = () => {
@@ -54,6 +57,18 @@ class MasterDokumen extends Component {
                 alert: false
             })
          }, 10000)
+    }
+
+    next = async () => {
+        const { page } = this.props.dokumen
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.dokumen
+        const token = localStorage.getItem('token')
+        await this.props.nextPage(token, page.prevLink)
     }
 
     uploadAlert = () => {
@@ -156,35 +171,45 @@ class MasterDokumen extends Component {
         }
     }
 
+    onSearch = (e) => {
+        this.setState({search: e.target.value})
+        if(e.key === 'Enter'){
+            this.getDataDokumen({limit: 10, search: this.state.search})
+        }
+    }
+
     componentDidMount() {
         this.getDataDokumen()
         this.getDataDivisi()
     }
 
-    getDataDokumen = async () => {
+    getDataDokumen = async (value) => {
         const token = localStorage.getItem("token")
-        await this.props.getDokumen(token)
+        const search = value === undefined ? '' : this.state.search
+        const limit = value === undefined ? this.state.limit : value.limit
+        await this.props.getDokumen(token, limit, search)
+        this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
     getDataDivisi = async () => {
         const token = localStorage.getItem("token")
-        await this.props.getDivisi(token)
+        await this.props.getDivisi(token, 100, '')
     }
 
 
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
-        const {dataDokumen, isGet, alertM, alertMsg, alertUpload} = this.props.dokumen
+        const {dataDokumen, isGet, alertM, alertMsg, alertUpload, page} = this.props.dokumen
         const {dataDivisi} = this.props.divisi
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
+                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
                         <Nav className="mr-auto" navbar>
                             <NavItem>
-                                <NavLink href="/home" className="navHome">Home</NavLink>
+                                <NavLink href="/" className="navHome">Home</NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
@@ -227,7 +252,7 @@ class MasterDokumen extends Component {
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>Super Admin</DropdownToggle>
                             <DropdownMenu right>
-                                <DropdownItem>Log Out</DropdownItem>
+                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
                     </Collapse>
@@ -254,10 +279,12 @@ class MasterDokumen extends Component {
                                 <text>Show: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
                                 <DropdownToggle caret color="light">
-                                    10
+                                    {this.state.limit}
                                 </DropdownToggle>
                                 <DropdownMenu>
-                                    <DropdownItem>20</DropdownItem>
+                                <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 50, search: ''})}>50</DropdownItem>
                                 </DropdownMenu>
                                 </ButtonDropdown>
                                 <text className="textEntries">entries</text>
@@ -271,7 +298,14 @@ class MasterDokumen extends Component {
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
-                                <Input className="search"><FaSearch size={20} /></Input>
+                                <Input 
+                                 className="search"
+                                 onChange={this.onSearch}
+                                 value={this.state.search}
+                                 onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         {isGet === false ? (
@@ -309,7 +343,7 @@ class MasterDokumen extends Component {
                                 {dataDokumen.length !== 0 && dataDokumen.map(item => {
                                         return (
                                     <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                        <th scope="row">{(dataDokumen.indexOf(item) + 1)}</th>
+                                        <th scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                         <td>{item.nama_dokumen}</td>
                                         <td>{item.jenis_dokumen}</td>
                                         <td>{item.divisi}</td>
@@ -325,13 +359,10 @@ class MasterDokumen extends Component {
                         )}
                         <div>
                             <div className="infoPageEmail">
-                                <text>Showing 1 to 3 of entries</text>
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev">Previous</button>
-                                    <text>1</text>
-                                    <text>....</text>
-                                    <text>10</text>
-                                    <button className="btnPrev">Next</button>
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -745,12 +776,14 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
+    logout: auth.logout,
     addDokumen: dokumen.addDokumen,
     updateDokumen: dokumen.updateDokumen,
     getDokumen: dokumen.getDokumen,
     resetError: dokumen.resetError,
     getDivisi: divisi.getDivisi,
-    uploadMaster: dokumen.uploadMaster
+    uploadMaster: dokumen.uploadMaster,
+    nextPage: dokumen.nextPage
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDokumen)

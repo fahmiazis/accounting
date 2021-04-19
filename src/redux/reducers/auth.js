@@ -21,6 +21,7 @@ export default (state=authState, action) => {
             case 'AUTH_USER_FULFILLED': {
                 localStorage.setItem('token', action.payload.data.Token)
                 localStorage.setItem('level', action.payload.data.user.user_level)
+                localStorage.setItem('name', action.payload.data.user.username)
                 return {
                     ...state,
                     level: action.payload.data.user.user_level,
@@ -49,6 +50,12 @@ export default (state=authState, action) => {
                 localStorage.removeItem('token')
                 localStorage.removeItem('level')
                 return authState
+            }
+            case 'RESET': {
+                return {
+                    ...state,
+                    isLogin: false
+                }
             }
             default: {
                 return state;

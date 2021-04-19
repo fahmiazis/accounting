@@ -13,7 +13,8 @@ const dokumenState = {
     dataDokumen: [],
     detailDokumen: {},
     alertM: '',
-    alertUpload: []
+    alertUpload: [],
+    page: {}
 };
 
 export default (state=dokumenState, action) => {
@@ -59,10 +60,39 @@ export default (state=dokumenState, action) => {
                     isError: false,
                     isGet: true,
                     dataDokumen: action.payload.data.result.rows,
-                    alertMsg: 'add dokumen Succesfully'
+                    alertMsg: 'get dokumen Succesfully',
+                    page: action.payload.data.pageInfo
                 };
             }
             case 'GET_DOKUMEN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'NEXT_DATA_DOKUMEN_PENDING': {
+                return {
+                    ...state,
+                    isGet: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'NEXT_DATA_DOKUMEN_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGet: true,
+                    dataDokumen: action.payload.data.result.rows,
+                    alertMsg: 'get dokumen Succesfully',
+                    page: action.payload.data.pageInfo
+                };
+            }
+            case 'NEXT_DATA_DOKUMEN_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,
