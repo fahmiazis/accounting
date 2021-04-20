@@ -8,7 +8,6 @@ import { Container, Collapse, Nav, Navbar,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Dropdown,
     Spinner} from 'reactstrap'
 import Pdf from "../components/Pdf"
-import auth from '../redux/actions/auth'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import {FaSearch} from 'react-icons/fa'
@@ -21,7 +20,9 @@ import {connect} from 'react-redux'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
+import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
+import {default as axios} from 'axios'
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -54,7 +55,11 @@ class Dokumen extends Component {
         act: [],
         totalDoc: [],
         tipe: 'daily',
-        appAct: {}
+        appAct: {},
+        date: '',
+        time: '',
+        search: '',
+        limit: 10
     }
 
     showAlert = () => {
@@ -97,9 +102,19 @@ class Dokumen extends Component {
     showDokumen = async (value) => {
         const token = localStorage.getItem('token')
         await this.props.showDokumen(token, value.id)
+        this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
         if (isShow) {
+            this.downloadData(value)
             this.openModalPdf()
+        }
+    }
+
+    onSearch = async (e) => {
+        this.setState({search: e.target.value})
+        const token = localStorage.getItem('token')
+        if(e.key === 'Enter'){
+            await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, e.target.value, this.state.limit)
         }
     }
 
@@ -113,18 +128,6 @@ class Dokumen extends Component {
         if (isUpload) {
             this.setState({fileUpload: ''})
         }
-    }
-    
-    next = async () => {
-        const { page } = this.props.dashboard
-        const token = localStorage.getItem('token')
-        await this.props.nextDashboard(token, page.nextLink)
-    }
-
-    prev = async () => {
-        const { page } = this.props.dashboard
-        const token = localStorage.getItem('token')
-        await this.props.nextDashboard(token, page.prevLink)
     }
 
     onChangeHandler = e => {
@@ -179,22 +182,85 @@ class Dokumen extends Component {
     showDok = async (value) => {
         const token = localStorage.getItem('token')
         this.setState({fileName: value.path, appAct: value.active})
+        // this.props.download(download[2])
         await this.props.showDokumen(token, value.path.id)
+        this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
         if (isShow) {
+            this.downloadData(value)
             this.openModalPdf()
         }
+    }
+
+    onEditDokumen = e => {
+        const {size, type} = e.target.files[0]
+        this.setState({fileUpload: e.target.files[0]})
+        if (size >= 10000000) {
+            this.setState({errMsg: "Maximum upload size 10 MB"})
+            this.uploadAlert()
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf') {
+            this.setState({errMsg: 'Invalid file type. Only excel and pdf files are allowed.'})
+            this.uploadAlert()
+        } else {
+            const {detail, aktif} = this.state
+            const token = localStorage.getItem('token')
+            const data = new FormData()
+            data.append('document', e.target.files[0])
+            this.props.updateUploadDokumen(token, detail.id, data)
+        }
+    }
+
+    downloadData = (value) => {
+        const download = value.path.split('/')
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${download[2]}`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    next = async () => {
+        const { page } = this.props.dashboard
+        const token = localStorage.getItem('token')
+        await this.props.nextDashboard(token, page.nextLink)
+    }
+
+    prev = async () => {
+        const { page } = this.props.dashboard
+        const token = localStorage.getItem('token')
+        await this.props.nextDashboard(token, page.prevLink)
+    }
+
+    chooseTime = async (e) => {
+        this.setState({time: e.target.value})
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, e.target.value, this.state.search, this.state.limit )
+    }
+
+    getDataLimit = async (value) => {
+        const token = localStorage.getItem('token')
+        const limit = value === undefined ? this.state.limit : value
+        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, limit)
+        this.setState({limit: value === undefined ? 10 : value})
     }
 
     getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
-        const { tipe } = this.state
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
-            await this.props.getActivity(token, '')   
+            await this.props.getActivity(token, value === undefined ? 'daily' : value)
+            this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
-            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value )
+            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
             this.setState({tipe: value === undefined ? 'daily' : value})
         }
     }
@@ -220,11 +286,19 @@ class Dokumen extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload, isGetPic, isApprove, isReject} = this.props.dashboard
+        const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate} = this.props.dashboard
         if (isError) {
             this.props.resetError()
             this.showAlert()
         } else if (isUpload) {
+            setTimeout(() => {
+                this.props.resetError()
+             }, 2000)
+             setTimeout(() => {
+                this.getDataDashboard()
+                this.openModalProses()
+             }, 2100)
+        } else if (isUpdate) {
             setTimeout(() => {
                 this.props.resetError()
              }, 2000)
@@ -250,11 +324,11 @@ class Dokumen extends Component {
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
-        const names = localStorage.getItem('name')
         const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const names = localStorage.getItem('name')
         return (
             <>
-                <Navbar color="light" light expand='md' className="navbar">
+                <Navbar color="light" light expand='lg' className="navbar">
                     <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
                     <NavbarToggler onClick={this.toggle} />
                     <Collapse isOpen={isOpen} navbar>
@@ -306,9 +380,9 @@ class Dokumen extends Component {
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
-                                {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names : 'User'}
+                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
                             </DropdownToggle>
-                            <DropdownMenu>
+                            <DropdownMenu right>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
@@ -331,8 +405,11 @@ class Dokumen extends Component {
                         <div>{alertM}</div>
                     </Alert>
                     <div className="bodyDashboard">
-                        <div className="titleDashboard">Dashboard</div>
+                        <div className="titleDashboard">Verifikasi Dokumen</div>
                         <div className="headDashboard">
+                            {level === '5' || level === '4' ? (
+                                <div></div>
+                            ) : (
                             <div>
                                 <text>Jenis: </text>
                                 <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
@@ -345,40 +422,47 @@ class Dokumen extends Component {
                                 </DropdownMenu>
                                 </ButtonDropdown>
                             </div>
+                            )}
                             {this.state.tipe === 'daily' ? (
-                            <div className="dateDash">
-                                <div>Tanggal Dokumen: </div>
-                                <div className="inputCalendar">
-                                    <Input  
-                                    type="date"
-                                    />
-                                </div>
-                                {/* <div><FaCalendarAlt size={22} /></div> */}
-                                {/* <Calendar
-                                value={this.state.value}
-                                onChange={this.state.onChange}
-                                /> */}
-                            </div>
+                                level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                    <div className="dateDash">
+                                        <div>Tanggal Upload: </div>
+                                        <div className="inputCalendar">
+                                            <Input  type="date" onChange={this.chooseTime}/>
+                                        </div>
+                                        {/* <div><FaCalendarAlt size={22} /></div> */}
+                                        {/* <Calendar
+                                        value={this.state.value}
+                                        onChange={this.state.onChange}
+                                        /> */}
+                                    </div>
+                                ) : (
+                                    <div></div>
+                                )
                             ) : (
-                            <div className="dateDash">
-                                <div>Periode Dokumen: </div>
-                                {/* <div className="inputCalendar">
-                                    <Input  type="date"/>
-                                </div> */}
-                                <Input
-                                    type="select"
-                                    name="select"
-                                    >   
-                                    <option>Februari</option>
-                                    <option>Maret</option>
-                                    <option>April</option>
-                                </Input>
-                                {/* <div><FaCalendarAlt size={22} /></div> */}
-                                {/* <Calendar
-                                value={this.state.value}
-                                onChange={this.state.onChange}
-                                /> */}
-                            </div>
+                                level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                <div className="dateDash">
+                                    <div>Periode Dokumen: </div>
+                                    {/* <div className="inputCalendar">
+                                        <Input  type="date"/>
+                                    </div> */}
+                                    <Input
+                                        type="select"
+                                        name="select"
+                                        >   
+                                        <option>Februari</option>
+                                        <option>Maret</option>
+                                        <option>April</option>
+                                    </Input>
+                                    {/* <div><FaCalendarAlt size={22} /></div> */}
+                                    {/* <Calendar
+                                    value={this.state.value}
+                                    onChange={this.state.onChange}
+                                    /> */}
+                                </div>
+                                ) : (
+                                    <div></div>
+                                )
                             )}
                         </div>
                         <div className="secHeadDashboard">
@@ -387,20 +471,56 @@ class Dokumen extends Component {
                                     <text className="mr-2">
                                         Show: 
                                     </text>
-                                    <Input
-                                    className=""
-                                    type="select"
-                                    name="select"
-                                    >   
-                                    <option>10</option>
-                                    <option>25</option>
-                                    <option>50</option>
-                                </Input>
+                                    { level === '5' || level === '4' ? (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    ) : (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    )}
                                 </div>
-                                <div className="secSearch">
-                                    <text>Search: </text>
-                                    <Input className="search"><FaSearch size={20} /></Input>
-                                </div>
+                                {level === '5' || level === '4' ? (
+                                    <div>
+                                        <text>Jenis: </text>
+                                        <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.tipe}
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                            <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                            <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    </div>
+                                ) : (
+                                    <div className="secSearch">
+                                        <text>Search: </text>
+                                        <Input 
+                                        className="search"
+                                        onChange={this.onSearch}
+                                        value={this.state.search}
+                                        onKeyPress={this.onSearch}
+                                        >
+                                            <FaSearch size={20} />
+                                        </Input>
+                                    </div>
+                                )}
                             </div>
                             <div className="statusSym">
                                 <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
@@ -513,7 +633,7 @@ class Dokumen extends Component {
                                                     <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
                                                 )}
                                                 {x.doc.length > 0 ? (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.progress/dataDash.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
@@ -527,13 +647,13 @@ class Dokumen extends Component {
                                             return (
                                             x !== null ? (
                                             <tr className="danger">
-                                                <th scope="row">{(dataSa.indexOf(x) + 1)}</th>
-                                                <td>{x.kode_plant}</td>
+                                                <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
-                                                    <td>{moment().subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                    <td>-</td>
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
@@ -606,7 +726,7 @@ class Dokumen extends Component {
                                                 )}
                                                 <td>SA</td>
                                             </tr>
-                                            ): (
+                                            ) : (
                                                 <div></div>
                                             )
                                             )
@@ -615,13 +735,13 @@ class Dokumen extends Component {
                                             return (
                                             x !== null ? (
                                             <tr className="danger">
-                                                <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + 1)}</th>
+                                                <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
-                                                    <td>{moment().subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                    <td>-</td>
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
@@ -697,7 +817,6 @@ class Dokumen extends Component {
                                             ) : (
                                                 <div></div>
                                             )
-                                            
                                             )
                                         })}
                                 </tbody>
@@ -757,7 +876,7 @@ class Dokumen extends Component {
                                     <div className="col-md-6">
                                         <div className="bsCir">
                                             {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                <BsDashCircleFill size={25} className="black cir" />
+                                                <BsDashCircleFill size={25} className="black" />
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 ? (
                                                 <BsCircle className="green" size={25} />
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
@@ -787,6 +906,13 @@ class Dokumen extends Component {
                                                 <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item.nama_dokumen))}>
                                                     {doc.find(({dokumen}) => dokumen === item.nama_dokumen).dokumen}
                                                 </a>
+                                                <Input
+                                                type="file"
+                                                name="file"
+                                                accept=".xls,.xlsx,.pdf"
+                                                onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item.nama_dokumen)})}
+                                                onChange={this.onEditDokumen}
+                                                />
                                             </div>
                                             )}                                            
                                         </div>
@@ -893,16 +1019,32 @@ class Dokumen extends Component {
                         <div className="readPdf">
                             <Pdf pdf={REACT_APP_BACKEND_URL + dataShow} />
                         </div>
+                        <hr/>
+                        <div className="foot">
+                            <div>
+                                <div>{moment(this.state.date).format('LLL')}</div>
+                            </div>
+                        {level === '1' || level === '2' || level === '3' ? (
+                            <div>
+                                <Button color="danger" onClick={this.openModalReject}>Reject</Button>
+                                <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
+                            </div>
+                            ) : (
+                                <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
+                            )}
+                        </div>
                     </ModalBody>
-                    {level === '1' || level === '2' || level === '3' ? (
+                    {/* {level === '1' || level === '2' || level === '3' ? (
+                    
                     <ModalFooter>
+                        <div>{moment(this.state.date).format('LL')}</div>
                         <Button color="danger" onClick={this.openModalReject}>Reject</Button>
                         <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
                     </ModalFooter>
                     ) : (
                     <ModalFooter>
                         <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
-                    </ModalFooter>)}
+                    </ModalFooter>)} */}
                 </Modal>
                 <Modal isOpen={openApprove} toggle={this.openModalApprove} centered={true}>
                     <ModalBody>
@@ -973,7 +1115,7 @@ class Dokumen extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.dashboard.isUpload ? true: false} size="sm">
+                <Modal isOpen={this.props.dashboard.isUpload || this.props.dashboard.isUpdate ? true: false} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -993,7 +1135,6 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
-    logout: auth.logout,
     getDashboard: dashboard.getDashboard,
     getActivity: dashboard.getActivity,
     uploadDocument: dashboard.uploadDokumen,
@@ -1003,7 +1144,11 @@ const mapDispatchToProps = {
     showDokumen: dashboard.showDokumen,
     getDashboardPic: dashboard.getDashboardPic,
     sendEmail: dashboard.sendEmail,
-    nextDashboard: dashboard.nextDashboard
+    getAlasan: alasan.getAlasan,
+    logout: auth.logout,
+    download: dashboard.download,
+    nextDashboard: dashboard.nextDashboard,
+    updateUploadDokumen: dashboard.updateUploadDokumen
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)

@@ -471,16 +471,29 @@ class Dokumen extends Component {
                                     <text className="mr-2">
                                         Show: 
                                     </text>
-                                    <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                    <DropdownToggle caret color="light">
-                                        {this.state.limit}
-                                    </DropdownToggle>
-                                    <DropdownMenu >
-                                        <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
-                                        <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
-                                        <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
-                                    </DropdownMenu>
-                                    </ButtonDropdown>
+                                    { level === '5' || level === '4' ? (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    ) : (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    )}
                                 </div>
                                 {level === '5' || level === '4' ? (
                                     <div>
