@@ -13,7 +13,7 @@ import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
 import email from '../redux/actions/email'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
-
+import depo from '../redux/actions/depo'
 
 const emailSchema = Yup.object().shape({
     nama_depo: Yup.string().required('must be filled'),
@@ -124,6 +124,7 @@ class MasterEmail extends Component {
 
     componentDidMount () {
         this.getDataEmail()
+        this.getDataDepo()
     }
 
     onSearch = (e) => {
@@ -219,6 +220,11 @@ class MasterEmail extends Component {
         }
     }
 
+    getDataDepo = async () => {
+        const token = localStorage.getItem("token")
+        await this.props.getDepo(token, 1000, '')
+    }
+
     componentDidUpdate() {
         const {isError, isUpload} = this.props.email
         if (isError) {
@@ -238,6 +244,7 @@ class MasterEmail extends Component {
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
         const {dataEmail, isGet, alertMsg, alertM, alertUpload, page} = this.props.email
+        const {dataDepo} = this.props.depo
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -353,7 +360,7 @@ class MasterEmail extends Component {
                                     <thead>
                                         <tr>
                                             <th>No</th>
-                                            <th>Kode Depo</th>
+                                            <th>Kode Plant</th>
                                             <th>AREA</th>
                                             <th>Email SA/KASIR</th>
                                             <th>Email AOS</th>
@@ -383,7 +390,7 @@ class MasterEmail extends Component {
                                 <thead>
                                     <tr>
                                         <th>No</th>
-                                        <th>Kode Depo</th>
+                                        <th>Kode Plant</th>
                                         <th>AREA</th>
                                         <th>Email SA/KASIR</th>
                                         <th>Email AOS</th>
@@ -460,7 +467,11 @@ class MasterEmail extends Component {
                                     onChange={handleChange('nama_depo')}
                                     >
                                         <option>-Pilih Depo-</option>
-                                        <option value="178-KRANJI">178-KRANJI</option>
+                                        {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
                                     </Input>
                                     {errors.nama_depo ? (
                                         <text className="txtError">{errors.nama_depo}</text>
@@ -726,7 +737,11 @@ class MasterEmail extends Component {
                                 onChange={handleChange('nama_depo')}
                                 >
                                     <option>-Pilih Depo-</option>
-                                    <option value="178-KRANJI">178-KRANJI</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
                                 </Input>
                                 {errors.nama_depo ? (
                                     <text className="txtError">{errors.nama_depo}</text>
@@ -1043,7 +1058,8 @@ class MasterEmail extends Component {
 
 const mapStateToProps = state => ({
     email: state.email,
-    auth: state.auth
+    auth: state.auth,
+    depo: state.depo
 })
 
 const mapDispatchToProps = {
@@ -1054,7 +1070,8 @@ const mapDispatchToProps = {
     getDetailEmail: email.getDetailEmail,
     resetError: email.resetError,
     uploadMaster: email.uploadMaster,
-    nextPage: email.nextPage
+    nextPage: email.nextPage,
+    getDepo: depo.getDepo
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterEmail)

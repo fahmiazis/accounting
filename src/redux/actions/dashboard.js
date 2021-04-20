@@ -5,7 +5,7 @@ import qs from 'qs'
 export default {
     updateUploadDokumen: (token, id, data) => ({
         type: 'UPDATE_UPLOAD_DOKUMEN',
-        payload: http(token).patch(`/dashboard/upload/edit/${id}`, qs.stringify(data)),
+        payload: http(token).patch(`/dashboard/upload/edit/${id}`, data),
     }),
     getDashboard: (token, tipe) => ({
         type: 'GET_DASHBOARD',
@@ -15,13 +15,13 @@ export default {
         type: 'NEXT_DATA',
         payload: http(token).get(`${link}`)
     }),
-    getDashboardPic: (token, tipe) => ({
+    getDashboardPic: (token, tipe, time, search, limit) => ({
         type: 'GET_DASHBOARD_PIC',
-        payload: http(token).get(`/dashboard/get?tipe=${tipe}`)
+        payload: http(token).get(`/dashboard/get?tipe=${tipe}&time=${time}&find=${search}&limit=${limit}`)
     }),
-    getActivity: (token) => ({
+    getActivity: (token, search) => ({
         type: 'GET_ACTIVITY',
-        payload: http(token).get(`/dashboard/activity`)
+        payload: http(token).get(`/dashboard/activity?search=${search}`)
     }),
     uploadDokumen: (token, id, time, data) => ({
         type: 'UPLOAD_DOKUMEN',

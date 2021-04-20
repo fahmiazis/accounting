@@ -358,7 +358,8 @@ export default (state=divisiState, action) => {
                     isApprove: false,
                     isReject: false,
                     alertM: '',
-                    isReport: false
+                    isReport: false,
+                    isUpdate: false
                 }
             }
             case 'RESET_REPORT': {

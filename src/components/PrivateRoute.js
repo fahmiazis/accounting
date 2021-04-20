@@ -3,6 +3,7 @@ import { Route, Redirect } from 'react-router-dom'
 import {connect} from "react-redux"
 import dashboard from '../redux/actions/dashboard'
 import auth from '../redux/actions/auth'
+import moment from 'moment'
 
 class PrivateRoute extends Component {
   componentDidMount(){
@@ -13,7 +14,7 @@ class PrivateRoute extends Component {
     const level = localStorage.getItem('level')
     const token = localStorage.getItem('token')
     if (level === '1' || level === '2' || level === '3') {
-        this.props.getDashboardPic(token, 'daily')
+        this.props.getDashboardPic(token, 'daily', moment().format('YYYY-MM-DD'), '', 10)
     } else {
         this.props.getDashboard(token, 'daily')
     }

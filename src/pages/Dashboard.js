@@ -192,7 +192,7 @@ class Dokumen extends Component {
         const { tipe } = this.state
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
-            await this.props.getActivity(token)   
+            await this.props.getActivity(token, '')   
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value )
             this.setState({tipe: value === undefined ? 'daily' : value})
