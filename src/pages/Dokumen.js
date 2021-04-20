@@ -186,8 +186,9 @@ class Dokumen extends Component {
         await this.props.showDokumen(token, value.path.id)
         this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
+        console.log(value)
         if (isShow) {
-            this.downloadData(value)
+            this.downloadDataPic(value)
             this.openModalPdf()
         }
     }
@@ -212,6 +213,22 @@ class Dokumen extends Component {
 
     downloadData = (value) => {
         const download = value.path.split('/')
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${download[2]}`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    downloadDataPic = (value) => {
+        const download = value.path.path.split('/')
         axios({
             url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
             method: 'GET',
