@@ -37,6 +37,7 @@ class Dokumen extends Component {
         openModal: false,
         drop: false,
         dropOpen: false,
+        dropLink: false,
         dropOpenNum: false,
         value: '',
         onChange: new Date(),
@@ -150,6 +151,10 @@ class Dokumen extends Component {
 
     dropOpen = () => {
         this.setState({drop: !this.state.drop})
+    }
+
+    dropLink = () => {
+        this.setState({dropLink: !this.state.dropLink})
     }
 
     toggle = () => {
@@ -359,7 +364,7 @@ class Dokumen extends Component {
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <Dropdown nav isOpen={this.state.dropLink} toggle={this.dropLink}>
                                 <DropdownToggle nav caret className="navDoc">
                                     Document
                                 </DropdownToggle>

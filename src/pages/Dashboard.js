@@ -59,7 +59,8 @@ class Dokumen extends Component {
         date: '',
         time: '',
         search: '',
-        limit: 10
+        limit: 10,
+        dropLink: false,
     }
 
     showAlert = () => {
@@ -265,6 +266,10 @@ class Dokumen extends Component {
         }
     }
 
+    dropLink = () => {
+        this.setState({dropLink: !this.state.dropLink})
+    }
+
     prepareDokumen = () => {
         const {dataSa, dataKasir} = this.props.dashboard
         const data = []
@@ -340,7 +345,7 @@ class Dokumen extends Component {
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <Dropdown nav isOpen={this.state.dropLink} toggle={this.dropLink}>
                                 <DropdownToggle nav caret className="navDoc">
                                     Document
                                 </DropdownToggle>
@@ -421,7 +426,7 @@ class Dokumen extends Component {
                         <div>{alertM}</div>
                     </Alert>
                     <div className="bodyDashboard">
-                        <div className="titleDashboard">Verifikasi Dokumen</div>
+                        <div className="titleDashboard">Dashboard</div>
                         <div className="headDashboard">
                             {level === '5' || level === '4' ? (
                                 <div></div>

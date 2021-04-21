@@ -198,6 +198,8 @@ class SettingDokumen extends Component {
 
 
     render() {
+        const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
         const {dataDokumen, isGet, alertM, alertMsg, alertUpload, page} = this.props.dokumen
         const {dataDivisi} = this.props.divisi
@@ -232,7 +234,9 @@ class SettingDokumen extends Component {
                             </NavItem>
                         </Nav>
                         <UncontrolledDropdown>
-                            <DropdownToggle nav caret>Super Admin</DropdownToggle>
+                            <DropdownToggle nav caret>
+                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
+                            </DropdownToggle>
                             <DropdownMenu right>
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
