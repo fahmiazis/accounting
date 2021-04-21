@@ -126,8 +126,10 @@ class MasterDepo extends Component {
         if (isAdd) {
             this.setState({confirm: 'add'})
             this.openConfirm()
-            this.getDataDepo()
             this.openModalAdd()
+            setTimeout(() => {
+                this.getDataDepo()
+            }, 500)
         }
     }
 

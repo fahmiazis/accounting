@@ -333,13 +333,17 @@ class Dokumen extends Component {
             this.prepareDokumen()
             this.props.resetError()
         } else if (isApprove) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openApprove: false})
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
             this.props.resetError()
         } else if (isReject) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openReject: false})
             this.props.resetError()
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
         }
     }
 

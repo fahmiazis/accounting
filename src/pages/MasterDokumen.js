@@ -118,8 +118,10 @@ class MasterDokumen extends Component {
         if (isAdd) {
             this.setState({confirm: 'add'})
             this.openConfirm()
-            this.getDataDokumen()
             this.openModalAdd()
+            setTimeout(() => {
+                this.getDataDokumen()
+            }, 500)
         }
     }
 
@@ -150,8 +152,10 @@ class MasterDokumen extends Component {
         if (isUpdate) {
             this.setState({confirm: 'edit'})
             this.openConfirm()
-            this.getDataDokumen()
             this.openModalEdit()
+            setTimeout(() => {
+                this.getDataDokumen()
+            }, 700)
         }
     }
 

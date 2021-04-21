@@ -150,8 +150,10 @@ class SettingDokumen extends Component {
         if (isUpdate) {
             this.setState({confirm: 'edit'})
             this.openConfirm()
-            this.getDataDokumen()
             this.openModalEdit()
+            setTimeout(() => {
+                this.getDataDokumen()
+            }, 700)
         }
     }
 
