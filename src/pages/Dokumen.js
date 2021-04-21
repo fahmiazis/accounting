@@ -702,7 +702,7 @@ class Dokumen extends Component {
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length < totalDoc.length ? (
+                                                        x.active[0].doc.length <= totalDoc.length ? (
                                                                 totalDoc.map(y => {
                                                                     return (
                                                                         <td>
@@ -790,7 +790,7 @@ class Dokumen extends Component {
                                                 )}
                                                 {x.active.length > 0 ? (
                                                     x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length < totalDoc.length ? (
+                                                        x.active[0].doc.length <= totalDoc.length ? (
                                                                 totalDoc.map(y => {
                                                                     return (
                                                                         <td>
