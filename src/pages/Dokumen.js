@@ -278,6 +278,7 @@ class Dokumen extends Component {
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
+            await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value})
         }
     }
@@ -342,6 +343,7 @@ class Dokumen extends Component {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
         const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
         return (
             <>
@@ -356,9 +358,25 @@ class Dokumen extends Component {
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Document
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/dokumen">
+                                        Verifikasi Dokumen
+                                    </DropdownItem>
+                                    <DropdownItem href="/setting/dokumen">
+                                        Setting Dokumen
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            ) : (
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            )}
                             {level === '1' ? (
                                 <Dropdown nav isOpen={drop} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
@@ -737,7 +755,7 @@ class Dokumen extends Component {
                                                     <td>0 %</td>
                                                 )}
                                                 {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].progress/x.dokumen.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
@@ -825,7 +843,7 @@ class Dokumen extends Component {
                                                     <td>0 %</td>
                                                 )}
                                                 {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].progress/x.dokumen.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
@@ -986,13 +1004,7 @@ class Dokumen extends Component {
                                             {act.length > 0 && act[0].doc.length > 0 ? (
                                                 <div>
                                                 {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                    <Input
-                                                        type="file"
-                                                        name="file"
-                                                        accept=".xls,.xlsx,.pdf"
-                                                        onClick={() => this.setState({detail: item})}
-                                                        onChange={this.onChangeHandler}
-                                                    />
+                                                    <div>Belum Upload</div>
                                                     ) : 
                                                     (
                                                     <div>
@@ -1106,8 +1118,11 @@ class Dokumen extends Component {
                                 onBlur={handleBlur('alasan')}
                                 >
                                     <option>-Pilih Alasan-</option>
-                                    <option value="Report Tidak Sesuai" >Report Tidak Sesuai</option>
-                                    <option value="Report Tidak Update">Report Tidak Update</option>
+                                    {dataAlasan.length !== 0 && dataAlasan.map(item => {
+                                        return (
+                                        <option value={item.alasan} >{item.alasan}</option>
+                                        )
+                                    })}
                                 </Input>
                             </div>
                             {errors.alasan ? (
@@ -1148,7 +1163,8 @@ class Dokumen extends Component {
 }
 
 const mapStateToProps = state => ({
-    dashboard: state.dashboard
+    dashboard: state.dashboard,
+    alasan: state.alasan
 })
 
 const mapDispatchToProps = {

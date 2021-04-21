@@ -433,6 +433,9 @@
 .colon {
   margin-right: 20px;
 }
+.colons {
+  margin-right: 8px;
+}
 .optionList {
   width: 100%;
 }

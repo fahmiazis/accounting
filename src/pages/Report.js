@@ -13,6 +13,7 @@ import {BsBell} from 'react-icons/bs'
 import depo from '../redux/actions/depo'
 import downloadFile from 'js-file-download'
 import {default as axios} from 'axios'
+import Select from 'react-select'
 
 class Report extends Component {
     state = {
@@ -32,7 +33,8 @@ class Report extends Component {
         kode: '',
         pic: '',
         from: '',
-        to: ''
+        to: '',
+        options: []
     }
 
     toggle = () => {
@@ -59,11 +61,11 @@ class Report extends Component {
     }
     
     chooseDepo = (e) => {
-        this.setState({kode: e.target.value})
+        this.setState({kode: e.value})
     }
 
     choosePic = (e) => {
-        this.setState({pic: e.target.value})
+        this.setState({pic: e.value})
     }
 
     openTypeFunc = () => {
@@ -107,9 +109,15 @@ class Report extends Component {
         const { isReport, isDownload } = this.props.dashboard
         if (level === "1" && isGet) {
           this.preparePic()
+          this.prepareSelect()
           this.props.resetError()
         } else if (level === "2" && isGet) {
             this.preparePic()
+            this.prepareSelect()
+            this.props.resetError()
+        } else if (level === "3" && isGet) {
+            this.preparePic()
+            this.prepareSelect()
             this.props.resetError()
         } else if (isReport) {
             this.downloadResultReport()
@@ -118,10 +126,6 @@ class Report extends Component {
             this.download()
             this.props.resetErrorReport()
         }
-        console.log(this.state.from)
-        console.log(this.state.to)
-        console.log(this.state.pic)
-        console.log(this.state.kode)
     }
 
     downloadResultReport = async () => {
@@ -160,6 +164,9 @@ class Report extends Component {
     preparePic = () => {
         const { dataDepo } = this.props.depo
         const temp = []
+        const data = [
+            {value: '', label: '-Pilih PIC-'}
+        ]
         if (dataDepo.length !== 0) {
             dataDepo.map(item => {
                 return (
@@ -168,7 +175,27 @@ class Report extends Component {
             })
             const set = new Set(temp)
             const newData = [...set]
-            this.setState({depo: newData})
+            newData.map(item => {
+                return (
+                    data.push({value: item, label: item})
+                )
+            })
+            this.setState({depo: data})
+        }
+    }
+
+    prepareSelect = () => {
+        const { dataDepo } = this.props.depo
+        const temp = [
+            {value: '', label: '-Pilih Depo-'}
+        ]
+        if (dataDepo.length !== 0) {
+            dataDepo.map(item => {
+                return (
+                    temp.push({value: item.kode_plant, label: item.kode_plant + '-' + item.nama_depo})
+                )
+            })
+            this.setState({options: temp})
         }
     }
 
@@ -190,9 +217,25 @@ class Report extends Component {
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Document
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/dokumen">
+                                        Verifikasi Dokumen
+                                    </DropdownItem>
+                                    <DropdownItem href="/setting/dokumen">
+                                        Setting Dokumen
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            ) : (
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            )}
                             {level === '1' ? (
                             <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
@@ -340,39 +383,25 @@ class Report extends Component {
                                 <div className="headReport">
                                     <text className="col-md-2 fontReport">PIC</text>
                                     <div className="optionType col-md-4">
-                                        <text className="colon">:</text>
-                                        <Input 
-                                        type="select" 
-                                        name="select"
-                                        onChange={this.choosePic}
-                                        disabled={this.state.kode === '' ? false : true}
-                                        >
-                                            <option value=''>-Pilih PIC-</option>
-                                            {depo.length !== 0 && depo.map(item => {
-                                                return (
-                                                    <option value={item}>{item}</option>
-                                                )
-                                            })}
-                                        </Input>
+                                        <text className="colons">:</text>
+                                        <Select
+                                            className="col-md-12"
+                                            options={this.state.depo}
+                                            onChange={this.choosePic}
+                                            isDisabled={this.state.kode === '' ? false : true}
+                                        />
                                     </div>
                                 </div>
                                 <div className="headReport">
                                     <text className="col-md-2 fontReport">Depo</text>
                                     <div className="optionType col-md-4">
-                                        <text className="colon">:</text>
-                                        <Input 
-                                        type="select" 
-                                        name="select"
-                                        onChange={this.chooseDepo}
-                                        disabled={this.state.pic === '' ? false : true}
-                                        >
-                                            <option value=''>-Pilih Depo-</option>
-                                            {dataDepo.length !== 0 && dataDepo.map(item => {
-                                                return (
-                                                    <option value={item.kode_plant}>{item.kode_plant + '-' + item.nama_depo}</option>
-                                                )
-                                            })}
-                                        </Input>
+                                        <text className="colons">:</text>
+                                        <Select
+                                            className="col-md-12"
+                                            options={this.state.options}
+                                            onChange={this.chooseDepo}
+                                            isDisabled={this.state.pic === '' ? false : true}
+                                        />
                                     </div>
                                 </div>
                                 <Button

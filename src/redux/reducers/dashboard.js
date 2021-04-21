@@ -84,7 +84,7 @@ export default (state=divisiState, action) => {
                     isGetPic: false,
                     isError: true,
                     alertMsg: "Unable connect to server",
-                    alertM: action.payload.response.data.message
+                    alertM: action.payload.response
                 };
             }
             case 'NEXT_DATA_PENDING': {

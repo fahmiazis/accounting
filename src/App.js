@@ -19,6 +19,7 @@ import MasterDepo from './pages/MasterDepo'
 import MasterDivisi from './pages/MasterDivisi'
 import Report from './pages/Report'
 import tes from './pages/tes'
+import SettingDokumen from './pages/SettingDokumen'
 
 class App extends Component {
 
@@ -66,6 +67,9 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/report">
                     <Report />
+                </PrivateRoute>
+                <PrivateRoute path="/setting/dokumen">
+                    <SettingDokumen />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

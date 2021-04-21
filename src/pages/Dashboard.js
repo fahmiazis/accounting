@@ -339,9 +339,25 @@ class Dokumen extends Component {
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Document
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/dokumen">
+                                        Verifikasi Dokumen
+                                    </DropdownItem>
+                                    <DropdownItem href="/setting/dokumen">
+                                        Setting Dokumen
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            ) : (
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            )}
                             {level === '1' ? (
                                 <Dropdown nav isOpen={drop} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
@@ -597,8 +613,16 @@ class Dokumen extends Component {
                                             return (
                                             <tr className="danger">
                                                 <th scope="row">{(active.indexOf(x) + 1)}</th>
-                                                <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                {x.jenis_dokumen == 'monthly' ? (
+                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                ) : (
+                                                    <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                )}
+                                                {x.jenis_dokumen == 'monthly' ? (
+                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                ) : (
+                                                    <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                )}
                                                 {dataDash !== undefined && dataDash.map(y => {
                                                     return (
                                                     <td>
@@ -651,7 +675,9 @@ class Dokumen extends Component {
                                                 <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                    x.active[0].jenis_dokumen === 'monthly' ? 
+                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
+                                                    : <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
                                                     <td>-</td>
                                                 )}
@@ -720,7 +746,7 @@ class Dokumen extends Component {
                                                     <td>0 %</td>
                                                 )}
                                                 {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].progress/x.dokumen.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
@@ -808,7 +834,7 @@ class Dokumen extends Component {
                                                     <td>0 %</td>
                                                 )}
                                                 {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].progress/x.dokumen.length) * 100) === 0 ? 'Belum Upload' : 'Kurang Upload' }</td>
+                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}

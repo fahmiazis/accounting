@@ -42,9 +42,25 @@ class Home extends Component {
                             <NavItem>
                                 <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Document
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/dokumen">
+                                        Verifikasi Dokumen
+                                    </DropdownItem>
+                                    <DropdownItem href="/setting/dokumen">
+                                        Setting Dokumen
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            ) : (
                             <NavItem>
                                 <NavLink href="/dokumen" className="navDoc">Document</NavLink>
                             </NavItem>
+                            )}
                             {level === '1' ? (
                             <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
                                 <DropdownToggle nav caret className="navDoc">
