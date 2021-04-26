@@ -24,6 +24,7 @@ import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
 import {default as axios} from 'axios'
 import { FcDocument } from 'react-icons/fc'
+moment.locales('id')
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -708,11 +709,13 @@ class Dokumen extends Component {
                                                 <th scope="row">{(active.indexOf(x) + 1)}</th>
                                                 {x.jenis_dokumen == 'monthly' ? (
                                                     <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
+                                                    <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
                                                 ) : (
                                                     <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 )}
                                                 {x.jenis_dokumen == 'monthly' ? (
-                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                    <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
                                                 ) : (
                                                     <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
                                                 )}
@@ -770,7 +773,9 @@ class Dokumen extends Component {
                                                 {x.active.length > 0 ? (
                                                     x.active[0].jenis_dokumen === 'monthly' ? 
                                                     <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                    : <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                    : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                        <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                    :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
                                                     <td>-</td>
                                                 )}
@@ -858,7 +863,11 @@ class Dokumen extends Component {
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                    x.active[0].jenis_dokumen === 'monthly' ? 
+                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
+                                                    : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                        <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                    :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                                 ):(
                                                     <td>-</td>
                                                 )}
