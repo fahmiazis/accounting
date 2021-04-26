@@ -9,6 +9,13 @@ import '../assets/css/style.css'
 import {connect} from 'react-redux'
 import dashboard from '../redux/actions/dashboard'
 import {BsBell} from 'react-icons/bs'
+import { FcDocument } from 'react-icons/fc'
+import moment from 'moment'
+import socket from '../helpers/socket'
+import {BsFillCircleFill} from 'react-icons/bs'
+
+const {REACT_APP_BACKEND_URL} = process.env
+
 
 class Home extends Component {
 
@@ -25,10 +32,32 @@ class Home extends Component {
         this.setState({isOpen: !this.state.isOpen})
     }
 
+    componentDidMount(){
+        this.getNotif()
+    }
+
+    componentDidUpdate(){
+        const kode = localStorage.getItem('kode')
+        socket.on(kode, () => {
+            this.getNotif()
+        })
+    }
+
+    getNotif = async () => {
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        if (level === '2' || level === '3') {
+            await this.props.getNotif(token)
+        } else if (level === '4' || level === '5') {
+            await this.props.getNotifArea(token)
+        }
+    }
+
     render() {
         const {isOpen, dropOpenNum} = this.state
         const level = localStorage.getItem('level')
         const names = localStorage.getItem('name')
+        const {notif, notifSa, notifKasir} = this.props.dashboard
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -96,6 +125,13 @@ class Home extends Component {
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                            <NavItem>
+                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
+                            </NavItem>
+                            ) : (
+                                <div></div>
+                            )}
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
@@ -107,11 +143,78 @@ class Home extends Component {
                         </UncontrolledDropdown>
                         <UncontrolledDropdown>
                             <DropdownToggle nav>
-                                <BsBell size={20} />
+                                <div className="optionType">
+                                    <BsBell size={20} />
+                                    {notif.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : ( 
+                                        <div></div>
+                                    )}
+                                </div>
                             </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem >Reject Dokumen</DropdownItem>
-                            </DropdownMenu>
+                            {level === '2' || level === '3' ? (
+                                <DropdownMenu right>
+                                    {notifSa.length > 0 && notifSa.map(item => {
+                                        return (
+                                        <DropdownItem href="/dokumen">
+                                            <div className="notif">
+                                                <FcDocument size={60} className="mr-4"/>
+                                                <div>
+                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>{item.dokumen.dokumen}</div>
+                                                    <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </DropdownItem>
+                                        )
+                                    })}
+                                    {notifKasir.length === 0 && notifSa.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                    )}
+                                </DropdownMenu>
+                            ) : level === '4' || level === '5' ? (
+                                <DropdownMenu right>
+                                {notif.length > 0 && notif.map(item => {
+                                    return (
+                                    <DropdownItem href="/dokumen">
+                                        <div className="notif">
+                                            <FcDocument size={40} className="mr-4"/>
+                                            <div>
+                                                <div>Dokumen Anda Direject</div>
+                                                <div>{item.dokumen.dokumen}</div>
+                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
+                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                    </DropdownItem>
+                                    )
+                                })}
+                                {notif.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">    
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                )}
+                                </DropdownMenu>
+                            ) : (
+                                <DropdownMenu right>
+                                    <DropdownItem>
+                                            <div className="grey">    
+                                                You don't have any notifications 
+                                            </div>        
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            )}
                         </UncontrolledDropdown>
                     </Collapse>
                 </Navbar>
@@ -130,12 +233,15 @@ class Home extends Component {
 }
 
 const mapStateToProps = state => ({
-    auth: state.auth
+    auth: state.auth,
+    dashboard: state.dashboard
 })
 
 const mapDispatchToProps = {
     logout: auth.logout,
-    getDashboard: dashboard.getDashboard
+    getDashboard: dashboard.getDashboard,
+    getNotifArea: dashboard.getNotifArea,
+    getNotif: dashboard.getNotif
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Home)

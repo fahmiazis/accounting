@@ -12,7 +12,7 @@ import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import {FaSearch} from 'react-icons/fa'
 import {AiOutlineCheck, AiFillCheckCircle, AiOutlineClose, AiOutlineMinus, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
-import {BsCircle, BsDashCircleFill} from 'react-icons/bs'
+import {BsCircle, BsDashCircleFill, BsFillCircleFill} from 'react-icons/bs'
 import {MdWatchLater} from 'react-icons/md'
 import dashboard from '../redux/actions/dashboard'
 import moment from 'moment'
@@ -23,6 +23,7 @@ import alasan from '../redux/actions/alasan'
 import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
 import {default as axios} from 'axios'
+import { FcDocument } from 'react-icons/fc'
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -131,6 +132,16 @@ class Dokumen extends Component {
         }
     }
 
+    getNotif = async () => {
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        if (level === '2' || level === '3') {
+            await this.props.getNotif(token)
+        } else if (level === '4' || level === '5') {
+            await this.props.getNotifArea(token)
+        }
+    }
+
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
@@ -182,6 +193,7 @@ class Dokumen extends Component {
 
     componentDidMount(){
         this.getDataDashboard()
+        this.getNotif()
     }
 
     showDok = async (value) => {
@@ -218,6 +230,7 @@ class Dokumen extends Component {
 
     downloadData = (value) => {
         const download = value.path.split('/')
+        const cek = download[2].split('.')
         axios({
             url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
             method: 'GET',
@@ -226,7 +239,7 @@ class Dokumen extends Component {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${download[2]}`); //or any other extension
+            link.setAttribute('download', `${value.dokumen}.${cek[1]}`); //or any other extension
             document.body.appendChild(link);
             link.click();
         });
@@ -234,6 +247,7 @@ class Dokumen extends Component {
 
     downloadDataPic = (value) => {
         const download = value.path.path.split('/')
+        const cek = download[2].split('.')
         axios({
             url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
             method: 'GET',
@@ -242,7 +256,7 @@ class Dokumen extends Component {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${download[2]}`); //or any other extension
+            link.setAttribute('download', `${value.path.dokumen}.${cek[1]}`); //or any other extension
             document.body.appendChild(link);
             link.click();
         });
@@ -279,7 +293,9 @@ class Dokumen extends Component {
         const level = localStorage.getItem('level')
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
-            await this.props.getActivity(token, value === undefined ? 'daily' : value)
+            setTimeout(() => {
+                this.props.getActivity(token, value === undefined ? 'daily' : value)
+            }, 1000)
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
@@ -351,7 +367,7 @@ class Dokumen extends Component {
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
-        const {dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
         return (
@@ -421,6 +437,13 @@ class Dokumen extends Component {
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                            <NavItem>
+                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
+                            </NavItem>
+                            ) : (
+                                <div></div>
+                            )}
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
@@ -432,11 +455,78 @@ class Dokumen extends Component {
                         </UncontrolledDropdown>
                         <UncontrolledDropdown>
                             <DropdownToggle nav>
-                                <BsBell size={20} />
+                                <div className="optionType">
+                                    <BsBell size={20} />
+                                    {notif.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : ( 
+                                        <div></div>
+                                    )}
+                                </div>
                             </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem >Reject Dokumen</DropdownItem>
-                            </DropdownMenu>
+                            {level === '2' || level === '3' ? (
+                                <DropdownMenu right>
+                                    {notifSa.length > 0 && notifSa.map(item => {
+                                        return (
+                                        <DropdownItem href="/dokumen">
+                                            <div className="notif">
+                                                <FcDocument size={60} className="mr-4"/>
+                                                <div>
+                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>{item.dokumen.dokumen}</div>
+                                                    <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </DropdownItem>
+                                        )
+                                    })}
+                                    {notifKasir.length === 0 && notifSa.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                    )}
+                                </DropdownMenu>
+                            ) : level === '4' || level === '5' ? (
+                                <DropdownMenu right>
+                                {notif.length > 0 && notif.map(item => {
+                                    return (
+                                    <DropdownItem href="/dokumen">
+                                        <div className="notif">
+                                            <FcDocument size={40} className="mr-4"/>
+                                            <div>
+                                                <div>Dokumen Anda Direject</div>
+                                                <div>{item.dokumen.dokumen}</div>
+                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
+                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                    </DropdownItem>
+                                    )
+                                })}
+                                {notif.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">    
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                )}
+                                </DropdownMenu>
+                            ) : (
+                                <DropdownMenu right>
+                                    <DropdownItem>
+                                            <div className="grey">    
+                                                You don't have any notifications 
+                                            </div>        
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            )}
                         </UncontrolledDropdown>
                     </Collapse>
                 </Navbar>
@@ -898,10 +988,17 @@ class Dokumen extends Component {
                         <div>
                             <div className="infoPage">
                                 <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                {level == '5' || level == '4' ? (
+                                <div className="pageButton">
+                                    <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                                </div>
+                                ) : (
                                 <div className="pageButton">
                                     <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
                                     <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1190,7 +1287,9 @@ const mapDispatchToProps = {
     logout: auth.logout,
     download: dashboard.download,
     nextDashboard: dashboard.nextDashboard,
-    updateUploadDokumen: dashboard.updateUploadDokumen
+    updateUploadDokumen: dashboard.updateUploadDokumen,
+    getNotifArea: dashboard.getNotifArea,
+    getNotif: dashboard.getNotif
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)

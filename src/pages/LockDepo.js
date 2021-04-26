@@ -6,7 +6,9 @@ import { Container, Collapse, Nav, Navbar,
     UncontrolledDropdown, DropdownToggle, DropdownMenu,
     DropdownItem, Table, ButtonDropdown, Input, Button,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Dropdown,
-    Spinner} from 'reactstrap'
+    Spinner,
+    Label,
+    FormGroup} from 'reactstrap'
 import Pdf from "../components/Pdf"
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
@@ -31,13 +33,14 @@ const alasanSchema = Yup.object().shape({
     alasan: Yup.string().required()
 });
 
-class Dokumen extends Component {
+class LockDepo extends Component {
     state = {
         alert: false,
         isOpen: false,
         openModal: false,
         drop: false,
         dropOpen: false,
+        dropLink: false,
         dropOpenNum: false,
         value: '',
         onChange: new Date(),
@@ -61,7 +64,9 @@ class Dokumen extends Component {
         time: '',
         search: '',
         limit: 10,
-        dropLink: false,
+        lock: {},
+        lockModal: false,
+        access: ''
     }
 
     showAlert = () => {
@@ -82,6 +87,15 @@ class Dokumen extends Component {
                 upload: false
             })
          }, 10000)
+    }
+
+    editAccess = async () => {
+        const {lock, access} = this.state
+        const data = {
+            access: access
+        }
+        const token = localStorage.getItem('token')
+        await this.props.editAccessActive(token, lock.id, data)
     }
 
     approveDokumen = async () => {
@@ -116,7 +130,7 @@ class Dokumen extends Component {
         this.setState({search: e.target.value})
         const token = localStorage.getItem('token')
         if(e.key === 'Enter'){
-            await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, e.target.value, this.state.limit)
+            await this.props.getAllActivity(token, e.target.value, this.state.limit, this.state.tipe === '' ? 'daily' : this.state.tipe)
         }
     }
 
@@ -154,6 +168,14 @@ class Dokumen extends Component {
         this.setState({drop: !this.state.drop})
     }
 
+    lockOpenModal = () => {
+        this.setState({lockModal: !this.state.lockModal})
+    }
+
+    dropLink = () => {
+        this.setState({dropLink: !this.state.dropLink})
+    }
+
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
     }
@@ -189,8 +211,9 @@ class Dokumen extends Component {
         await this.props.showDokumen(token, value.path.id)
         this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
+        console.log(value)
         if (isShow) {
-            this.downloadData(value)
+            this.downloadDataPic(value)
             this.openModalPdf()
         }
     }
@@ -213,6 +236,12 @@ class Dokumen extends Component {
         }
     }
 
+    lockOpen = (value) => {
+        this.setState({lock: value})
+        this.lockOpenModal()
+        console.log(value)
+    }
+
     downloadData = (value) => {
         const download = value.path.split('/')
         axios({
@@ -229,30 +258,48 @@ class Dokumen extends Component {
         });
     }
 
+    downloadDataPic = (value) => {
+        const download = value.path.path.split('/')
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${download[2]}`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
     next = async () => {
-        const { page } = this.props.dashboard
+        const { pages } = this.props.dashboard
         const token = localStorage.getItem('token')
-        await this.props.nextDashboard(token, page.nextLink)
+        await this.props.nextDashboard(token, pages.nextLink)
     }
 
     prev = async () => {
-        const { page } = this.props.dashboard
+        const { pages } = this.props.dashboard
         const token = localStorage.getItem('token')
-        await this.props.nextDashboard(token, page.prevLink)
-    }
-
-    chooseTime = async (e) => {
-        this.setState({time: e.target.value})
-        const token = localStorage.getItem('token')
-        const level = localStorage.getItem('level')
-        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, e.target.value, this.state.search, this.state.limit )
+        await this.props.nextDashboard(token, pages.prevLink)
     }
 
     getDataLimit = async (value) => {
         const token = localStorage.getItem('token')
         const limit = value === undefined ? this.state.limit : value
-        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, limit)
+        await this.props.getAllActivity(token, this.state.search, this.state.tipe === '' ? 'daily' : this.state.tipe, limit)
         this.setState({limit: value === undefined ? 10 : value})
+    }
+
+    getDataDashboard = async (value) => {
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        if (level === '2') {
+            await this.props.getAllActivity(token, this.state.search, this.state.limit, value === undefined ? 'daily' : value)
+            this.setState({tipe: value === undefined ? 'daily' : value})
+        }
     }
 
     getNotif = async () => {
@@ -265,47 +312,17 @@ class Dokumen extends Component {
         }
     }
 
-    getDataDashboard = async (value) => {
-        const token = localStorage.getItem('token')
-        const level = localStorage.getItem('level')
-        if (level === '4' || level === '5') {
-            await this.props.getDashboard(token, value === undefined ? 'daily' : value)
-            setTimeout(() => {
-                this.props.getActivity(token, value === undefined ? 'daily' : value)
-            }, 1000)
-            this.setState({tipe: value === undefined ? 'daily' : value})
-        } else if (level === '3' || level === '1' || level === '2') {
-            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
-            this.setState({tipe: value === undefined ? 'daily' : value})
-        }
-    }
-
-    dropLink = () => {
-        this.setState({dropLink: !this.state.dropLink})
-    }
-
     prepareDokumen = () => {
-        const {dataSa, dataKasir} = this.props.dashboard
         const data = []
-        dataSa.map(x => {
-            return (
-                data.push(x !== null ? x.dokumen.length : 0)
-            )
-        })
-        dataKasir.map(x => {
-            return (
-                data.push(x !== null ? x.dokumen.length : 0)
-            )
-        })
-        const res = []
-        for (let i = 0; i <= Math.max(...data)-1; i++) {
-            res.push(i)
+        const time = moment().endOf('month').format('DD')
+        for (let i = 1; i <= time; i++) {
+            data.push(i)
         }
-        this.setState({totalDoc: res})
+        this.setState({totalDoc: data})
     }
 
     componentDidUpdate() {
-        const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate} = this.props.dashboard
+        const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate, isEdit} = this.props.dashboard
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -329,21 +346,32 @@ class Dokumen extends Component {
             this.prepareDokumen()
             this.props.resetError()
         } else if (isApprove) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openApprove: false})
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
             this.props.resetError()
         } else if (isReject) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openReject: false})
             this.props.resetError()
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
+        } else if (isEdit) {
+            this.lockOpenModal()
+            this.props.resetError()
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500);
         }
     }
 
 
     render() {
-        const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
+        const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, lock, lockModal} = this.state
         const level = localStorage.getItem('level')
-        const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const {notifSa, notifKasir, notif, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSaActive, dataKasirActive, dataDepo, pages} = this.props.dashboard
+        const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
         return (
             <>
@@ -514,66 +542,7 @@ class Dokumen extends Component {
                         <div>{alertM}</div>
                     </Alert>
                     <div className="bodyDashboard">
-                        <div className="titleDashboard">Dashboard</div>
-                        <div className="headDashboard">
-                            {level === '5' || level === '4' ? (
-                                <div></div>
-                            ) : (
-                            <div>
-                                <text>Jenis: </text>
-                                <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
-                                <DropdownToggle caret color="light">
-                                    {this.state.tipe}
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
-                                    <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
-                                </DropdownMenu>
-                                </ButtonDropdown>
-                            </div>
-                            )}
-                            {this.state.tipe === 'daily' ? (
-                                level == "6" || level == '1' || level == '2' || level == '3' ? (
-                                    <div className="dateDash">
-                                        <div>Tanggal Upload: </div>
-                                        <div className="inputCalendar">
-                                            <Input  type="date" onChange={this.chooseTime}/>
-                                        </div>
-                                        {/* <div><FaCalendarAlt size={22} /></div> */}
-                                        {/* <Calendar
-                                        value={this.state.value}
-                                        onChange={this.state.onChange}
-                                        /> */}
-                                    </div>
-                                ) : (
-                                    <div></div>
-                                )
-                            ) : (
-                                level == "6" || level == '1' || level == '2' || level == '3' ? (
-                                <div className="dateDash">
-                                    <div>Periode Dokumen: </div>
-                                    {/* <div className="inputCalendar">
-                                        <Input  type="date"/>
-                                    </div> */}
-                                    <Input
-                                        type="select"
-                                        name="select"
-                                        >   
-                                        <option>Februari</option>
-                                        <option>Maret</option>
-                                        <option>April</option>
-                                    </Input>
-                                    {/* <div><FaCalendarAlt size={22} /></div> */}
-                                    {/* <Calendar
-                                    value={this.state.value}
-                                    onChange={this.state.onChange}
-                                    /> */}
-                                </div>
-                                ) : (
-                                    <div></div>
-                                )
-                            )}
-                        </div>
+                        <div className="titleDashboard">Lock / Unlock</div>
                         <div className="secHeadDashboard">
                             <div className="searchDash">
                                 <div className="secSearch mr-4">
@@ -604,20 +573,6 @@ class Dokumen extends Component {
                                         </ButtonDropdown>
                                     )}
                                 </div>
-                                {level === '5' || level === '4' ? (
-                                    <div>
-                                        <text>Jenis: </text>
-                                        <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.tipe}
-                                        </DropdownToggle>
-                                        <DropdownMenu>
-                                            <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
-                                            <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
-                                    </div>
-                                ) : (
                                     <div className="secSearch">
                                         <text>Search: </text>
                                         <Input 
@@ -629,13 +584,6 @@ class Dokumen extends Component {
                                             <FaSearch size={20} />
                                         </Input>
                                     </div>
-                                )}
-                            </div>
-                            <div className="statusSym">
-                                <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
-                                <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
-                                <div><BsCircle size={20} className="green" /><text>  Open</text></div>
-                                <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                             </div>
                         </div>
                         <div className="tableDashboard">
@@ -658,19 +606,15 @@ class Dokumen extends Component {
                                         ): level === '6' || level === '3' || level === '1' || level === '2' ? (
                                         <tr>
                                             <th>No</th>
+                                            <th>PIC</th>
                                             <th>Kode Plant</th>
                                             <th>Nama Depo</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
+                                            <th>User Area</th>
                                             {totalDoc.length !== 0 && totalDoc.map(item => {
                                                 return (
-                                                <th>{item + 1}</th>
+                                                <th>{item}</th>
                                                 )
                                             })}
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                            <th>Uploaded By</th>
                                         </tr>
                                         ): (
                                         <tr>
@@ -678,8 +622,6 @@ class Dokumen extends Component {
                                             <th>PIC</th>
                                             <th>Kode Plant</th>
                                             <th>Nama Depo</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
                                             <th>1</th>
                                             <th>2</th>
                                             <th>3</th>
@@ -700,271 +642,96 @@ class Dokumen extends Component {
                                         </tr>
                                         )}
                                 </thead>
-                                    {level === '4' || level === '5' ? (
+                                    { level === '2' || level === '1' ? (
                                 <tbody>
-                                        {active !== undefined && active.map(x => {
-                                            return (
-                                            <tr className="danger">
-                                                <th scope="row">{(active.indexOf(x) + 1)}</th>
-                                                {x.jenis_dokumen == 'monthly' ? (
-                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
-                                                ) : (
-                                                    <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                )}
-                                                {x.jenis_dokumen == 'monthly' ? (
-                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
-                                                ) : (
-                                                    <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
-                                                )}
-                                                {dataDash !== undefined && dataDash.map(y => {
-                                                    return (
-                                                    <td>
-                                                        {x.doc.length === 0 ? (
-                                                            <AiOutlineMinus className="black" />
-                                                        ):(
-                                                            x.doc.map(item => {
-                                                                return (
-                                                                    item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="black"/>
-                                                                    ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="green" />
-                                                                    ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineCheck className="blue"/>
-                                                                    ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineClose className="red" />
-                                                                    ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : (
-                                                                        <div></div>
-                                                                    )
-                                                                )
-                                                            })
-                                                        )}
-                                                    </td>
-                                                    )
-                                                })}
-                                                <td>{dataDash.length}</td>
-                                                {x.doc.length === 0 ? (
-                                                    <td>0 %</td>
-                                                ) : (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
-                                                )}
-                                                {x.doc.length > 0 ? (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                            </tr>
-                                            )
-                                        })}
-                                </tbody>
-                                ): level === '6' || level === '3' || level === '2' || level === '1' ? (
-                                <tbody>
-                                        {dataSa !== undefined && dataSa.map(x => {
+                                        {dataSaActive !== undefined && dataSaActive.map(x => {
                                             return (
                                             x !== null ? (
+                                                // onClick={() => this.openModalProses(this.setState({doc: dataSaActive[dataSaActive.indexOf(x)].dokumen, act: dataSaActive[dataSaActive.indexOf(x)].active}))}
                                             <tr className="danger">
-                                                <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                <th scope="row">{(dataSaActive.indexOf(x) + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                <td>{x.nama_pic_1}</td>
                                                 <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
+                                                <td>SA</td>
                                                 {x.active.length > 0 ? (
-                                                    x.active[0].jenis_dokumen === 'monthly' ? 
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                    : <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length <= totalDoc.length ? (
-                                                                totalDoc.map(y => {
-                                                                    return (
-                                                                        <td>
-                                                                            {x.active[0].doc[y] ? (
-                                                                                x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : (
-                                                                                    <div></div>
-                                                                                )
-                                                                            ): (
-                                                                                <AiOutlineMinus className="black" />
-                                                                            )}
-                                                                        </td>
-                                                                    )
-                                                                })
-                                                        ) : (
-                                                            x.active[0].doc.map(item => {
-                                                                return (
-                                                                    <td>
-                                                                        {item.status_dokumen === 1 ? (
-                                                                            <BsCircle className="black"/>
-                                                                        ) : (
-                                                                            <AiOutlineMinus className="black" />
-                                                                        )}
-                                                                    </td>
-                                                                )
-                                                            })
+                                                    totalDoc.map(y => {
+                                                        let cek =  []
+                                                        let data = []
+                                                        for (let i = 0; i < totalDoc.length; i++) {
+                                                            if (x.active[i] === undefined) {
+                                                                cek.push('')
+                                                            } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                cek.push(x.active[i].access)
+                                                                data.push(i)
+                                                            }
+                                                        }
+                                                        return (
+                                                            <td>
+                                                                <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                    {cek}
+                                                                </a>
+                                                            </td>
                                                         )
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td><AiOutlineMinus className="black" /></td>
-                                                            )
-                                                        }) 
-                                                    )
+                                                    })
                                                 ): (
                                                     totalDoc.map(item => {
                                                         return (
-                                                            <td><AiOutlineMinus className="black" /></td>
+                                                            <td></td>
                                                         )
                                                     })
                                                 )}
-                                                <td>{x.dokumen.length}</td>
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                ):(
-                                                    <td>0 %</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                                <td>SA</td>
                                             </tr>
                                             ) : (
                                                 <div></div>
                                             )
                                             )
                                         })}
-                                        {dataKasir !== undefined && dataKasir.map(x => {
+                                        {dataKasirActive !== undefined && dataKasirActive.map(x => {
                                             return (
                                             x !== null ? (
-                                            <tr className="danger">
-                                                <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                // onClick={() => this.openModalProses(this.setState({doc: dataKasirActive[dataKasirActive.indexOf(x)].dokumen, act: dataKasirActive[dataKasirActive.indexOf(x)].active}))}
+                                            <tr className="danger" >
+                                                <th scope="row">{(dataKasirActive.indexOf(x) + dataSaActive.length + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                <td>{x.nama_pic_1}</td>
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
+                                                <td>Kasir</td>
                                                 {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length <= totalDoc.length ? (
-                                                                totalDoc.map(y => {
-                                                                    return (
-                                                                        <td>
-                                                                            {x.active[0].doc[y] ? (
-                                                                                x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : (
-                                                                                    <div></div>
-                                                                                )
-                                                                            ): (
-                                                                                <AiOutlineMinus className="black" />
-                                                                            )}
-                                                                        </td>
-                                                                    )
-                                                                })
-                                                        ) : (
-                                                            x.active[0].doc.map(item => {
-                                                                return (
-                                                                    <td>
-                                                                        {item.status_dokumen === 1 ? (
-                                                                            <BsCircle className="black"/>
-                                                                        ) : (
-                                                                            <AiOutlineMinus className="black" />
-                                                                        )}
-                                                                    </td>
-                                                                )
-                                                            })
+                                                    totalDoc.map(y => {
+                                                        let cek =  []
+                                                        for (let i = 0; i < totalDoc.length; i++) {
+                                                            if (x.active[i] === undefined) {
+                                                                cek.push('')
+                                                            } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                cek.push(x.active[i].access)
+                                                            }
+                                                        }
+                                                        return (
+                                                            <td>
+                                                                <a className="green" onClick={this.openModalProses}>
+                                                                    {cek}
+                                                                </a>
+                                                            </td>
                                                         )
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td><AiOutlineMinus className="black" /></td>
-                                                            )
-                                                        }) 
-                                                    )
+                                                    })
                                                 ): (
                                                     totalDoc.map(item => {
                                                         return (
-                                                            <td><AiOutlineMinus className="black" /></td>
+                                                            <td></td>
                                                         )
                                                     })
                                                 )}
-                                                <td>{x.dokumen.length}</td>
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                ):(
-                                                    <td>0 %</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                                <td>Kasir</td>
                                             </tr>
                                             ) : (
-                                                <div></div>
+                                                <td></td>
                                             )
                                             )
                                         })}
                                 </tbody>
                                 ): (
                                     <tbody>
-                                    <tr className="danger" onClick={this.openModalProses}>
-                                        <th scope="row">1</th>
-                                        <td>Anjar</td>
-                                        <td>107</td>
-                                        <td>Garut</td>
-                                        <td>01 Januari 2021</td>
-                                        <td>02 Januari 2021</td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td>14</td>
-                                        <td>100%</td>
-                                        <td>Done</td>
+                                    <tr className="danger">
                                     </tr>
                                     </tbody>
                                 )}
@@ -972,10 +739,10 @@ class Dokumen extends Component {
                         </div>
                         <div>
                             <div className="infoPage">
-                                <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                <text>Showing {pages.currentPage} of {pages.pages} pages</text>
                                 <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                    <button className="btnPrev" color="info" disabled={pages.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={pages.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
                             </div>
                         </div>
@@ -1088,13 +855,7 @@ class Dokumen extends Component {
                                             {act.length > 0 && act[0].doc.length > 0 ? (
                                                 <div>
                                                 {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                    <Input
-                                                        type="file"
-                                                        name="file"
-                                                        accept=".xls,.xlsx,.pdf"
-                                                        onClick={() => this.setState({detail: item})}
-                                                        onChange={this.onChangeHandler}
-                                                    />
+                                                    <div>Belum Upload</div>
                                                     ) : 
                                                     (
                                                     <div>
@@ -1132,97 +893,47 @@ class Dokumen extends Component {
                         <div></div>
                     )}
                 </Modal>
-                <Modal isOpen={openPdf} size="lg" toggle={this.openModalPdf} centered={true}>
-                <ModalHeader toggle={this.openModalPdf}>Dokumen</ModalHeader>
+                <Modal isOpen={lockModal} toggle={this.lockOpenModal}>
                     <ModalBody>
-                        <div className="readPdf">
-                            <Pdf pdf={REACT_APP_BACKEND_URL + dataShow} />
+                    <div className="headReport">
+                            <text className="col-md-3">Kode Plant</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <text>{lock.kode_plant}</text>
+                            </div>
                         </div>
-                        <hr/>
-                        <div className="foot">
-                            <div>
-                                <div>{moment(this.state.date).format('LLL')}</div>
+                        <div className="headReports">
+                            <text className="col-md-3">Tanggal Upload</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <text>{moment(lock.createdAt).format('LL')}</text>
                             </div>
-                        {level === '1' || level === '2' || level === '3' ? (
-                            <div>
-                                <Button color="danger" onClick={this.openModalReject}>Reject</Button>
-                                <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
+                        </div>
+                        <div className="headReports">
+                            <text className="col-md-3">Access</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <div className="headReport mt-4 ml-3">
+                                    <div className="mr-3">
+                                        <Label check>
+                                            <Input type="radio" name="radio2" checked={lock.access === 'lock' ? true : this.state.access === 'lock' ? true : false} onChange={() => this.setState({access: 'lock'})}/>
+                                            Lock
+                                        </Label>
+                                    </div>
+                                    <div className="ml-3">
+                                        <Label check>
+                                            <Input type="radio" name="radio2" checked={lock.access === 'unlock' ? true : this.state.access === 'unlock' ? true : false} onChange={() => this.setState({access: 'unlock'})}/>
+                                            Unlock
+                                        </Label>
+                                    </div>
+                                </div>
                             </div>
-                            ) : (
-                                <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
-                            )}
                         </div>
                     </ModalBody>
-                    {/* {level === '1' || level === '2' || level === '3' ? (
-                    
                     <ModalFooter>
-                        <div>{moment(this.state.date).format('LL')}</div>
-                        <Button color="danger" onClick={this.openModalReject}>Reject</Button>
-                        <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
+                        <Button color="primary" onClick={this.editAccess}>Save</Button>
+                        <Button color="secondary" onClick={this.lockOpenModal}>Close</Button>
                     </ModalFooter>
-                    ) : (
-                    <ModalFooter>
-                        <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
-                    </ModalFooter>)} */}
-                </Modal>
-                <Modal isOpen={openApprove} toggle={this.openModalApprove} centered={true}>
-                    <ModalBody>
-                        <div className="modalApprove">
-                            <div>
-                                <text>
-                                    Anda yakin untuk approve 
-                                    <text className="verif"> {this.state.fileName.dokumen} </text>
-                                    pada tanggal
-                                    <text className="verif"> {moment().format('LL')}</text> ?
-                                </text>
-                            </div>
-                            <div className="btnApprove">
-                                <Button color="primary" onClick={this.approveDokumen}>Ya</Button>
-                                <Button color="secondary" onClick={this.openModalApprove}>Tidak</Button>
-                            </div>
-                        </div>
-                    </ModalBody>
-                </Modal>
-                <Modal isOpen={openReject} toggle={this.openModalReject} centered={true}>
-                    <ModalBody>
-                    <Formik
-                    initialValues={{
-                    alasan: "",
-                    }}
-                    validationSchema={alasanSchema}
-                    onSubmit={(values) => {this.rejectDokumen(values)}}
-                    >
-                        {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
-                            <div className="modalApprove">
-                            <div className="quest">Anda yakin untuk reject {this.state.fileName.dokumen} ?</div>
-                            <div className="alasan">
-                                <text className="col-md-3">
-                                    Pilih Alasan
-                                </text>
-                                <Input 
-                                type="select" 
-                                name="select" 
-                                className="col-md-9"
-                                value={values.alasan}
-                                onChange={handleChange('alasan')}
-                                onBlur={handleBlur('alasan')}
-                                >
-                                    <option>-Pilih Alasan-</option>
-                                    <option value="Report Tidak Sesuai" >Report Tidak Sesuai</option>
-                                    <option value="Report Tidak Update">Report Tidak Update</option>
-                                </Input>
-                            </div>
-                            {errors.alasan ? (
-                                    <text className="txtError">{errors.alasan}</text>
-                                ) : null}
-                            <div className="btnApprove">
-                                <Button color="primary" onClick={handleSubmit}>Ya</Button>
-                                <Button color="secondary" onClick={this.openModalReject}>Tidak</Button>
-                            </div>
-                        </div>
-                        )}
-                        </Formik>
-                    </ModalBody>
                 </Modal>
                 <Modal isOpen={this.props.dashboard.isLoading ? true: false} size="sm">
                         <ModalBody>
@@ -1250,7 +961,8 @@ class Dokumen extends Component {
 }
 
 const mapStateToProps = state => ({
-    dashboard: state.dashboard
+    dashboard: state.dashboard,
+    alasan: state.alasan
 })
 
 const mapDispatchToProps = {
@@ -1268,8 +980,11 @@ const mapDispatchToProps = {
     download: dashboard.download,
     nextDashboard: dashboard.nextDashboard,
     updateUploadDokumen: dashboard.updateUploadDokumen,
+    getAllActivity: dashboard.getAllActivity,
+    editAccessActive: dashboard.editAccessActive,
+    getDashboard: dashboard.getDashboard,
     getNotifArea: dashboard.getNotifArea,
     getNotif: dashboard.getNotif
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)
+export default connect(mapStateToProps, mapDispatchToProps)(LockDepo)

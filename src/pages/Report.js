@@ -14,6 +14,9 @@ import depo from '../redux/actions/depo'
 import downloadFile from 'js-file-download'
 import {default as axios} from 'axios'
 import Select from 'react-select'
+import { FcDocument } from 'react-icons/fc'
+import moment from 'moment'
+import {BsFillCircleFill} from 'react-icons/bs'
 
 class Report extends Component {
     state = {
@@ -48,10 +51,6 @@ class Report extends Component {
         this.setState({dropOpenNum: !this.state.dropOpenNum})
     }
 
-    componentDidUpdate() {
-        console.log(this.state.type === "")
-    }
-
     chooseFrom = (e) => {
         this.setState({from: e.target.value})
     }
@@ -74,32 +73,41 @@ class Report extends Component {
 
     componentDidMount() {
         this.getDataDepo()
+        this.getNotif()
     }
 
     createReport = async () => {
         const {kode, pic, from, to} = this.state
         const level = localStorage.getItem('level')
         const token = localStorage.getItem("token")
+        const depo = localStorage.getItem('kode')
         let data = {}
-        const datas = {
-            kode_plant: kode
-        }
         if (level === '1' || level === '2') {
             if (kode === '') {
                 data = {
-                    pic: pic
+                    pic: pic,
+                    kode_plant: ''
                 }
                 await this.props.report(token, from, to, data)
             } else if (pic === '') {
                 data = {
+                    pic: '',
                     kode_plant: kode
                 }
                 await this.props.report(token, from, to, data)
             }
         } else if (level === '4' || level === '5') {
+            data = {
+                pic: '',
+                kode_plant: depo
+            }
             await this.props.report(token, from, to, data)
         } else if (level === '3') {
-            await this.props.report(token, from, to, datas)
+            data = {
+                pic: '',
+                kode_plant: kode
+            }
+            await this.props.report(token, from, to, data)
         }
     }
 
@@ -148,6 +156,16 @@ class Report extends Component {
     download = async () => {
         const {dataDownload} = this.props.dashboard
         downloadFile(dataDownload, 'report.xls')
+    }
+
+    getNotif = async () => {
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        if (level === '2' || level === '3') {
+            await this.props.getNotif(token)
+        } else if (level === '4' || level === '5') {
+            await this.props.getNotifArea(token)
+        }
     }
 
     getDataDepo = async () => {
@@ -204,6 +222,7 @@ class Report extends Component {
         const level = localStorage.getItem('level')
         const names = localStorage.getItem('name')
         const {dataDepo} = this.props.depo
+        const {notif, notifSa, notifKasir} = this.props.dashboard
         return (
             <>
                 <Navbar color="light" light expand="md" className="navbar">
@@ -271,6 +290,13 @@ class Report extends Component {
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                            <NavItem>
+                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
+                            </NavItem>
+                            ) : (
+                                <div></div>
+                            )}
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>
@@ -282,11 +308,78 @@ class Report extends Component {
                         </UncontrolledDropdown>
                         <UncontrolledDropdown>
                             <DropdownToggle nav>
-                                <BsBell size={20} />
+                                <div className="optionType">
+                                    <BsBell size={20} />
+                                    {notif.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                        <BsFillCircleFill className="red ball" size={10} />
+                                    ) : ( 
+                                        <div></div>
+                                    )}
+                                </div>
                             </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem >Reject Dokumen</DropdownItem>
-                            </DropdownMenu>
+                            {level === '2' || level === '3' ? (
+                                <DropdownMenu right>
+                                    {notifSa.length > 0 && notifSa.map(item => {
+                                        return (
+                                        <DropdownItem href="/dokumen">
+                                            <div className="notif">
+                                                <FcDocument size={60} className="mr-4"/>
+                                                <div>
+                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>{item.dokumen.dokumen}</div>
+                                                    <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </DropdownItem>
+                                        )
+                                    })}
+                                    {notifKasir.length === 0 && notifSa.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                    )}
+                                </DropdownMenu>
+                            ) : level === '4' || level === '5' ? (
+                                <DropdownMenu right>
+                                {notif.length > 0 && notif.map(item => {
+                                    return (
+                                    <DropdownItem href="/dokumen">
+                                        <div className="notif">
+                                            <FcDocument size={40} className="mr-4"/>
+                                            <div>
+                                                <div>Dokumen Anda Direject</div>
+                                                <div>{item.dokumen.dokumen}</div>
+                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
+                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                    </DropdownItem>
+                                    )
+                                })}
+                                {notif.length === 0 && (
+                                    <DropdownItem>
+                                        <div className="grey">    
+                                            You don't have any notifications 
+                                        </div>        
+                                    </DropdownItem>
+                                )}
+                                </DropdownMenu>
+                            ) : (
+                                <DropdownMenu right>
+                                    <DropdownItem>
+                                            <div className="grey">    
+                                                You don't have any notifications 
+                                            </div>        
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            )}
                         </UncontrolledDropdown>
                     </Collapse>
                 </Navbar>
@@ -343,19 +436,13 @@ class Report extends Component {
                             <div className="headReport">
                                 <text className="col-md-2 fontReport">Depo</text>
                                 <div className="optionType col-md-4">
-                                    <text className="colon">:</text>
-                                    <Input 
-                                        type="select" 
-                                        name="select"
-                                        onChange={this.chooseDepo}
-                                        >
-                                        <option value=''>-Pilih Depo-</option>
-                                        {dataDepo.length !== 0 && dataDepo.map(item => {
-                                        return (
-                                            <option value={item.kode_plant}>{item.kode_plant + '-' + item.nama_depo}</option>
-                                        )
-                                        })}
-                                    </Input>
+                                    <text className="colons">:</text>
+                                    <Select
+                                            className="col-md-12"
+                                            options={this.state.options}
+                                            onChange={this.chooseDepo}
+                                            isDisabled={this.state.pic === '' ? false : true}
+                                        />
                                 </div>
                             </div>
                             <Button
@@ -434,7 +521,9 @@ const mapDispatchToProps = {
     resetError: depo.resetError,
     report: dashboard.report,
     resetErrorReport: dashboard.resetErrorReport,
-    downloadReport: dashboard.downloadReport
+    downloadReport: dashboard.downloadReport,
+    getNotifArea: dashboard.getNotifArea,
+    getNotif: dashboard.getNotif
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Report)

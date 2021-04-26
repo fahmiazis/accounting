@@ -24,10 +24,19 @@ const divisiState = {
     dataKasir: [],
     isSend: false,
     page: {},
+    pages: {},
     isReport: false,
     dataReport: '',
     isDownload: false,
-    dataDownload: ''
+    dataDownload: '',
+    dataSaActive: [],
+    dataKasirActive: [],
+    dataDepoActive: [],
+    isEdit: false,
+    isGetNotif: false,
+    notifSa: [],
+    notifKasir: [],
+    notif: []
 };
 
 export default (state=divisiState, action) => {
@@ -87,6 +96,57 @@ export default (state=divisiState, action) => {
                     alertM: action.payload.response
                 };
             }
+            case 'GET_NOTIF_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'GET_NOTIF_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetNotif: true,
+                    isError: false,
+                    notifSa: action.payload.data.sa,
+                    notifKasir: action.payload.data.kasir,
+                };
+            }
+            case 'GET_NOTIF_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetNotif: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server",
+                };
+            }
+            case 'GET_NOTIF_AREA_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'GET_NOTIF_AREA_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetNotif: true,
+                    isError: false,
+                    notif: action.payload.data.result,
+                };
+            }
+            case 'GET_NOTIF_AREA_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetNotif: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server",
+                };
+            }
             case 'NEXT_DATA_PENDING': {
                 return {
                     ...state,
@@ -103,7 +163,11 @@ export default (state=divisiState, action) => {
                     dataSa: action.payload.data.sa,
                     dataKasir: action.payload.data.kasir,
                     dataDepo: action.payload.data.results.rows,
-                    page: action.payload.data.pageInfo
+                    page: action.payload.data.pageInfo,
+                    pages: action.payload.data.pageInfo,
+                    dataSaActive: action.payload.data.sa,
+                    dataKasirActive: action.payload.data.kasir,
+                    dataDepoActive: action.payload.data.results.rows,
                 };
             }
             case 'NEXT_DATA_REJECTED': {
@@ -139,6 +203,36 @@ export default (state=divisiState, action) => {
                     ...state,
                     isLoading: false,
                     isAdd: false,
+                    isError: true,
+                    alertMsg: "Unable connect to server"
+                };
+            }
+            case 'GET_ALL_ACTIVITY_PENDING': {
+                return {
+                    ...state,
+                    isGetPic: false,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'GET_ALL_ACTIVITY_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isGetPic: true,
+                    dataSaActive: action.payload.data.sa,
+                    dataKasirActive: action.payload.data.kasir,
+                    dataDepoActive: action.payload.data.results.rows,
+                    pages: action.payload.data.pageInfo,
+                    alertMsg: 'get activity Succesfully'
+                };
+            }
+            case 'GET_ALL_ACTIVITY_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGetPic: false,
                     isError: true,
                     alertMsg: "Unable connect to server"
                 };
@@ -219,6 +313,31 @@ export default (state=divisiState, action) => {
                     isError: true,
                     alertMsg: action.payload.response.data.message,
                     alertM: action.payload.response.data.error
+                };
+            }
+            case 'EDIT_ACCESS_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ....'
+                };
+            }
+            case 'EDIT_ACCESS_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isEdit: true,
+                    isError: false,
+                    alertMsg: 'edit acess Succesfully'
+                };
+            }
+            case 'EDIT_ACCESS_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isEdit: false,
+                    isError: true,
+                    alertMsg: 'edit access failed',
                 };
             }
             case 'UPLOAD_DOKUMEN_PENDING': {
@@ -359,7 +478,8 @@ export default (state=divisiState, action) => {
                     isReject: false,
                     alertM: '',
                     isReport: false,
-                    isUpdate: false
+                    isUpdate: false,
+                    isEdit: false
                 }
             }
             case 'RESET_REPORT': {

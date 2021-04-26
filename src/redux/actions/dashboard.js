@@ -23,6 +23,10 @@ export default {
         type: 'GET_ACTIVITY',
         payload: http(token).get(`/dashboard/activity?search=${search}`)
     }),
+    getAllActivity: (token, search, limit, tipe) => ({
+        type: 'GET_ALL_ACTIVITY',
+        payload: http(token).get(`/dashboard/active?tipe=${tipe}&find=${search}&limit=${limit}`)
+    }),
     uploadDokumen: (token, id, time, data) => ({
         type: 'UPLOAD_DOKUMEN',
         payload: http(token).post(`/dashboard/upload/${id}/${time}`, data)
@@ -55,10 +59,22 @@ export default {
         type: 'DOWNLOAD_REPORT',
         payload: http().get(link)
     }),
+    editAccessActive: (token, id, data) => ({
+        type:'EDIT_ACCESS',
+        payload: http(token).patch(`/dashboard/edit/${id}`, qs.stringify(data))
+    }),
     resetError: () => ({
         type: 'RESET'
     }),
     resetErrorReport: () => ({
         type: 'RESET_REPORT'
+    }),
+    getNotif: (token) => ({
+        type: 'GET_NOTIF',
+        payload: http(token).get(`/dashboard/notif`)
+    }),
+    getNotifArea: (token) => ({
+        type: 'GET_NOTIF_AREA',
+        payload: http(token).get(`/dashboard/notif`)
     })
 }

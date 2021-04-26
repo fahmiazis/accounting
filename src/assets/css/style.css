@@ -6,6 +6,7 @@
   
   html,body{
     height: 100%;
+    overflow-y: auto;
   }
   
   .bodyLogin {
@@ -225,6 +226,9 @@
 .green {
   color: green;
 }
+.tableSA {
+  overflow-y: scroll;
+}
 .tableDashboard {
   margin-top: 20px;
   margin-bottom: 20px;
@@ -424,6 +428,11 @@
   align-items: center;
   margin-bottom: 20px;
 }
+.headReports {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 .optionType {
   display: flex;
   flex-direction: row;
@@ -490,4 +499,20 @@
 }
 .item {
   width: max-content;
+}
+.notif {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.modal-open {
+  overflow: auto;
+}
+.grey {
+  color: #9b9b9b;
+}
+.ball {
+  position: absolute;
+  margin-left: 10px;
+  margin-bottom: 8px;
 }
