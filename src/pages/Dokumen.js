@@ -257,7 +257,7 @@ class Dokumen extends Component {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${value.path.dokumen}.${cek[1]}`); //or any other extension
+            link.setAttribute('download', `${value.path.kode_depo}_${value.path.dokumen}.${cek[1]}`); //or any other extension
             document.body.appendChild(link);
             link.click();
         });
