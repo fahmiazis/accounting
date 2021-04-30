@@ -20,6 +20,8 @@ import {BsFillCircleFill} from 'react-icons/bs'
 
 class Report extends Component {
     state = {
+        month: [],
+        moon: 0,
         isOpen: false,
         dropOpen: false,
         dropOpenNum: false,
@@ -27,10 +29,11 @@ class Report extends Component {
         onChange: new Date(),
         sidebarOpen: false,
         modalAdd: false,
+        settingOpen: false,
         modalEdit: false,
         modalUpload: false,
         modalDownload: false,
-        type: "Daily",
+        type: "daily",
         openType: false,
         depo: [],
         kode: '',
@@ -44,6 +47,10 @@ class Report extends Component {
         this.setState({isOpen: !this.state.isOpen})
     }
 
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
+    }
+
     dropDown = () => {
         this.setState({dropOpen: !this.state.dropOpen})
     }
@@ -52,7 +59,12 @@ class Report extends Component {
     }
 
     chooseFrom = (e) => {
-        this.setState({from: e.target.value})
+        if (this.state.type === 'monthly') {
+            this.setState({from: e.target.value, to: e.target.value})
+            console.log(e)
+        } else {
+            this.setState({from: e.target.value})   
+        }
     }
 
     chooseTo = (e) => {
@@ -88,26 +100,26 @@ class Report extends Component {
                     pic: pic,
                     kode_plant: ''
                 }
-                await this.props.report(token, from, to, data)
+                await this.props.report(token, from, to, data, this.state.type)
             } else if (pic === '') {
                 data = {
                     pic: '',
                     kode_plant: kode
                 }
-                await this.props.report(token, from, to, data)
+                await this.props.report(token, from, to, data, this.state.type)
             }
         } else if (level === '4' || level === '5') {
             data = {
                 pic: '',
                 kode_plant: depo
             }
-            await this.props.report(token, from, to, data)
+            await this.props.report(token, from, to, data, this.state.type)
         } else if (level === '3') {
             data = {
                 pic: '',
                 kode_plant: kode
             }
-            await this.props.report(token, from, to, data)
+            await this.props.report(token, from, to, data, this.state.type)
         }
     }
 
@@ -134,6 +146,8 @@ class Report extends Component {
             this.download()
             this.props.resetErrorReport()
         }
+        console.log(this.state.to)
+        console.log(this.state.from)
     }
 
     downloadResultReport = async () => {
@@ -204,6 +218,7 @@ class Report extends Component {
 
     prepareSelect = () => {
         const { dataDepo } = this.props.depo
+        const moon = []
         const temp = [
             {value: '', label: '-Pilih Depo-'}
         ]
@@ -215,6 +230,10 @@ class Report extends Component {
             })
             this.setState({options: temp})
         }
+        for (let i = 0; i < 3; i++) {
+            moon.push(moment().subtract(i, 'month'))
+        }
+        this.setState({month: moon, moon: moon[0]})
     }
 
     render() {
@@ -291,9 +310,19 @@ class Report extends Component {
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                            <NavItem>
-                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
-                            </NavItem>
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                             ) : (
                                 <div></div>
                             )}
@@ -395,17 +424,17 @@ class Report extends Component {
                                         {type}
                                     </DropdownToggle>
                                     <DropdownMenu>
-                                        <DropdownItem onClick={() => this.setState({type: 'Daily'})}>
+                                        <DropdownItem onClick={() => this.setState({type: 'daily'})}>
                                             Daily
                                         </DropdownItem>
-                                        <DropdownItem onClick={() => this.setState({type: 'Monthly'})}>
+                                        <DropdownItem onClick={() => this.setState({type: 'monthly'})}>
                                             Monthly
                                         </DropdownItem>
                                     </DropdownMenu>
                                 </ButtonDropdown>
                             </div>
                         </div>
-                        {type === "Daily" ? (
+                        {type === "daily" ? (
                         <div className="headReport">
                             <text className="col-md-2 fontReport">Tanggal Dokumen</text>
                             <div className="optionType col-md-4">
@@ -416,15 +445,18 @@ class Report extends Component {
                                 <Input type="date" name="creeatedAt" onChange={this.chooseTo} />
                             </div>
                         </div>
-                        ) : type === "Monthly" ?(
+                        ) : type === "monthly" ?(
                         <div className="headReport">
                             <text className="col-md-2 fontReport">Periode Dokumen</text>
                             <div className="optionType col-md-4">
                                 <text className="colon">:</text>
-                                <Input type="select" name="select">
-                                    <option>-Pilih Period-</option>
-                                    <option>Januari</option>
-                                    <option>Februari</option>
+                                <Input type="select" name="select" onChange={this.chooseFrom}>
+                                    <option value="">-Pilih Period-</option>
+                                    {this.state.month.length !== 0 && this.state.month.map(item => {
+                                        return (
+                                            <option value={moment(item).format('YYYY-MM-DD')}>{moment(item).format('MMMM')}</option>
+                                        )
+                                    })}
                                 </Input>
                             </div>
                         </div>

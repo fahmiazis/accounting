@@ -39,6 +39,7 @@ class SettingDokumen extends Component {
         value: '',
         onChange: new Date(),
         sidebarOpen: false,
+        settingOpen: false,
         modalAdd: false,
         modalEdit: false,
         modalUpload: false,
@@ -61,6 +62,10 @@ class SettingDokumen extends Component {
                 alert: false
             })
          }, 10000)
+    }
+
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
     }
 
     next = async () => {
@@ -250,6 +255,23 @@ class SettingDokumen extends Component {
                             <NavItem>
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
+                            {level === '2' ? (
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            ) : (
+                                <div></div>
+                            )}
                         </Nav>
                         <UncontrolledDropdown>
                             <DropdownToggle nav caret>

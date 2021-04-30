@@ -3,9 +3,9 @@ import http from '../../helpers/http'
 import qs from 'qs'
 
 export default {
-    updateUploadDokumen: (token, id, data) => ({
+    updateUploadDokumen: (token, id, idAct, data) => ({
         type: 'UPDATE_UPLOAD_DOKUMEN',
-        payload: http(token).patch(`/dashboard/upload/edit/${id}`, data),
+        payload: http(token).patch(`/dashboard/upload/edit/${id}/${idAct}`, data),
     }),
     getDashboard: (token, tipe) => ({
         type: 'GET_DASHBOARD',
@@ -27,9 +27,9 @@ export default {
         type: 'GET_ALL_ACTIVITY',
         payload: http(token).get(`/dashboard/active?tipe=${tipe}&find=${search}&limit=${limit}`)
     }),
-    uploadDokumen: (token, id, time, data) => ({
+    uploadDokumen: (token, id, idAct, data) => ({
         type: 'UPLOAD_DOKUMEN',
-        payload: http(token).post(`/dashboard/upload/${id}/${time}`, data)
+        payload: http(token).post(`/dashboard/upload/${id}/${idAct}`, data)
     }),
     approve: (token, id, idAct) => ({
         type: 'APPROVE',
@@ -51,9 +51,9 @@ export default {
         type: 'DOWNLOAD',
         payload: http().get(`/uploads/${data}`)
     }),
-    report: (token, fr, to, data) => ({
+    report: (token, fr, to, data, tipe) => ({
         type: 'REPORT',
-        payload: http(token).post(`/dashboard/report?from=${fr}&to=${to}`, qs.stringify(data))
+        payload: http(token).post(`/dashboard/report?from=${fr}&to=${to}&tipe=${tipe}`, qs.stringify(data))
     }),
     downloadReport: (link) => ({
         type: 'DOWNLOAD_REPORT',

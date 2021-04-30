@@ -9,6 +9,7 @@ import PrivateRoute from './components/PrivateRoute'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
+import DateClossing from './pages/DateClossing'
 import Dokumen from './pages/Dokumen'
 import MasterEmail from './pages/MasterEmail'
 import MasterPic from './pages/MasterPic'
@@ -74,6 +75,9 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/lock">
                     <LockDepo />
+                </PrivateRoute>
+                <PrivateRoute path="/date">
+                    <DateClossing />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

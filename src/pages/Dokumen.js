@@ -34,6 +34,7 @@ const alasanSchema = Yup.object().shape({
 
 class Dokumen extends Component {
     state = {
+        month: [],
         alert: false,
         isOpen: false,
         openModal: false,
@@ -57,12 +58,15 @@ class Dokumen extends Component {
         aktif: {},
         act: [],
         totalDoc: [],
+        settingOpen: false,
         tipe: 'daily',
         appAct: {},
         date: '',
         time: '',
         search: '',
-        limit: 10
+        limit: 10,
+        moon: 0,
+        periode: false
     }
 
     showAlert = () => {
@@ -96,7 +100,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const {isReject} = this.props.dashboard
         await this.props.reject(token, fileName.id, appAct.id, value)
-        await this.props.sendEmail(token, fileName.id)
+        // await this.props.sendEmail(token, fileName.id)
         if (isReject) {
             this.getDataDashboard()
         }
@@ -126,7 +130,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const data = new FormData()
         data.append('document', fileUpload)
-        await this.props.uploadDocument(token, detail.id, moment(aktif.createdAt).utc().format('YYYY-MM-DD'), data)
+        await this.props.uploadDocument(token, detail.id, aktif.id, data)
         const {isUpload} = this.props.dashboard
         if (isUpload) {
             this.setState({fileUpload: ''})
@@ -146,23 +150,30 @@ class Dokumen extends Component {
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 10000000) {
-            this.setState({errMsg: "Maximum upload size 10 MB"})
+        if (size >= 20000000) {
+            this.setState({errMsg: "Maximum upload size 20 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf') {
-            this.setState({errMsg: 'Invalid file type. Only excel and pdf files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip') {
+            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7zip files are allowed.'})
             this.uploadAlert()
         } else {
             const {detail, aktif} = this.state
             const token = localStorage.getItem('token')
             const data = new FormData()
             data.append('document', e.target.files[0])
-            this.props.uploadDocument(token, detail.id, moment(aktif.createdAt).utc().format('YYYY-MM-DD'), data)
+            this.props.uploadDocument(token, detail.id, aktif.id, data)
         }
+    }
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
     }
 
     dropOpen = () => {
         this.setState({drop: !this.state.drop})
+    }
+
+    dropPeriod = () => {
+        this.setState({periode: !this.state.periode})
     }
 
     dropLink = () => {
@@ -225,7 +236,7 @@ class Dokumen extends Component {
             const token = localStorage.getItem('token')
             const data = new FormData()
             data.append('document', e.target.files[0])
-            this.props.updateUploadDokumen(token, detail.id, data)
+            this.props.updateUploadDokumen(token, detail.id, aktif.id, data)
         }
     }
 
@@ -289,6 +300,13 @@ class Dokumen extends Component {
         this.setState({limit: value === undefined ? 10 : value})
     }
 
+    getDataMonthly = async (value) => {
+        const token = localStorage.getItem('token')
+        await this.props.getDashboardPic(token, 'monthly', moment(value).format('YYYY-MM-DD'), this.state.search, this.state.limit)
+        this.setState({moon: moment(value), time: value})
+    }
+
+
     getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
@@ -308,6 +326,7 @@ class Dokumen extends Component {
     prepareDokumen = () => {
         const {dataSa, dataKasir} = this.props.dashboard
         const data = []
+        const moon = []
         dataSa.map(x => {
             return (
                 data.push(x !== null ? x.dokumen.length : 0)
@@ -322,7 +341,10 @@ class Dokumen extends Component {
         for (let i = 0; i <= Math.max(...data)-1; i++) {
             res.push(i)
         }
-        this.setState({totalDoc: res})
+        for (let i = 0; i < 3; i++) {
+            moon.push(moment().subtract(i, 'month'))
+        }
+        this.setState({totalDoc: res, month: moon, moon: moon[0]})
     }
 
     componentDidUpdate() {
@@ -439,9 +461,19 @@ class Dokumen extends Component {
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                            <NavItem>
-                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
-                            </NavItem>
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                             ) : (
                                 <div></div>
                             )}
@@ -578,17 +610,18 @@ class Dokumen extends Component {
                                 level == "6" || level == '1' || level == '2' || level == '3' ? (
                                 <div className="dateDash">
                                     <div>Periode Dokumen: </div>
-                                    {/* <div className="inputCalendar">
-                                        <Input  type="date"/>
-                                    </div> */}
-                                    <Input
-                                        type="select"
-                                        name="select"
-                                        >   
-                                        <option>Februari</option>
-                                        <option>Maret</option>
-                                        <option>April</option>
-                                    </Input>
+                                    <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
+                                        <DropdownToggle caret color="light">
+                                            {moment(this.state.moon).format('MMMM')}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            {this.state.month.length !== 0 && this.state.month.map(item => {
+                                                return (
+                                                    <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM')}</DropdownItem>
+                                                )
+                                            })}
+                                        </DropdownMenu>
+                                    </ButtonDropdown>
                                     {/* <div><FaCalendarAlt size={22} /></div> */}
                                     {/* <Calendar
                                     value={this.state.value}
@@ -762,6 +795,10 @@ class Dokumen extends Component {
                                                                         <AiOutlineClose className="red" />
                                                                     ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
                                                                         <MdWatchLater className="red" size={20}/>
+                                                                    ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
+                                                                        <MdWatchLater className="red" size={20}/>
+                                                                    ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
+                                                                        <MdWatchLater className="red" size={20}/>
                                                                     ) : (
                                                                         <div></div>
                                                                     )
@@ -825,6 +862,10 @@ class Dokumen extends Component {
                                                                                 ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <AiOutlineClose className="red" />
                                                                                 ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <MdWatchLater className="red" size={20}/>
                                                                                 ) : (
                                                                                     <div></div>
@@ -917,6 +958,10 @@ class Dokumen extends Component {
                                                                                 ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <AiOutlineClose className="red" />
                                                                                 ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <MdWatchLater className="red" size={20}/>
                                                                                 ) : (
                                                                                     <div></div>
@@ -1043,6 +1088,10 @@ class Dokumen extends Component {
                                                 <AiOutlineCheck className="blue" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
                                                 <MdWatchLater className="red" size={25}/>
+                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                                <MdWatchLater className="red" size={25}/>
+                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
+                                                <MdWatchLater className="red" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
                                                 <AiOutlineClose className="red" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 ? (
@@ -1118,6 +1167,10 @@ class Dokumen extends Component {
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
                                                     <AiOutlineCheck className="blue" size={25}/>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
                                                     <MdWatchLater className="red" size={25}/>
                                                 ) : (
                                                     <div></div>

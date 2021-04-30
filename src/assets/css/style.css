@@ -516,3 +516,6 @@
   margin-left: 10px;
   margin-bottom: 8px;
 }
+.uncon {
+  max-height: max-content;
+}

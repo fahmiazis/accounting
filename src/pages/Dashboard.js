@@ -32,13 +32,15 @@ const alasanSchema = Yup.object().shape({
     alasan: Yup.string().required()
 });
 
-class Dokumen extends Component {
+class Dashboard extends Component {
     state = {
+        month: [],
         alert: false,
         isOpen: false,
         openModal: false,
         drop: false,
         dropOpen: false,
+        dropLink: false,
         dropOpenNum: false,
         value: '',
         onChange: new Date(),
@@ -56,13 +58,15 @@ class Dokumen extends Component {
         aktif: {},
         act: [],
         totalDoc: [],
+        settingOpen: false,
         tipe: 'daily',
         appAct: {},
         date: '',
         time: '',
         search: '',
         limit: 10,
-        dropLink: false,
+        moon: 0,
+        periode: false
     }
 
     showAlert = () => {
@@ -96,7 +100,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const {isReject} = this.props.dashboard
         await this.props.reject(token, fileName.id, appAct.id, value)
-        await this.props.sendEmail(token, fileName.id)
+        // await this.props.sendEmail(token, fileName.id)
         if (isReject) {
             this.getDataDashboard()
         }
@@ -126,33 +130,54 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const data = new FormData()
         data.append('document', fileUpload)
-        await this.props.uploadDocument(token, detail.id, moment(aktif.createdAt).utc().format('YYYY-MM-DD'), data)
+        await this.props.uploadDocument(token, detail.id, aktif.id, data)
         const {isUpload} = this.props.dashboard
         if (isUpload) {
             this.setState({fileUpload: ''})
         }
     }
 
+    getNotif = async () => {
+        const token = localStorage.getItem('token')
+        const level = localStorage.getItem('level')
+        if (level === '2' || level === '3') {
+            await this.props.getNotif(token)
+        } else if (level === '4' || level === '5') {
+            await this.props.getNotifArea(token)
+        }
+    }
+
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 10000000) {
-            this.setState({errMsg: "Maximum upload size 10 MB"})
+        if (size >= 20000000) {
+            this.setState({errMsg: "Maximum upload size 20 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf') {
-            this.setState({errMsg: 'Invalid file type. Only excel and pdf files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip') {
+            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7zip files are allowed.'})
             this.uploadAlert()
         } else {
             const {detail, aktif} = this.state
             const token = localStorage.getItem('token')
             const data = new FormData()
             data.append('document', e.target.files[0])
-            this.props.uploadDocument(token, detail.id, moment(aktif.createdAt).utc().format('YYYY-MM-DD'), data)
+            this.props.uploadDocument(token, detail.id, aktif.id, data)
         }
+    }
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
     }
 
     dropOpen = () => {
         this.setState({drop: !this.state.drop})
+    }
+
+    dropPeriod = () => {
+        this.setState({periode: !this.state.periode})
+    }
+
+    dropLink = () => {
+        this.setState({dropLink: !this.state.dropLink})
     }
 
     toggle = () => {
@@ -190,8 +215,9 @@ class Dokumen extends Component {
         await this.props.showDokumen(token, value.path.id)
         this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
+        console.log(value)
         if (isShow) {
-            this.downloadData(value)
+            this.downloadDataPic(value)
             this.openModalPdf()
         }
     }
@@ -199,23 +225,24 @@ class Dokumen extends Component {
     onEditDokumen = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 10000000) {
-            this.setState({errMsg: "Maximum upload size 10 MB"})
+        if (size >= 20000000) {
+            this.setState({errMsg: "Maximum upload size 20 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf') {
-            this.setState({errMsg: 'Invalid file type. Only excel and pdf files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip') {
+            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7zip files are allowed.'})
             this.uploadAlert()
         } else {
             const {detail, aktif} = this.state
             const token = localStorage.getItem('token')
             const data = new FormData()
             data.append('document', e.target.files[0])
-            this.props.updateUploadDokumen(token, detail.id, data)
+            this.props.updateUploadDokumen(token, detail.id, aktif.id, data)
         }
     }
 
     downloadData = (value) => {
         const download = value.path.split('/')
+        const cek = download[2].split('.')
         axios({
             url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
             method: 'GET',
@@ -224,7 +251,24 @@ class Dokumen extends Component {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${download[2]}`); //or any other extension
+            link.setAttribute('download', `${value.dokumen}.${cek[1]}`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    downloadDataPic = (value) => {
+        const download = value.path.path.split('/')
+        const cek = download[2].split('.')
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${value.path.kode_depo}_${value.path.dokumen}.${cek[1]}`); //or any other extension
             document.body.appendChild(link);
             link.click();
         });
@@ -256,15 +300,12 @@ class Dokumen extends Component {
         this.setState({limit: value === undefined ? 10 : value})
     }
 
-    getNotif = async () => {
+    getDataMonthly = async (value) => {
         const token = localStorage.getItem('token')
-        const level = localStorage.getItem('level')
-        if (level === '2' || level === '3') {
-            await this.props.getNotif(token)
-        } else if (level === '4' || level === '5') {
-            await this.props.getNotifArea(token)
-        }
+        await this.props.getDashboardPic(token, 'monthly', moment(value).format('YYYY-MM-DD'), this.state.search, this.state.limit)
+        this.setState({moon: moment(value), time: value})
     }
+
 
     getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
@@ -277,17 +318,15 @@ class Dokumen extends Component {
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
+            await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value})
         }
-    }
-
-    dropLink = () => {
-        this.setState({dropLink: !this.state.dropLink})
     }
 
     prepareDokumen = () => {
         const {dataSa, dataKasir} = this.props.dashboard
         const data = []
+        const moon = []
         dataSa.map(x => {
             return (
                 data.push(x !== null ? x.dokumen.length : 0)
@@ -302,7 +341,10 @@ class Dokumen extends Component {
         for (let i = 0; i <= Math.max(...data)-1; i++) {
             res.push(i)
         }
-        this.setState({totalDoc: res})
+        for (let i = 0; i < 3; i++) {
+            moon.push(moment().subtract(i, 'month'))
+        }
+        this.setState({totalDoc: res, month: moon, moon: moon[0]})
     }
 
     componentDidUpdate() {
@@ -330,13 +372,17 @@ class Dokumen extends Component {
             this.prepareDokumen()
             this.props.resetError()
         } else if (isApprove) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openApprove: false})
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
             this.props.resetError()
         } else if (isReject) {
-            this.getDataDashboard()
             this.setState({openModal: false, openPdf: false, openReject: false})
             this.props.resetError()
+            setTimeout(() => {
+                this.getDataDashboard()
+            }, 500)
         }
     }
 
@@ -345,6 +391,7 @@ class Dokumen extends Component {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
         const level = localStorage.getItem('level')
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
         return (
             <>
@@ -414,9 +461,19 @@ class Dokumen extends Component {
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                            <NavItem>
-                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
-                            </NavItem>
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                             ) : (
                                 <div></div>
                             )}
@@ -515,7 +572,7 @@ class Dokumen extends Component {
                         <div>{alertM}</div>
                     </Alert>
                     <div className="bodyDashboard">
-                        <div className="titleDashboard">Dashboard</div>
+                        <div className="titleDashboard">Verifikasi Dokumen</div>
                         <div className="headDashboard">
                             {level === '5' || level === '4' ? (
                                 <div></div>
@@ -553,17 +610,18 @@ class Dokumen extends Component {
                                 level == "6" || level == '1' || level == '2' || level == '3' ? (
                                 <div className="dateDash">
                                     <div>Periode Dokumen: </div>
-                                    {/* <div className="inputCalendar">
-                                        <Input  type="date"/>
-                                    </div> */}
-                                    <Input
-                                        type="select"
-                                        name="select"
-                                        >   
-                                        <option>Februari</option>
-                                        <option>Maret</option>
-                                        <option>April</option>
-                                    </Input>
+                                    <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
+                                        <DropdownToggle caret color="light">
+                                            {moment(this.state.moon).format('MMMM')}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            {this.state.month.length !== 0 && this.state.month.map(item => {
+                                                return (
+                                                    <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM')}</DropdownItem>
+                                                )
+                                            })}
+                                        </DropdownMenu>
+                                    </ButtonDropdown>
                                     {/* <div><FaCalendarAlt size={22} /></div> */}
                                     {/* <Calendar
                                     value={this.state.value}
@@ -737,6 +795,10 @@ class Dokumen extends Component {
                                                                         <AiOutlineClose className="red" />
                                                                     ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
                                                                         <MdWatchLater className="red" size={20}/>
+                                                                    ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
+                                                                        <MdWatchLater className="red" size={20}/>
+                                                                    ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
+                                                                        <MdWatchLater className="red" size={20}/>
                                                                     ) : (
                                                                         <div></div>
                                                                     )
@@ -800,6 +862,10 @@ class Dokumen extends Component {
                                                                                 ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <AiOutlineClose className="red" />
                                                                                 ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <MdWatchLater className="red" size={20}/>
                                                                                 ) : (
                                                                                     <div></div>
@@ -893,6 +959,10 @@ class Dokumen extends Component {
                                                                                     <AiOutlineClose className="red" />
                                                                                 ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                     <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
                                                                                 ) : (
                                                                                     <div></div>
                                                                                 )
@@ -950,7 +1020,7 @@ class Dokumen extends Component {
                                 </tbody>
                                 ): (
                                     <tbody>
-                                    <tr className="danger" onClick={this.openModalProses}>
+                                    <tr className="danger">
                                         <th scope="row">1</th>
                                         <td>Anjar</td>
                                         <td>107</td>
@@ -982,10 +1052,17 @@ class Dokumen extends Component {
                         <div>
                             <div className="infoPage">
                                 <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                {level == '5' || level == '4' ? (
+                                <div className="pageButton">
+                                    <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                                </div>
+                                ) : (
                                 <div className="pageButton">
                                     <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
                                     <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1010,6 +1087,10 @@ class Dokumen extends Component {
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
                                                 <AiOutlineCheck className="blue" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
+                                                <MdWatchLater className="red" size={25}/>
+                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                                <MdWatchLater className="red" size={25}/>
+                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
                                                 <MdWatchLater className="red" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
                                                 <AiOutlineClose className="red" size={25}/>
@@ -1087,6 +1168,10 @@ class Dokumen extends Component {
                                                     <AiOutlineCheck className="blue" size={25}/>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
                                                     <MdWatchLater className="red" size={25}/>
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
+                                                    <MdWatchLater className="red" size={25}/>
                                                 ) : (
                                                     <div></div>
                                                 )
@@ -1097,13 +1182,7 @@ class Dokumen extends Component {
                                             {act.length > 0 && act[0].doc.length > 0 ? (
                                                 <div>
                                                 {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                    <Input
-                                                        type="file"
-                                                        name="file"
-                                                        accept=".xls,.xlsx,.pdf"
-                                                        onClick={() => this.setState({detail: item})}
-                                                        onChange={this.onChangeHandler}
-                                                    />
+                                                    <div>Belum Upload</div>
                                                     ) : 
                                                     (
                                                     <div>
@@ -1217,8 +1296,11 @@ class Dokumen extends Component {
                                 onBlur={handleBlur('alasan')}
                                 >
                                     <option>-Pilih Alasan-</option>
-                                    <option value="Report Tidak Sesuai" >Report Tidak Sesuai</option>
-                                    <option value="Report Tidak Update">Report Tidak Update</option>
+                                    {dataAlasan.length !== 0 && dataAlasan.map(item => {
+                                        return (
+                                        <option value={item.alasan} >{item.alasan}</option>
+                                        )
+                                    })}
                                 </Input>
                             </div>
                             {errors.alasan ? (
@@ -1259,7 +1341,8 @@ class Dokumen extends Component {
 }
 
 const mapStateToProps = state => ({
-    dashboard: state.dashboard
+    dashboard: state.dashboard,
+    alasan: state.alasan
 })
 
 const mapDispatchToProps = {
@@ -1281,4 +1364,4 @@ const mapDispatchToProps = {
     getNotif: dashboard.getNotif
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Dokumen)
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard)

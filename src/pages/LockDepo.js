@@ -35,6 +35,7 @@ const alasanSchema = Yup.object().shape({
 
 class LockDepo extends Component {
     state = {
+        settingOpen: false,
         alert: false,
         isOpen: false,
         openModal: false,
@@ -186,6 +187,10 @@ class LockDepo extends Component {
     dropOpenN = () => {
         this.setState({dropOpenNum: !this.state.dropOpenNum})
     }
+
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
+    }
     openModalProses = () => {
         this.setState({openModal: !this.state.openModal})
     }
@@ -239,7 +244,6 @@ class LockDepo extends Component {
     lockOpen = (value) => {
         this.setState({lock: value})
         this.lockOpenModal()
-        console.log(value)
     }
 
     downloadData = (value) => {
@@ -289,16 +293,16 @@ class LockDepo extends Component {
     getDataLimit = async (value) => {
         const token = localStorage.getItem('token')
         const limit = value === undefined ? this.state.limit : value
-        await this.props.getAllActivity(token, this.state.search, this.state.tipe === '' ? 'daily' : this.state.tipe, limit)
+        await this.props.getAllActivity(token, this.state.search, limit, this.state.tipe === '' ? 'daily' : this.state.tipe)
         this.setState({limit: value === undefined ? 10 : value})
     }
 
     getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
+        this.setState({tipe: value === undefined ? 'daily' : value})
         if (level === '2') {
             await this.props.getAllActivity(token, this.state.search, this.state.limit, value === undefined ? 'daily' : value)
-            this.setState({tipe: value === undefined ? 'daily' : value})
         }
     }
 
@@ -313,12 +317,20 @@ class LockDepo extends Component {
     }
 
     prepareDokumen = () => {
+        const { tipe } = this.state
         const data = []
-        const time = moment().endOf('month').format('DD')
-        for (let i = 1; i <= time; i++) {
-            data.push(i)
+        if (tipe === 'daily') {
+            const time = moment().endOf('month').format('DD')
+            for (let i = 1; i <= time; i++) {
+                data.push(i)
+            }
+            this.setState({totalDoc: data})   
+        } else if (tipe === 'monthly') {
+            for (let i = 1; i <= 12; i++) {
+                data.push(i)
+            }
+            this.setState({totalDoc: data}) 
         }
-        this.setState({totalDoc: data})
     }
 
     componentDidUpdate() {
@@ -441,9 +453,19 @@ class LockDepo extends Component {
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                            <NavItem>
-                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
-                            </NavItem>
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                             ) : (
                                 <div></div>
                             )}
@@ -573,24 +595,36 @@ class LockDepo extends Component {
                                         </ButtonDropdown>
                                     )}
                                 </div>
-                                    <div className="secSearch">
-                                        <text>Search: </text>
-                                        <Input 
-                                        className="search"
-                                        onChange={this.onSearch}
-                                        value={this.state.search}
-                                        onKeyPress={this.onSearch}
-                                        >
-                                            <FaSearch size={20} />
-                                        </Input>
-                                    </div>
+                                <div>
+                                    <text>Jenis: </text>
+                                    <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                    <DropdownToggle caret color="light">
+                                        {this.state.tipe}
+                                    </DropdownToggle>
+                                    <DropdownMenu>
+                                        <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                        <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                    </DropdownMenu>
+                                    </ButtonDropdown>
+                                </div>
+                            </div>
+                            <div className="secSearch">
+                                <text>Search: </text>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
                             </div>
                         </div>
                         <div className="tableDashboard">
                             <Table bordered responsive hover className="tab">
                                 <thead>
                                 {level === '4' || level === '5' ? (
-                                        <tr>
+                                        <tr>moment().month(0)
                                             <th>No</th>
                                             <th>Tanggal Dokumen</th>
                                             <th>Tanggal Upload</th>
@@ -612,7 +646,7 @@ class LockDepo extends Component {
                                             <th>User Area</th>
                                             {totalDoc.length !== 0 && totalDoc.map(item => {
                                                 return (
-                                                <th>{item}</th>
+                                                <th>{this.state.tipe === 'monthly' ? moment().month(item - 1).format('MMMM') : item}</th>
                                                 )
                                             })}
                                         </tr>
@@ -654,32 +688,62 @@ class LockDepo extends Component {
                                                 <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 <td>SA</td>
-                                                {x.active.length > 0 ? (
-                                                    totalDoc.map(y => {
-                                                        let cek =  []
-                                                        let data = []
-                                                        for (let i = 0; i < totalDoc.length; i++) {
-                                                            if (x.active[i] === undefined) {
-                                                                cek.push('')
-                                                            } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
-                                                                cek.push(x.active[i].access)
-                                                                data.push(i)
+                                                {this.state.tipe === 'daily' ? (
+                                                    x.active.length > 0 ? (
+                                                        totalDoc.map(y => {
+                                                            let cek =  []
+                                                            let data = []
+                                                            for (let i = 0; i < totalDoc.length; i++) {
+                                                                if (x.active[i] === undefined) {
+                                                                    cek.push('')
+                                                                } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                    cek.push(x.active[i].access)
+                                                                    data.push(i)
+                                                                }
                                                             }
-                                                        }
-                                                        return (
-                                                            <td>
-                                                                <a className="green" onClick={() => this.lockOpen(x.active[data])}>
-                                                                    {cek}
-                                                                </a>
-                                                            </td>
-                                                        )
-                                                    })
-                                                ): (
-                                                    totalDoc.map(item => {
-                                                        return (
-                                                            <td></td>
-                                                        )
-                                                    })
+                                                            return (
+                                                                <td>
+                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                        {cek}
+                                                                    </a>
+                                                                </td>
+                                                            )
+                                                        })
+                                                    ): (
+                                                        totalDoc.map(item => {
+                                                            return (
+                                                                <td></td>
+                                                            )
+                                                        })
+                                                    )
+                                                ) : (
+                                                    x.active.length > 0 ? (
+                                                        totalDoc.map(y => {
+                                                            let cek =  []
+                                                            let data = []
+                                                            for (let i = 0; i < totalDoc.length; i++) {
+                                                                if (x.active[i] === undefined) {
+                                                                    cek.push('')
+                                                                } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
+                                                                    cek.push(x.active[i].access)
+                                                                    data.push(i)
+                                                                }
+                                                            }
+                                                            return (
+                                                                <td>
+                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                        {cek}
+                                                                    </a>
+                                                                </td>
+                                                            )
+                                                        })
+                                                    ): (
+                                                        totalDoc.map(item => {
+                                                            return (
+                                                                <td></td>
+                                                            )
+                                                        })
+                                                    )
                                                 )}
                                             </tr>
                                             ) : (
@@ -697,31 +761,59 @@ class LockDepo extends Component {
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 <td>Kasir</td>
-                                                {x.active.length > 0 ? (
-                                                    totalDoc.map(y => {
-                                                        let cek =  []
-                                                        for (let i = 0; i < totalDoc.length; i++) {
-                                                            if (x.active[i] === undefined) {
-                                                                cek.push('')
-                                                            } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
-                                                                cek.push(x.active[i].access)
+                                                {this.state.tipe === 'daily' ? (
+                                                    x.active.length > 0 ? (
+                                                        totalDoc.map(y => {
+                                                            let cek =  []
+                                                            for (let i = 0; i < totalDoc.length; i++) {
+                                                                if (x.active[i] === undefined) {
+                                                                    cek.push('')
+                                                                } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                    cek.push(x.active[i].access)
+                                                                }
                                                             }
-                                                        }
-                                                        return (
-                                                            <td>
-                                                                <a className="green" onClick={this.openModalProses}>
-                                                                    {cek}
-                                                                </a>
-                                                            </td>
-                                                        )
-                                                    })
-                                                ): (
-                                                    totalDoc.map(item => {
-                                                        return (
-                                                            <td></td>
-                                                        )
-                                                    })
-                                                )}
+                                                            return (
+                                                                <td>
+                                                                    <a className="green" onClick={this.openModalProses}>
+                                                                        {cek}
+                                                                    </a>
+                                                                </td>
+                                                            )
+                                                        })
+                                                    ): (
+                                                        totalDoc.map(item => {
+                                                            return (
+                                                                <td></td>
+                                                            )
+                                                        })
+                                                    )
+                                                ) : (
+                                                    x.active.length > 0 ? (
+                                                        totalDoc.map(y => {
+                                                            let cek =  []
+                                                            for (let i = 0; i < totalDoc.length; i++) {
+                                                                if (x.active[i] === undefined) {
+                                                                    cek.push('')
+                                                                } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
+                                                                    cek.push(x.active[i].access)
+                                                                }
+                                                            }
+                                                            return (
+                                                                <td>
+                                                                    <a className="green" onClick={this.openModalProses}>
+                                                                        {cek}
+                                                                    </a>
+                                                                </td>
+                                                            )
+                                                        })
+                                                    ): (
+                                                        totalDoc.map(item => {
+                                                            return (
+                                                                <td></td>
+                                                            )
+                                                        })
+                                                    )
+                                                ) }
                                             </tr>
                                             ) : (
                                                 <td></td>

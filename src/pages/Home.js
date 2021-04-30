@@ -11,7 +11,7 @@ import dashboard from '../redux/actions/dashboard'
 import {BsBell} from 'react-icons/bs'
 import { FcDocument } from 'react-icons/fc'
 import moment from 'moment'
-import socket from '../helpers/socket'
+// import socket from '../helpers/socket'
 import {BsFillCircleFill} from 'react-icons/bs'
 
 const {REACT_APP_BACKEND_URL} = process.env
@@ -21,6 +21,7 @@ class Home extends Component {
 
     state = {
         isOpen: false,
+        settingOpen: false,
         dropOpenNum: false,
     }
 
@@ -32,15 +33,19 @@ class Home extends Component {
         this.setState({isOpen: !this.state.isOpen})
     }
 
+    dropSetting = () => {
+        this.setState({settingOpen: !this.state.settingOpen})
+    }
+
     componentDidMount(){
         this.getNotif()
     }
 
     componentDidUpdate(){
-        const kode = localStorage.getItem('kode')
-        socket.on(kode, () => {
-            this.getNotif()
-        })
+        // const kode = localStorage.getItem('kode')
+        // socket.on(kode, () => {
+        //     this.getNotif()
+        // })
     }
 
     getNotif = async () => {
@@ -126,9 +131,19 @@ class Home extends Component {
                                 <NavLink href="/report" className="navReport">Report</NavLink>
                             </NavItem>
                             {level === '2' ? (
-                            <NavItem>
-                                <NavLink href="/lock" className="navReport">Setting Access</NavLink>
-                            </NavItem>
+                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
+                                <DropdownToggle nav caret className="navDoc">
+                                    Setting
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="/lock">
+                                        Setting Access
+                                    </DropdownItem>
+                                    <DropdownItem href="/date">
+                                        Setting Date Clossing
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                             ) : (
                                 <div></div>
                             )}
@@ -141,7 +156,7 @@ class Home extends Component {
                                 <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
                             </DropdownMenu>
                         </UncontrolledDropdown>
-                        <UncontrolledDropdown>
+                        <UncontrolledDropdown className="uncon">
                             <DropdownToggle nav>
                                 <div className="optionType">
                                     <BsBell size={20} />
