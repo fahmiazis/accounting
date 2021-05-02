@@ -13,6 +13,8 @@ import * as Yup from 'yup'
 import divisi from '../redux/actions/divisi'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const divisiSchema = Yup.object().shape({
     divisi: Yup.string().required('must be filled'),
@@ -60,6 +62,41 @@ class MasterDivisi extends Component {
                 upload: false
             })
          }, 10000)
+    }
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.divisi
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master divisi.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/divisi.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "divisi.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
     }
 
     toggle = () => {
@@ -137,7 +174,7 @@ class MasterDivisi extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.divisi
+        const {isError, isUpload, isExport} = this.props.divisi
         if (isError) {
             this.showAlert()
             this.props.resetError()
@@ -149,6 +186,9 @@ class MasterDivisi extends Component {
              setTimeout(() => {
                 this.getDataDivisi()
              }, 2100)
+        } else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
     }
 
@@ -284,7 +324,7 @@ class MasterDivisi extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -487,7 +527,7 @@ class MasterDivisi extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -553,7 +593,8 @@ const mapDispatchToProps = {
     getDivisi: divisi.getDivisi,
     resetError: divisi.resetError,
     uploadMaster: divisi.uploadMaster,
-    nextPage: divisi.nextPage
+    nextPage: divisi.nextPage,
+    exportMaster: divisi.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDivisi)

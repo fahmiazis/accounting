@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/user/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_USER',
+        payload: http(token).get(`/user/export`)
+    }),
     getDetailUser: (token, id) => ({
         type: 'GET_DETAIL_USER',
         payload: http(token).get(`/user/detail/${id}`)

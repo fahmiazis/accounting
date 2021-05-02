@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/divisi/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_DIVISI',
+        payload: http(token).get(`/divisi/export`)
+    }),
     deleteDivisi: (token, id) => ({
         type: 'DELETE_DIVISI',
         payload: http(token).delete(`/divisi/delete/${id}`)

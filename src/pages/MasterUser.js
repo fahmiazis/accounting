@@ -14,6 +14,8 @@ import {connect} from 'react-redux'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const userSchema = Yup.object().shape({
     username: Yup.string().required(),
@@ -74,6 +76,22 @@ class MasterUser extends Component {
          }, 10000)
     }
 
+    DownloadMaster = () => {
+        const {link} = this.props.user
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master user.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
     }
@@ -102,6 +120,21 @@ class MasterUser extends Component {
     }
     openModalDownload = () => {
         this.setState({modalUpload: !this.state.modalUpload})
+    }
+
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/user.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "user.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
     }
 
     addUser = async (values) => {
@@ -185,8 +218,13 @@ class MasterUser extends Component {
         }
     }
 
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
+    }
+
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.user
+        const {isError, isUpload, isExport} = this.props.user
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -198,6 +236,9 @@ class MasterUser extends Component {
              setTimeout(() => {
                 this.getDataUser()
              }, 2100)
+        } else if (isExport) {
+            this.DownloadMaster()
+            this.props.resetError()
         }
     }
 
@@ -316,7 +357,7 @@ class MasterUser extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -672,7 +713,7 @@ class MasterUser extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -740,7 +781,8 @@ const mapDispatchToProps = {
     resetError: user.resetError,
     getDepo: depo.getDepo,
     uploadMaster: user.uploadMaster,
-    nextPage: user.nextPage
+    nextPage: user.nextPage,
+    exportMaster: user.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterUser)

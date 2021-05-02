@@ -14,11 +14,39 @@ const depoState = {
     detailDepo: {},
     alertM: '',
     alertUpload: [],
-    page: {}
+    page: {},
+    isExport: false,
+    link: ''
 };
 
 export default (state=depoState, action) => {
         switch(action.type){
+            case 'EXPORT_MASTER_DEPO_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'EXPORT_MASTER_DEPO_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isExport: true,
+                    link: action.payload.data.link,
+                    alertMsg: 'success export data'
+                };
+            }
+            case 'EXPORT_MASTER_DEPO_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isExport: false,
+                    isError: true,
+                    alertMsg: 'Failed export data'
+                };
+            }
             case 'ADD_DEPO_PENDING': {
                 return {
                     ...state,
@@ -186,7 +214,8 @@ export default (state=depoState, action) => {
                     ...state,
                     isError: false,
                     isUpload: false,
-                    isGet: false
+                    isGet: false,
+                    isExport: false
                 }
             }
             default: {

@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/dokumen/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_DOKUMEN',
+        payload: http(token).get(`/dokumen/export`)
+    }),
     getDetailDokumen: (token, id) => ({
         type: 'GET_DETAIL_DOKUMEN',
         payload: http(token).get(`/dokumen/detail/${id}`)

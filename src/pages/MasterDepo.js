@@ -13,6 +13,8 @@ import * as Yup from 'yup'
 import depo from '../redux/actions/depo'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const depoSchema = Yup.object().shape({
     kode_depo: Yup.string().required(),
@@ -79,6 +81,21 @@ class MasterDepo extends Component {
          }, 10000)
     }
 
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/depo.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "depo.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
     uploadAlert = () => {
         this.setState({upload: true, modalUpload: false })
        
@@ -91,6 +108,11 @@ class MasterDepo extends Component {
 
     openConfirm = () => {
         this.setState({modalConfirm: !this.state.modalConfirm})
+    }
+
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
     }
 
     toggle = () => {
@@ -166,7 +188,7 @@ class MasterDepo extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.depo
+        const {isError, isUpload, isExport} = this.props.depo
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -178,7 +200,26 @@ class MasterDepo extends Component {
              setTimeout(() => {
                 this.getDataDepo()
              }, 2100)
+        } else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.depo
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master depo.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
     }
 
     componentDidMount() {
@@ -301,7 +342,7 @@ class MasterDepo extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -1127,7 +1168,7 @@ class MasterDepo extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -1193,7 +1234,8 @@ const mapDispatchToProps = {
     getDepo: depo.getDepo,
     resetError: depo.resetError,
     uploadMaster: depo.uploadMaster,
-    nextPage: depo.nextPage
+    nextPage: depo.nextPage,
+    exportMaster: depo.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDepo)

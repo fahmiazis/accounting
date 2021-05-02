@@ -14,11 +14,39 @@ const emailState = {
     detailEmail: {},
     alertM: '',
     alertUpload: [],
-    page: {}
+    page: {},
+    isExport: false,
+    link: ''
 };
 
 export default (state=emailState, action) => {
         switch(action.type){
+            case 'EXPORT_MASTER_EMAIL_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'EXPORT_MASTER_EMAIL_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isExport: true,
+                    link: action.payload.data.link,
+                    alertMsg: 'success export data'
+                };
+            }
+            case 'EXPORT_MASTER_EMAIL_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isExport: false,
+                    isError: true,
+                    alertMsg: 'Failed export data'
+                };
+            }
             case 'ADD_EMAIL_PENDING': {
                 return {
                     ...state,
@@ -184,7 +212,8 @@ export default (state=emailState, action) => {
                 return {
                     ...state,
                     isError: false,
-                    isUpload: false
+                    isUpload: false,
+                    isExport: false
                 }
             }
             default: {

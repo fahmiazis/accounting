@@ -13,6 +13,8 @@ import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const alasanSchema = Yup.object().shape({
     kode_alasan: Yup.string().required('must be filled'),
@@ -105,6 +107,26 @@ class MasterAlasan extends Component {
         await this.props.nextPage(token, page.prevLink)
     }
 
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/alasan.xlsx`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "alasan.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
+    }
+
     addAlasan = async (values) => {
         const token = localStorage.getItem("token")
         await this.props.addAlasan(token, values)
@@ -150,7 +172,7 @@ class MasterAlasan extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.alasan
+        const {isError, isUpload, isExport} = this.props.alasan
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -162,6 +184,9 @@ class MasterAlasan extends Component {
              setTimeout(() => {
                 this.getDataAlasan()
              }, 2100)
+        } else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
     }
 
@@ -174,6 +199,22 @@ class MasterAlasan extends Component {
         if(e.key === 'Enter'){
             this.getDataAlasan({limit: 10, search: this.state.search})
         }
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.alasan
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master alasan.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
     }
 
     getDataAlasan = async (value) => {
@@ -285,7 +326,7 @@ class MasterAlasan extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -526,7 +567,7 @@ class MasterAlasan extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={() => this.DownloadTemplate()}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMasterAlasan}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -592,7 +633,8 @@ const mapDispatchToProps = {
     getAlasan: alasan.getAlasan,
     resetError: alasan.resetError,
     uploadMaster: alasan.uploadMaster,
-    nextPage: alasan.nextPage
+    nextPage: alasan.nextPage,
+    exportMaster: alasan.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterAlasan)

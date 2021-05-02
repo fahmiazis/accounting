@@ -15,6 +15,8 @@ import divisi from '../redux/actions/divisi'
 import {connect} from 'react-redux'
 import moment from 'moment'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const dokumenSchema = Yup.object().shape({
     nama_dokumen: Yup.string().required(),
@@ -89,6 +91,21 @@ class MasterDokumen extends Component {
         this.setState({modalConfirm: !this.state.modalConfirm})
     }
 
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/dokumen.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "dokumen.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
     dropDown = () => {
         this.setState({dropOpen: !this.state.dropOpen})
     }
@@ -123,6 +140,27 @@ class MasterDokumen extends Component {
                 this.getDataDokumen()
             }, 500)
         }
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.dokumen
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master dokumen.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
     }
 
     onChangeHandler = e => {
@@ -160,7 +198,7 @@ class MasterDokumen extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.dokumen
+        const {isError, isUpload, isExport} = this.props.dokumen
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -172,6 +210,9 @@ class MasterDokumen extends Component {
              setTimeout(() => {
                 this.getDataDokumen()
              }, 2100)
+        } else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
     }
 
@@ -298,7 +339,7 @@ class MasterDokumen extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -719,7 +760,7 @@ class MasterDokumen extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -787,7 +828,8 @@ const mapDispatchToProps = {
     resetError: dokumen.resetError,
     getDivisi: divisi.getDivisi,
     uploadMaster: dokumen.uploadMaster,
-    nextPage: dokumen.nextPage
+    nextPage: dokumen.nextPage,
+    exportMaster: dokumen.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDokumen)

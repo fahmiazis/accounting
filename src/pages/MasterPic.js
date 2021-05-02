@@ -15,6 +15,8 @@ import depo from '../redux/actions/depo'
 import pic from '../redux/actions/pic'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const picSchema = Yup.object().shape({
     pic: Yup.string().required(),
@@ -79,12 +81,48 @@ class MasterPic extends Component {
          }, 10000)
     }
 
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/pic.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "pic.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
     }
 
     openConfirm = () => {
         this.setState({modalConfirm: !this.state.modalConfirm})
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.pic
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master pic.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
     }
 
     dropDown = () => {
@@ -172,7 +210,7 @@ class MasterPic extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.pic
+        const {isError, isUpload, isExport} = this.props.pic
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -184,6 +222,9 @@ class MasterPic extends Component {
              setTimeout(() => {
                 this.getDataPic()
              }, 2100)
+        }  else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
     }
 
@@ -316,7 +357,7 @@ class MasterPic extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -673,7 +714,7 @@ class MasterPic extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -743,7 +784,8 @@ const mapDispatchToProps = {
     getDivisi: divisi.getDivisi,
     getDepo: depo.getDepo,
     uploadMaster: pic.uploadMaster,
-    nextPage: pic.nextPage
+    nextPage: pic.nextPage,
+    exportMaster: pic.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterPic)

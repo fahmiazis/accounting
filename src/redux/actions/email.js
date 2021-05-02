@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/email/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_EMAIL',
+        payload: http(token).get(`/email/export`)
+    }),
     getDetailEmail: (token, id) => ({
         type: 'GET_DETAIL_EMAIL',
         payload: http(token).get(`/email/detail/${id}`)

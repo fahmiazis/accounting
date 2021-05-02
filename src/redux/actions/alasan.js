@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/alasan/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_ALASAN',
+        payload: http(token).get(`/alasan/export`)
+    }),
     deleteAlasan: (token, id) => ({
         type: 'DELETE_ALASAN',
         payload: http(token).delete(`/alasan/delete/${id}`)

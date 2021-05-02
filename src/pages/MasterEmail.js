@@ -14,6 +14,8 @@ import email from '../redux/actions/email'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
 import depo from '../redux/actions/depo'
+import {default as axios} from 'axios'
+const {REACT_APP_BACKEND_URL} = process.env
 
 const emailSchema = Yup.object().shape({
     nama_depo: Yup.string().required('must be filled'),
@@ -89,6 +91,41 @@ class MasterEmail extends Component {
                 alert: false
             })
          }, 10000)
+    }
+    ExportMaster = () => {
+        const token = localStorage.getItem('token')
+        this.props.exportMaster(token)
+    }
+
+    DownloadTemplate = () => {
+        axios({
+            url: `${REACT_APP_BACKEND_URL}/masters/email.xlsx`,
+            method: 'GET',
+            responseType: 'blob',
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "email.xlsx");
+            document.body.appendChild(link);
+            link.click();
+        });
+    }
+
+    DownloadMaster = () => {
+        const {link} = this.props.email
+        axios({
+            url: `${link}`,
+            method: 'GET',
+            responseType: 'blob', // important
+        }).then((response) => {
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', "master email.xlsx"); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+        });
     }
 
     dropDown = () => {
@@ -226,7 +263,7 @@ class MasterEmail extends Component {
     }
 
     componentDidUpdate() {
-        const {isError, isUpload} = this.props.email
+        const {isError, isUpload, isExport} = this.props.email
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -238,6 +275,9 @@ class MasterEmail extends Component {
              setTimeout(() => {
                 this.getDataEmail()
              }, 2100)
+        } else if (isExport) {
+            this.props.resetError()
+            this.DownloadMaster()
         }
     }
 
@@ -338,7 +378,7 @@ class MasterEmail extends Component {
                             <div className="headEmail">
                                 <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
                                 <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg">Download</Button>
+                                <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                             </div>
                             <div className="searchEmail">
                                 <text>Search: </text>
@@ -1001,7 +1041,7 @@ class MasterEmail extends Component {
                             </div>
                         </div>
                         <div className="btnUpload">
-                            <Button color="info">Download Template</Button>
+                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
                             <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMasterEmail}>Upload</Button>
                             <Button onClick={this.openModalUpload}>Cancel</Button>
                         </div>
@@ -1071,7 +1111,8 @@ const mapDispatchToProps = {
     resetError: email.resetError,
     uploadMaster: email.uploadMaster,
     nextPage: email.nextPage,
-    getDepo: depo.getDepo
+    getDepo: depo.getDepo,
+    exportMaster: email.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterEmail)

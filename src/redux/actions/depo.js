@@ -23,6 +23,10 @@ export default {
         type: 'GET_DETAIL_DEPO',
         payload: http(token).get(`/depo/detail/${id}`)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_DEPO',
+        payload: http(token).get(`/depo/export`)
+    }),
     nextPage: (token, link) => ({
         type: 'NEXT_DATA_DEPO',
         payload: http(token).get(`${link}`)

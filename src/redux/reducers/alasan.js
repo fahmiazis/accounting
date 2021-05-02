@@ -7,6 +7,7 @@ const divisiState = {
     isDetail: false,
     isDelete: false,
     token: '',
+    isExport: false,
     isLoading: false,
     isError: false,
     alertMsg: '',
@@ -14,7 +15,8 @@ const divisiState = {
     detailAlasan: {},
     alertM: '',
     alertUpload: [],
-    page: {}
+    page: {},
+    link: ''
 };
 
 export default (state=divisiState, action) => {
@@ -181,11 +183,38 @@ export default (state=divisiState, action) => {
                     alertUpload: action.payload.response.data.result
                 };
             }
+            case 'EXPORT_MASTER_ALASAN_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'EXPORT_MASTER_ALASAN_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isExport: true,
+                    link: action.payload.data.link,
+                    alertMsg: 'success export data'
+                };
+            }
+            case 'EXPORT_MASTER_ALASAN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isExport: false,
+                    isError: true,
+                    alertMsg: 'Failed export data'
+                };
+            }
             case 'RESET': {
                 return {
                     ...state,
                     isError: false,
-                    isUpload: false
+                    isUpload: false,
+                    isExport: false
                 }
             }
             default: {

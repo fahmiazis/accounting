@@ -765,16 +765,18 @@ class LockDepo extends Component {
                                                     x.active.length > 0 ? (
                                                         totalDoc.map(y => {
                                                             let cek =  []
+                                                            let data = []
                                                             for (let i = 0; i < totalDoc.length; i++) {
                                                                 if (x.active[i] === undefined) {
                                                                     cek.push('')
                                                                 } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
                                                                     cek.push(x.active[i].access)
+                                                                    data.push(i)
                                                                 }
                                                             }
                                                             return (
                                                                 <td>
-                                                                    <a className="green" onClick={this.openModalProses}>
+                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
                                                                         {cek}
                                                                     </a>
                                                                 </td>
@@ -791,16 +793,18 @@ class LockDepo extends Component {
                                                     x.active.length > 0 ? (
                                                         totalDoc.map(y => {
                                                             let cek =  []
+                                                            let data = []
                                                             for (let i = 0; i < totalDoc.length; i++) {
                                                                 if (x.active[i] === undefined) {
                                                                     cek.push('')
                                                                 } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
                                                                     cek.push(x.active[i].access)
+                                                                    data.push(i)
                                                                 }
                                                             }
                                                             return (
                                                                 <td>
-                                                                    <a className="green" onClick={this.openModalProses}>
+                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
                                                                         {cek}
                                                                     </a>
                                                                 </td>
@@ -813,7 +817,7 @@ class LockDepo extends Component {
                                                             )
                                                         })
                                                     )
-                                                ) }
+                                                )}
                                             </tr>
                                             ) : (
                                                 <td></td>

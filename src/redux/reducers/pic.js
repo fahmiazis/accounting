@@ -14,11 +14,39 @@ const picState = {
     detailPic: {},
     alertM: '',
     alertUpload: [],
-    page: {}
+    page: {},
+    isExport: false,
+    link: ''
 };
 
 export default (state=picState, action) => {
         switch(action.type){
+            case 'EXPORT_MASTER_PIC_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'EXPORT_MASTER_PIC_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    isExport: true,
+                    link: action.payload.data.link,
+                    alertMsg: 'success export data'
+                };
+            }
+            case 'EXPORT_MASTER_PIC_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isExport: false,
+                    isError: true,
+                    alertMsg: 'Failed export data'
+                };
+            }
             case 'ADD_PIC_PENDING': {
                 return {
                     ...state,
@@ -185,7 +213,8 @@ export default (state=picState, action) => {
                 return {
                     ...state,
                     isError: false,
-                    isUpload: false
+                    isUpload: false,
+                    isExport: false
                 }
             }
             default: {

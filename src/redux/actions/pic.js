@@ -19,6 +19,10 @@ export default {
         type: 'UPLOAD_MASTER',
         payload: http(token).post(`/pic/master`, data)
     }),
+    exportMaster: (token) => ({
+        type: 'EXPORT_MASTER_PIC',
+        payload: http(token).get(`/pic/export`)
+    }),
     getDetailPic: (token, id) => ({
         type: 'GET_DETAIL_PIC',
         payload: http(token).get(`/pic/detail/${id}`)
