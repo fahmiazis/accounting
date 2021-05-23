@@ -10,7 +10,7 @@ import { Container, Collapse, Nav, Navbar,
 import Pdf from "../components/Pdf"
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineCheck, AiFillCheckCircle, AiOutlineClose, AiOutlineMinus, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
 import {BsCircle, BsDashCircleFill, BsFillCircleFill} from 'react-icons/bs'
 import {MdWatchLater} from 'react-icons/md'
@@ -24,6 +24,9 @@ import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
 import {default as axios} from 'axios'
 import { FcDocument } from 'react-icons/fc'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 moment.locales('id')
 
 const {REACT_APP_BACKEND_URL} = process.env
@@ -33,40 +36,54 @@ const alasanSchema = Yup.object().shape({
 });
 
 class Dokumen extends Component {
-    state = {
-        month: [],
-        alert: false,
-        isOpen: false,
-        openModal: false,
-        drop: false,
-        dropOpen: false,
-        dropLink: false,
-        dropOpenNum: false,
-        value: '',
-        onChange: new Date(),
-        openPdf: false,
-        openApprove: false,
-        openReject: false,
-        upload: false,
-        errMsg: '',
-        detail: {},
-        fileUpload: '',
-        file: '',
-        fileName: {},
-        alasan: '',
-        doc: [],
-        aktif: {},
-        act: [],
-        totalDoc: [],
-        settingOpen: false,
-        tipe: 'daily',
-        appAct: {},
-        date: '',
-        time: '',
-        search: '',
-        limit: 10,
-        moon: 0,
-        periode: false
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            month: [],
+            alert: false,
+            isOpen: false,
+            openModal: false,
+            drop: false,
+            dropOpen: false,
+            dropLink: false,
+            dropOpenNum: false,
+            value: '',
+            onChange: new Date(),
+            openPdf: false,
+            openApprove: false,
+            openReject: false,
+            upload: false,
+            errMsg: '',
+            detail: {},
+            fileUpload: '',
+            file: '',
+            fileName: {},
+            alasan: '',
+            doc: [],
+            aktif: {},
+            act: [],
+            totalDoc: [],
+            settingOpen: false,
+            tipe: 'daily',
+            appAct: {},
+            date: '',
+            time: '',
+            search: '',
+            limit: 10,
+            moon: 0,
+            periode: false
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     showAlert = () => {
@@ -386,6 +403,14 @@ class Dokumen extends Component {
         }
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+      }
 
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
@@ -393,123 +418,106 @@ class Dokumen extends Component {
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
-        return (
-            <>
-                <Navbar color="light" light expand='lg' className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                                <Dropdown nav isOpen={this.state.dropLink} toggle={this.dropLink}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Document
+
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <UncontrolledDropdown>
+                                <DropdownToggle nav>
+                                    <div className="optionType">
+                                        <BsBell size={20} className="white"/>
+                                        {notif.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : ( 
+                                            <div></div>
+                                        )}
+                                    </div>
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/dokumen">
-                                        Verifikasi Dokumen
-                                    </DropdownItem>
-                                    <DropdownItem href="/setting/dokumen">
-                                        Setting Dokumen
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                            <NavItem>
-                                <NavLink href="/dokumen" className="navDoc">Document</NavLink>
-                            </NavItem>
-                            )}
-                            {level === '1' ? (
-                                <Dropdown nav isOpen={drop} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Master
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/email">
-                                        Master Email
-                                    </DropdownItem>
-                                    <DropdownItem href="/master/dokumen">
-                                        Master Document
-                                    </DropdownItem>
-                                    <DropdownItem href="/pic">
-                                        Master PIC
-                                    </DropdownItem>
-                                    <DropdownItem href="/alasan">
-                                        Master Alasan
-                                    </DropdownItem>
-                                    <DropdownItem href="/depo">
-                                        Master Depo
-                                    </DropdownItem>
-                                    <DropdownItem href="/user">
-                                        Master User
-                                    </DropdownItem>
-                                    <DropdownItem href="/divisi">
-                                        Master Divisi
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Setting
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/lock">
-                                        Setting Access
-                                    </DropdownItem>
-                                    <DropdownItem href="/date">
-                                        Setting Date Clossing
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>
-                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
-                            </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav>
-                                <div className="optionType">
-                                    <BsBell size={20} />
-                                    {notif.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : ( 
-                                        <div></div>
-                                    )}
-                                </div>
-                            </DropdownToggle>
-                            {level === '2' || level === '3' ? (
-                                <DropdownMenu right>
-                                    {notifSa.length > 0 && notifSa.map(item => {
+                                {level === '2' || level === '3' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                        {notifSa.length > 0 && notifSa.map(item => {
+                                            return (
+                                            <DropdownItem href="/dokumen">
+                                                <div className="notif">
+                                                    <FcDocument size={60} className="mr-4"/>
+                                                    <div>
+                                                        <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                        <div>Kode Plant: {item.kode_plant}</div>
+                                                        <div>{item.dokumen.dokumen}</div>
+                                                        <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </DropdownItem>
+                                            )
+                                        })}
+                                        {notifKasir.length === 0 && notifSa.length === 0 && (
+                                        <DropdownItem>
+                                            <div className="grey">
+                                                You don't have any notifications 
+                                            </div>        
+                                        </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                ) : level === '4' || level === '5' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                    {notif.length > 0 && notif.map(item => {
                                         return (
                                         <DropdownItem href="/dokumen">
                                             <div className="notif">
-                                                <FcDocument size={60} className="mr-4"/>
+                                                <FcDocument size={40} className="mr-4"/>
                                                 <div>
-                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
-                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>Dokumen Anda Direject</div>
                                                     <div>{item.dokumen.dokumen}</div>
+                                                    <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
                                                     <div>{moment(item.active.createdAt).format('LLL')}</div>
                                                 </div>
                                             </div>
@@ -517,153 +525,65 @@ class Dokumen extends Component {
                                         </DropdownItem>
                                         )
                                     })}
-                                    {notifKasir.length === 0 && notifSa.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                            ) : level === '4' || level === '5' ? (
-                                <DropdownMenu right>
-                                {notif.length > 0 && notif.map(item => {
-                                    return (
-                                    <DropdownItem href="/dokumen">
-                                        <div className="notif">
-                                            <FcDocument size={40} className="mr-4"/>
-                                            <div>
-                                                <div>Dokumen Anda Direject</div>
-                                                <div>{item.dokumen.dokumen}</div>
-                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
-                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
-                                            </div>
-                                        </div>
-                                        <hr/>
-                                    </DropdownItem>
-                                    )
-                                })}
-                                {notif.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">    
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                )}
-                                </DropdownMenu>
-                            ) : (
-                                <DropdownMenu right>
-                                    <DropdownItem>
+                                    {notif.length === 0 && (
+                                        <DropdownItem>
                                             <div className="grey">    
                                                 You don't have any notifications 
                                             </div>        
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            )}
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
-                    <Alert color="danger" className="alertWrong" isOpen={upload}>
-                        <div>{errMsg}</div>
-                    </Alert>
-                    <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
-                        <div>{alertMsg}</div>
-                        <div>{alertM}</div>
-                    </Alert>
-                    <div className="bodyDashboard">
-                        <div className="titleDashboard">Verifikasi Dokumen</div>
-                        <div className="headDashboard">
-                            {level === '5' || level === '4' ? (
-                                <div></div>
-                            ) : (
-                            <div>
-                                <text>Jenis: </text>
-                                <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
-                                <DropdownToggle caret color="light">
-                                    {this.state.tipe}
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
-                                    <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
-                                </DropdownMenu>
-                                </ButtonDropdown>
-                            </div>
-                            )}
-                            {this.state.tipe === 'daily' ? (
-                                level == "6" || level == '1' || level == '2' || level == '3' ? (
-                                    <div className="dateDash">
-                                        <div>Tanggal Upload: </div>
-                                        <div className="inputCalendar">
-                                            <Input  type="date" onChange={this.chooseTime}/>
-                                        </div>
-                                        {/* <div><FaCalendarAlt size={22} /></div> */}
-                                        {/* <Calendar
-                                        value={this.state.value}
-                                        onChange={this.state.onChange}
-                                        /> */}
-                                    </div>
-                                ) : (
-                                    <div></div>
-                                )
-                            ) : (
-                                level == "6" || level == '1' || level == '2' || level == '3' ? (
-                                <div className="dateDash">
-                                    <div>Periode Dokumen: </div>
-                                    <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
-                                        <DropdownToggle caret color="light">
-                                            {moment(this.state.moon).format('MMMM')}
-                                        </DropdownToggle>
-                                        <DropdownMenu >
-                                            {this.state.month.length !== 0 && this.state.month.map(item => {
-                                                return (
-                                                    <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM')}</DropdownItem>
-                                                )
-                                            })}
-                                        </DropdownMenu>
-                                    </ButtonDropdown>
-                                    {/* <div><FaCalendarAlt size={22} /></div> */}
-                                    {/* <Calendar
-                                    value={this.state.value}
-                                    onChange={this.state.onChange}
-                                    /> */}
-                                </div>
-                                ) : (
-                                    <div></div>
-                                )
-                            )}
-                        </div>
-                        <div className="secHeadDashboard">
-                            <div className="searchDash">
-                                <div className="secSearch mr-4">
-                                    <text className="mr-2">
-                                        Show: 
-                                    </text>
-                                    { level === '5' || level === '4' ? (
-                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.limit}
-                                        </DropdownToggle>
-                                        <DropdownMenu >
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
-                                    ) : (
-                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.limit}
-                                        </DropdownToggle>
-                                        <DropdownMenu >
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
+                                        </DropdownItem>
                                     )}
-                                </div>
-                                {level === '5' || level === '4' ? (
+                                    </DropdownMenu>
+                                ) : (
+                                    <DropdownMenu right>
+                                        <DropdownItem>
+                                                <div className="grey">    
+                                                    You don't have any notifications 
+                                                </div>        
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                )}
+                            </UncontrolledDropdown>
+                        </div>
+                    </div>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
+
+        return (
+            <>
+                <Sidebar {...sidebarProps}>
+                    <MaterialTitlePanel title={contentHeader}>
+                        <div className="background-logo">
+                            <Alert color="danger" className="alertWrong" isOpen={upload}>
+                                <div>{errMsg}</div>
+                            </Alert>
+                            <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                                <div>{alertMsg}</div>
+                                <div>{alertM}</div>
+                            </Alert>
+                            <div className="bodyDashboard">
+                            <div className="headMaster">
+                                <div className="titleDashboard col-md-12">Verifikasi Dokumen</div>
+                            </div>
+                                <div className="headDashboard">
+                                    {level === '5' || level === '4' ? (
+                                        <div></div>
+                                    ) : (
                                     <div>
                                         <text>Jenis: </text>
                                         <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
@@ -676,397 +596,489 @@ class Dokumen extends Component {
                                         </DropdownMenu>
                                         </ButtonDropdown>
                                     </div>
-                                ) : (
-                                    <div className="secSearch">
-                                        <text>Search: </text>
-                                        <Input 
-                                        className="search"
-                                        onChange={this.onSearch}
-                                        value={this.state.search}
-                                        onKeyPress={this.onSearch}
-                                        >
-                                            <FaSearch size={20} />
-                                        </Input>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="statusSym">
-                                <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
-                                <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
-                                <div><BsCircle size={20} className="green" /><text>  Open</text></div>
-                                <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
-                            </div>
-                        </div>
-                        <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                {level === '4' || level === '5' ? (
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
-                                            {dataDash !== undefined && dataDash.map(item => {
-                                                return (
-                                                <th>{(dataDash.indexOf(item) + 1)}</th>
-                                                )
-                                            })}
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                        </tr>
-                                        ): level === '6' || level === '3' || level === '1' || level === '2' ? (
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Kode Plant</th>
-                                            <th>Nama Depo</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
-                                            {totalDoc.length !== 0 && totalDoc.map(item => {
-                                                return (
-                                                <th>{item + 1}</th>
-                                                )
-                                            })}
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                            <th>Uploaded By</th>
-                                        </tr>
-                                        ): (
-                                        <tr>
-                                            <th>No</th>
-                                            <th>PIC</th>
-                                            <th>Kode Plant</th>
-                                            <th>Nama Depo</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
-                                            <th>1</th>
-                                            <th>2</th>
-                                            <th>3</th>
-                                            <th>4</th>
-                                            <th>5</th>
-                                            <th>6</th>
-                                            <th>7</th>
-                                            <th>8</th>
-                                            <th>9</th>
-                                            <th>10</th>
-                                            <th>11</th>
-                                            <th>12</th>
-                                            <th>13</th>
-                                            <th>14</th>
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                        </tr>
+                                    )}
+                                    {this.state.tipe === 'daily' ? (
+                                        level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                            <div className="dateDash">
+                                                <div>Tanggal Upload: </div>
+                                                <div className="inputCalendar">
+                                                    <Input  type="date" onChange={this.chooseTime}/>
+                                                </div>
+                                                {/* <div><FaCalendarAlt size={22} /></div> */}
+                                                {/* <Calendar
+                                                value={this.state.value}
+                                                onChange={this.state.onChange}
+                                                /> */}
+                                            </div>
+                                        ) : (
+                                            <div></div>
+                                        )
+                                    ) : (
+                                        level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                        <div className="dateDash">
+                                            <div>Periode Dokumen: </div>
+                                            <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
+                                                <DropdownToggle caret color="light">
+                                                    {moment(this.state.moon).format('MMMM')}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    {this.state.month.length !== 0 && this.state.month.map(item => {
+                                                        return (
+                                                            <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM')}</DropdownItem>
+                                                        )
+                                                    })}
+                                                </DropdownMenu>
+                                            </ButtonDropdown>
+                                            {/* <div><FaCalendarAlt size={22} /></div> */}
+                                            {/* <Calendar
+                                            value={this.state.value}
+                                            onChange={this.state.onChange}
+                                            /> */}
+                                        </div>
+                                        ) : (
+                                            <div></div>
+                                        )
+                                    )}
+                                </div>
+                                <div className="secHeadDashboard">
+                                    <div className="searchDash">
+                                        <div className="secSearch mr-4">
+                                            <text className="mr-2">
+                                                Show: 
+                                            </text>
+                                            { level === '5' || level === '4' ? (
+                                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                                <DropdownToggle caret color="light">
+                                                    {this.state.limit}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
+                                                </DropdownMenu>
+                                                </ButtonDropdown>
+                                            ) : (
+                                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                                <DropdownToggle caret color="light">
+                                                    {this.state.limit}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                                </DropdownMenu>
+                                                </ButtonDropdown>
+                                            )}
+                                        </div>
+                                        {level === '5' || level === '4' ? (
+                                            <div>
+                                                <text>Jenis: </text>
+                                                <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                                <DropdownToggle caret color="light">
+                                                    {this.state.tipe}
+                                                </DropdownToggle>
+                                                <DropdownMenu>
+                                                    <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                                    <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                                </DropdownMenu>
+                                                </ButtonDropdown>
+                                            </div>
+                                        ) : (
+                                            <div className="secSearch">
+                                                <text>Search: </text>
+                                                <Input 
+                                                className="search"
+                                                onChange={this.onSearch}
+                                                value={this.state.search}
+                                                onKeyPress={this.onSearch}
+                                                >
+                                                    <FaSearch size={20} />
+                                                </Input>
+                                            </div>
                                         )}
-                                </thead>
-                                    {level === '4' || level === '5' ? (
-                                <tbody>
-                                        {active !== undefined && active.map(x => {
-                                            return (
-                                            <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)]}))}>
-                                                <th scope="row">{(active.indexOf(x) + 1)}</th>
-                                                {x.jenis_dokumen == 'monthly' ? (
-                                                    <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
-                                                ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
-                                                    <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                ) : (
-                                                    <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                    </div>
+                                    <div className="statusSym">
+                                        <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
+                                        <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
+                                        <div><BsCircle size={20} className="green" /><text>  Open</text></div>
+                                        <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
+                                    </div>
+                                </div>
+                                <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                        {level === '4' || level === '5' ? (
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Tanggal Dokumen</th>
+                                                    <th>Tanggal Upload</th>
+                                                    {dataDash !== undefined && dataDash.map(item => {
+                                                        return (
+                                                        <th>{(dataDash.indexOf(item) + 1)}</th>
+                                                        )
+                                                    })}
+                                                    <th>Jumlah File Upload</th>
+                                                    <th>Persentase</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                                ): level === '6' || level === '3' || level === '1' || level === '2' ? (
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>PIC</th>
+                                                    <th>Kode Plant</th>
+                                                    <th>Nama Depo</th>
+                                                    <th>Tanggal Dokumen</th>
+                                                    <th>Tanggal Upload</th>
+                                                    {totalDoc.length !== 0 && totalDoc.map(item => {
+                                                        return (
+                                                        <th>{item + 1}</th>
+                                                        )
+                                                    })}
+                                                    <th>Jumlah File Upload</th>
+                                                    <th>Persentase</th>
+                                                    <th>Status</th>
+                                                    <th>Uploaded By</th>
+                                                </tr>
+                                                ): (
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>PIC</th>
+                                                    <th>Kode Plant</th>
+                                                    <th>Nama Depo</th>
+                                                    <th>Tanggal Dokumen</th>
+                                                    <th>Tanggal Upload</th>
+                                                    <th>1</th>
+                                                    <th>2</th>
+                                                    <th>3</th>
+                                                    <th>4</th>
+                                                    <th>5</th>
+                                                    <th>6</th>
+                                                    <th>7</th>
+                                                    <th>8</th>
+                                                    <th>9</th>
+                                                    <th>10</th>
+                                                    <th>11</th>
+                                                    <th>12</th>
+                                                    <th>13</th>
+                                                    <th>14</th>
+                                                    <th>Jumlah File Upload</th>
+                                                    <th>Persentase</th>
+                                                    <th>Status</th>
+                                                </tr>
                                                 )}
-                                                {x.jenis_dokumen == 'monthly' ? (
-                                                    <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
-                                                ) : (
-                                                    <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
-                                                )}
-                                                {dataDash !== undefined && dataDash.map(y => {
+                                        </thead>
+                                            {level === '4' || level === '5' ? (
+                                        <tbody>
+                                                {active !== undefined && active.map(x => {
                                                     return (
-                                                    <td>
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)]}))}>
+                                                        <th scope="row">{(active.indexOf(x) + 1)}</th>
+                                                        {x.jenis_dokumen == 'monthly' ? (
+                                                            <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                        ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
+                                                            <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                        ) : (
+                                                            <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                        )}
+                                                        {x.jenis_dokumen == 'monthly' ? (
+                                                            <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                        ) : (
+                                                            <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                        )}
+                                                        {dataDash !== undefined && dataDash.map(y => {
+                                                            return (
+                                                            <td>
+                                                                {x.doc.length === 0 ? (
+                                                                    <AiOutlineMinus className="black" />
+                                                                ):(
+                                                                    x.doc.map(item => {
+                                                                        return (
+                                                                            item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
+                                                                                <BsCircle className="black"/>
+                                                                            ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
+                                                                                <BsCircle className="green" />
+                                                                            ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
+                                                                                <AiOutlineCheck className="blue"/>
+                                                                            ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
+                                                                                <AiOutlineClose className="red" />
+                                                                            ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : (
+                                                                                <div></div>
+                                                                            )
+                                                                        )
+                                                                    })
+                                                                )}
+                                                            </td>
+                                                            )
+                                                        })}
+                                                        <td>{dataDash.length}</td>
                                                         {x.doc.length === 0 ? (
-                                                            <AiOutlineMinus className="black" />
+                                                            <td>0 %</td>
+                                                        ) : (
+                                                            <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
+                                                        )}
+                                                        {x.doc.length > 0 ? (
+                                                            <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
                                                         ):(
-                                                            x.doc.map(item => {
-                                                                return (
-                                                                    item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="black"/>
-                                                                    ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="green" />
-                                                                    ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineCheck className="blue"/>
-                                                                    ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineClose className="red" />
-                                                                    ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : (
-                                                                        <div></div>
+                                                            <td>Belum Upload</td>
+                                                        )}
+                                                    </tr>
+                                                    )
+                                                })}
+                                        </tbody>
+                                        ): level === '6' || level === '3' || level === '2' || level === '1' ? (
+                                        <tbody>
+                                                {dataSa !== undefined && dataSa.map(x => {
+                                                    return (
+                                                    x !== null ? (
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataSa[dataSa.indexOf(x)].dokumen, act: dataSa[dataSa.indexOf(x)].active}))}>
+                                                        <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                        <td>{x.nama_pic_1}</td>
+                                                        <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
+                                                        <td>{x.nama_depo}</td>
+                                                        {x.active.length > 0 ? (
+                                                            x.active[0].jenis_dokumen === 'monthly' ? 
+                                                            <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
+                                                            : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                                <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                            :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                        ):(
+                                                            <td>-</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
+                                                        ):(
+                                                            <td>-</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            x.active[0].doc.length > 0 ? (
+                                                                x.active[0].doc.length <= totalDoc.length ? (
+                                                                        totalDoc.map(y => {
+                                                                            return (
+                                                                                <td>
+                                                                                    {x.active[0].doc[y] ? (
+                                                                                        x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <BsCircle className="black"/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <BsCircle className="green" />
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <AiOutlineCheck className="blue"/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <AiOutlineClose className="red" />
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : (
+                                                                                            <div></div>
+                                                                                        )
+                                                                                    ): (
+                                                                                        <AiOutlineMinus className="black" />
+                                                                                    )}
+                                                                                </td>
+                                                                            )
+                                                                        })
+                                                                ) : (
+                                                                    x.active[0].doc.map(item => {
+                                                                        return (
+                                                                            <td>
+                                                                                {item.status_dokumen === 1 ? (
+                                                                                    <BsCircle className="black"/>
+                                                                                ) : (
+                                                                                    <AiOutlineMinus className="black" />
+                                                                                )}
+                                                                            </td>
+                                                                        )
+                                                                    })
+                                                                )
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td><AiOutlineMinus className="black" /></td>
                                                                     )
+                                                                }) 
+                                                            )
+                                                        ): (
+                                                            totalDoc.map(item => {
+                                                                return (
+                                                                    <td><AiOutlineMinus className="black" /></td>
                                                                 )
                                                             })
                                                         )}
-                                                    </td>
+                                                        <td>{x.dokumen.length}</td>
+                                                        {x.active.length > 0 ? (
+                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
+                                                        ):(
+                                                            <td>0 %</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                                        ):(
+                                                            <td>Belum Upload</td>
+                                                        )}
+                                                        <td>SA</td>
+                                                    </tr>
+                                                    ) : (
+                                                        <div></div>
+                                                    )
                                                     )
                                                 })}
-                                                <td>{dataDash.length}</td>
-                                                {x.doc.length === 0 ? (
-                                                    <td>0 %</td>
-                                                ) : (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
-                                                )}
-                                                {x.doc.length > 0 ? (
-                                                    <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                            </tr>
-                                            )
-                                        })}
-                                </tbody>
-                                ): level === '6' || level === '3' || level === '2' || level === '1' ? (
-                                <tbody>
-                                        {dataSa !== undefined && dataSa.map(x => {
-                                            return (
-                                            x !== null ? (
-                                            <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataSa[dataSa.indexOf(x)].dokumen, act: dataSa[dataSa.indexOf(x)].active}))}>
-                                                <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
-                                                <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
-                                                <td>{x.nama_depo}</td>
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].jenis_dokumen === 'monthly' ? 
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                    : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
-                                                        <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                    :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length <= totalDoc.length ? (
-                                                                totalDoc.map(y => {
-                                                                    return (
-                                                                        <td>
-                                                                            {x.active[0].doc[y] ? (
-                                                                                x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                {dataKasir !== undefined && dataKasir.map(x => {
+                                                    return (
+                                                    x !== null ? (
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active}))}>
+                                                        <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                        <td>{x.nama_pic_1}</td>
+                                                        <td>{x.kode_plant}</td>
+                                                        <td>{x.nama_depo}</td>
+                                                        {x.active.length > 0 ? (
+                                                            x.active[0].jenis_dokumen === 'monthly' ? 
+                                                            <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
+                                                            : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                                <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                            :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                        ):(
+                                                            <td>-</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
+                                                        ):(
+                                                            <td>-</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            x.active[0].doc.length > 0 ? (
+                                                                x.active[0].doc.length <= totalDoc.length ? (
+                                                                        totalDoc.map(y => {
+                                                                            return (
+                                                                                <td>
+                                                                                    {x.active[0].doc[y] ? (
+                                                                                        x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <BsCircle className="black"/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <BsCircle className="green" />
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <AiOutlineCheck className="blue"/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <AiOutlineClose className="red" />
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <MdWatchLater className="red" size={20}/>
+                                                                                        ) : (
+                                                                                            <div></div>
+                                                                                        )
+                                                                                    ): (
+                                                                                        <AiOutlineMinus className="black" />
+                                                                                    )}
+                                                                                </td>
+                                                                            )
+                                                                        })
+                                                                ) : (
+                                                                    x.active[0].doc.map(item => {
+                                                                        return (
+                                                                            <td>
+                                                                                {item.status_dokumen === 1 ? (
                                                                                     <BsCircle className="black"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
                                                                                 ) : (
-                                                                                    <div></div>
-                                                                                )
-                                                                            ): (
-                                                                                <AiOutlineMinus className="black" />
-                                                                            )}
-                                                                        </td>
+                                                                                    <AiOutlineMinus className="black" />
+                                                                                )}
+                                                                            </td>
+                                                                        )
+                                                                    })
+                                                                )
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td><AiOutlineMinus className="black" /></td>
                                                                     )
-                                                                })
-                                                        ) : (
-                                                            x.active[0].doc.map(item => {
+                                                                }) 
+                                                            )
+                                                        ): (
+                                                            totalDoc.map(item => {
                                                                 return (
-                                                                    <td>
-                                                                        {item.status_dokumen === 1 ? (
-                                                                            <BsCircle className="black"/>
-                                                                        ) : (
-                                                                            <AiOutlineMinus className="black" />
-                                                                        )}
-                                                                    </td>
+                                                                    <td><AiOutlineMinus className="black" /></td>
                                                                 )
                                                             })
-                                                        )
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td><AiOutlineMinus className="black" /></td>
-                                                            )
-                                                        }) 
+                                                        )}
+                                                        <td>{x.dokumen.length}</td>
+                                                        {x.active.length > 0 ? (
+                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
+                                                        ):(
+                                                            <td>0 %</td>
+                                                        )}
+                                                        {x.active.length > 0 ? (
+                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                                        ):(
+                                                            <td>Belum Upload</td>
+                                                        )}
+                                                        <td>Kasir</td>
+                                                    </tr>
+                                                    ) : (
+                                                        <div></div>
                                                     )
-                                                ): (
-                                                    totalDoc.map(item => {
-                                                        return (
-                                                            <td><AiOutlineMinus className="black" /></td>
-                                                        )
-                                                    })
-                                                )}
-                                                <td>{x.dokumen.length}</td>
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                ):(
-                                                    <td>0 %</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                                <td>SA</td>
-                                            </tr>
-                                            ) : (
-                                                <div></div>
-                                            )
-                                            )
-                                        })}
-                                        {dataKasir !== undefined && dataKasir.map(x => {
-                                            return (
-                                            x !== null ? (
-                                            <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active}))}>
-                                                <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
-                                                <td>{x.kode_plant}</td>
-                                                <td>{x.nama_depo}</td>
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].jenis_dokumen === 'monthly' ? 
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                    : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
-                                                        <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                    :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length <= totalDoc.length ? (
-                                                                totalDoc.map(y => {
-                                                                    return (
-                                                                        <td>
-                                                                            {x.active[0].doc[y] ? (
-                                                                                x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : (
-                                                                                    <div></div>
-                                                                                )
-                                                                            ): (
-                                                                                <AiOutlineMinus className="black" />
-                                                                            )}
-                                                                        </td>
-                                                                    )
-                                                                })
-                                                        ) : (
-                                                            x.active[0].doc.map(item => {
-                                                                return (
-                                                                    <td>
-                                                                        {item.status_dokumen === 1 ? (
-                                                                            <BsCircle className="black"/>
-                                                                        ) : (
-                                                                            <AiOutlineMinus className="black" />
-                                                                        )}
-                                                                    </td>
-                                                                )
-                                                            })
-                                                        )
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td><AiOutlineMinus className="black" /></td>
-                                                            )
-                                                        }) 
                                                     )
-                                                ): (
-                                                    totalDoc.map(item => {
-                                                        return (
-                                                            <td><AiOutlineMinus className="black" /></td>
-                                                        )
-                                                    })
-                                                )}
-                                                <td>{x.dokumen.length}</td>
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                ):(
-                                                    <td>0 %</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                                <td>Kasir</td>
+                                                })}
+                                        </tbody>
+                                        ): (
+                                            <tbody>
+                                            <tr className="danger" onClick={this.openModalProses}>
+                                                <th scope="row">1</th>
+                                                <td>Anjar</td>
+                                                <td>107</td>
+                                                <td>Garut</td>
+                                                <td>01 Januari 2021</td>
+                                                <td>02 Januari 2021</td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td><AiOutlineCheck className="blue" /></td>
+                                                <td>14</td>
+                                                <td>100%</td>
+                                                <td>Done</td>
                                             </tr>
-                                            ) : (
-                                                <div></div>
-                                            )
-                                            )
-                                        })}
-                                </tbody>
-                                ): (
-                                    <tbody>
-                                    <tr className="danger" onClick={this.openModalProses}>
-                                        <th scope="row">1</th>
-                                        <td>Anjar</td>
-                                        <td>107</td>
-                                        <td>Garut</td>
-                                        <td>01 Januari 2021</td>
-                                        <td>02 Januari 2021</td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td><AiOutlineCheck className="blue" /></td>
-                                        <td>14</td>
-                                        <td>100%</td>
-                                        <td>Done</td>
-                                    </tr>
-                                    </tbody>
-                                )}
-                            </Table>
-                        </div>
-                        <div>
-                            <div className="infoPage">
-                                <text>Showing {page.currentPage} of {page.pages} pages</text>
-                                {level == '5' || level == '4' ? (
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                                            </tbody>
+                                        )}
+                                    </Table>
                                 </div>
-                                ) : (
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                <div>
+                                    <div className="infoPage">
+                                        <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                        {level == '5' || level == '4' ? (
+                                        <div className="pageButton">
+                                            <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
+                                            <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                                        </div>
+                                        ) : (
+                                        <div className="pageButton">
+                                            <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                            <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                        </div>
+                                        )}
+                                    </div>
                                 </div>
-                                )}
                             </div>
                         </div>
-                    </div>
-                </Container>
+                    </MaterialTitlePanel>
+                </Sidebar>
                 <Modal isOpen={openModal} size="lg" toggle={this.openModalProses}>
                     <ModalHeader toggle={this.openModalProses}>Proses Dokumen Daily</ModalHeader>
                     {level === '4' || level === '5' ? (

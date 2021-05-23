@@ -6,7 +6,7 @@ import { Container, Collapse, Nav, Navbar,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner} from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle } from 'react-icons/ai'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
@@ -18,6 +18,9 @@ import moment from 'moment'
 import dashboard from '../redux/actions/dashboard'
 import {BsBell, BsFillCircleFill} from 'react-icons/bs'
 import { FcDocument } from 'react-icons/fc'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 
 const alasanSchema = Yup.object().shape({
     jenis: Yup.string().required('tipe must be filled'),
@@ -26,30 +29,53 @@ const alasanSchema = Yup.object().shape({
 });
 
 class DateClossing extends Component {
-    state = {
-        confirm: "",
-        isOpen: false,
-        dropOpen: false,
-        dropOpenNum: false,
-        settingOpen: false,
-        value: '',
-        onChange: new Date(),
-        sidebarOpen: false,
-        modalAdd: false,
-        modalEdit: false,
-        modalUpload: false,
-        modalDownload: false,
-        modalConfirm: false,
-        detail: {},
-        date: [],
-        alert: false,
-        upload: false,
-        errMsg: '',
-        fileUpload: '',
-        limit: 10,
-        search: '',
-        data: []
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            confirm: "",
+            isOpen: false,
+            dropOpen: false,
+            dropOpenNum: false,
+            settingOpen: false,
+            value: '',
+            onChange: new Date(),
+            sidebarOpen: false,
+            modalAdd: false,
+            modalEdit: false,
+            modalUpload: false,
+            modalDownload: false,
+            modalConfirm: false,
+            detail: {},
+            date: [],
+            alert: false,
+            upload: false,
+            errMsg: '',
+            fileUpload: '',
+            limit: 10,
+            search: '',
+            data: []
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
+
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+      }
 
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
@@ -243,123 +269,106 @@ class DateClossing extends Component {
         const {notif, notifSa, notifKasir} = this.props.dashboard
         const level = localStorage.getItem('level')
         const names = localStorage.getItem('name')
-        return (
-            <>
-                <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                                <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Document
+
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <UncontrolledDropdown>
+                                <DropdownToggle nav>
+                                    <div className="optionType">
+                                        <BsBell size={20} className="white"/>
+                                        {notif.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : ( 
+                                            <div></div>
+                                        )}
+                                    </div>
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/dokumen">
-                                        Verifikasi Dokumen
-                                    </DropdownItem>
-                                    <DropdownItem href="/setting/dokumen">
-                                        Setting Dokumen
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                            <NavItem>
-                                <NavLink href="/dokumen" className="navDoc">Document</NavLink>
-                            </NavItem>
-                            )}
-                            {level === '1' ? (
-                            <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Master
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/email">
-                                        Master Email
-                                    </DropdownItem>
-                                    <DropdownItem href="/master/dokumen">
-                                        Master Document
-                                    </DropdownItem>
-                                    <DropdownItem href="/pic">
-                                        Master PIC
-                                    </DropdownItem>
-                                    <DropdownItem href="/alasan">
-                                        Master Alasan
-                                    </DropdownItem>
-                                    <DropdownItem href="/depo">
-                                        Master Depo
-                                    </DropdownItem>
-                                    <DropdownItem href="/user">
-                                        Master User
-                                    </DropdownItem>
-                                    <DropdownItem href="/divisi">
-                                        Master Divisi
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Setting
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/lock">
-                                        Setting Access
-                                    </DropdownItem>
-                                    <DropdownItem href="/date">
-                                        Setting Date Clossing
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>
-                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names : 'User'}
-                            </DropdownToggle>
-                            <DropdownMenu>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav>
-                                <div className="optionType">
-                                    <BsBell size={20} />
-                                    {notif.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : ( 
-                                        <div></div>
-                                    )}
-                                </div>
-                            </DropdownToggle>
-                            {level === '2' || level === '3' ? (
-                                <DropdownMenu right>
-                                    {notifSa.length > 0 && notifSa.map(item => {
+                                {level === '2' || level === '3' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                        {notifSa.length > 0 && notifSa.map(item => {
+                                            return (
+                                            <DropdownItem href="/dokumen">
+                                                <div className="notif">
+                                                    <FcDocument size={60} className="mr-4"/>
+                                                    <div>
+                                                        <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                        <div>Kode Plant: {item.kode_plant}</div>
+                                                        <div>{item.dokumen.dokumen}</div>
+                                                        <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </DropdownItem>
+                                            )
+                                        })}
+                                        {notifKasir.length === 0 && notifSa.length === 0 && (
+                                        <DropdownItem>
+                                            <div className="grey">
+                                                You don't have any notifications 
+                                            </div>        
+                                        </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                ) : level === '4' || level === '5' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                    {notif.length > 0 && notif.map(item => {
                                         return (
                                         <DropdownItem href="/dokumen">
                                             <div className="notif">
-                                                <FcDocument size={60} className="mr-4"/>
+                                                <FcDocument size={40} className="mr-4"/>
                                                 <div>
-                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
-                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>Dokumen Anda Direject</div>
                                                     <div>{item.dokumen.dokumen}</div>
+                                                    <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
                                                     <div>{moment(item.active.createdAt).format('LLL')}</div>
                                                 </div>
                                             </div>
@@ -367,148 +376,146 @@ class DateClossing extends Component {
                                         </DropdownItem>
                                         )
                                     })}
-                                    {notifKasir.length === 0 && notifSa.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                            ) : level === '4' || level === '5' ? (
-                                <DropdownMenu right>
-                                {notif.length > 0 && notif.map(item => {
-                                    return (
-                                    <DropdownItem href="/dokumen">
-                                        <div className="notif">
-                                            <FcDocument size={40} className="mr-4"/>
-                                            <div>
-                                                <div>Dokumen Anda Direject</div>
-                                                <div>{item.dokumen.dokumen}</div>
-                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
-                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
-                                            </div>
-                                        </div>
-                                        <hr/>
-                                    </DropdownItem>
-                                    )
-                                })}
-                                {notif.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">    
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                )}
-                                </DropdownMenu>
-                            ) : (
-                                <DropdownMenu right>
-                                    <DropdownItem>
+                                    {notif.length === 0 && (
+                                        <DropdownItem>
                                             <div className="grey">    
                                                 You don't have any notifications 
                                             </div>        
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            )}
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
-                    <Alert color="danger" className="alertWrong" isOpen={alert}>
-                        <div>{alertMsg}</div>
-                        <div>{alertM}</div>
-                        {alertUpload !== undefined && alertUpload.map(item => {
-                            return (
-                                <div>{item}</div>
-                            )
-                        })}
-                    </Alert>
-                    <Alert color="danger" className="alertWrong" isOpen={upload}>
-                        <div>{errMsg}</div>
-                    </Alert>
-                    <div className="bodyDashboard">
-                        <div className="headMaster">
-                            <div className="titleDashboard col-md-12">Setting Date Clossing</div>
+                                        </DropdownItem>
+                                    )}
+                                    </DropdownMenu>
+                                ) : (
+                                    <DropdownMenu right>
+                                        <DropdownItem>
+                                                <div className="grey">    
+                                                    You don't have any notifications 
+                                                </div>        
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                )}
+                            </UncontrolledDropdown>
                         </div>
-                        <div className="secHeadDashboard">
-                            <div>
-                                {/* <text>Show: </text>
-                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                <DropdownToggle caret color="light">
-                                    {this.state.limit}
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
-                                </DropdownMenu>
-                                </ButtonDropdown>
-                                <text className="textEntries">entries</text> */}
+                    </div>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
+        return (
+            <>
+                <Sidebar {...sidebarProps}>
+                    <MaterialTitlePanel title={contentHeader}>
+                    <div className="background-logo">
+                        <Alert color="danger" className="alertWrong" isOpen={alert}>
+                            <div>{alertMsg}</div>
+                            <div>{alertM}</div>
+                            {alertUpload !== undefined && alertUpload.map(item => {
+                                return (
+                                    <div>{item}</div>
+                                )
+                            })}
+                        </Alert>
+                        <Alert color="danger" className="alertWrong" isOpen={upload}>
+                            <div>{errMsg}</div>
+                        </Alert>
+                        <div className="bodyDashboard">
+                            <div className="headMaster">
+                                <div className="titleDashboard col-md-12">Setting Date Clossing</div>
                             </div>
-                        </div>
-                        <div className="secEmail">
-                            <div className="headEmail">
-                                <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                            </div>
-                            <div className="searchEmail">
-                            </div>
-                        </div>
-                        {isGet === false ? (
-                            <div className="tableDashboard">
-                                <Table bordered responsive hover className="tab">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Tipe</th>
-                                            <th>Day</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                </Table>
-                                <div className="spin">
-                                    <Spinner type="grow" color="primary"/>
-                                    <Spinner type="grow" className="mr-3 ml-3" color="success"/>
-                                    <Spinner type="grow" color="warning"/>
-                                    <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
-                                    <Spinner type="grow" color="info"/>
+                            <div className="secHeadDashboard">
+                                <div>
+                                    {/* <text>Show: </text>
+                                    <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                    <DropdownToggle caret color="light">
+                                        {this.state.limit}
+                                    </DropdownToggle>
+                                    <DropdownMenu>
+                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
+                                        <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
+                                        <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
+                                    </DropdownMenu>
+                                    </ButtonDropdown>
+                                    <text className="textEntries">entries</text> */}
                                 </div>
-                            </div>    
-                        ) : (
-                            <div className="tableDashboard">
-                                <Table bordered responsive hover className="tab">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Tipe</th>
-                                            <th>Day</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {dataDate.length !== 0 && dataDate.map(item => {
-                                        return (
-                                        <tr>
-                                            <th scope="row">{(dataDate.indexOf(item) + 1)}</th>
-                                            <td>{item.jenis}</td>
-                                            <td>{item.jenis === 'monthly' ? moment(item.day).format('LL') : '-'}</td>
-                                            <td>{item.jenis === 'daily' ? moment(item.time).format('HH:mm') : '-'}</td>
-                                        </tr>
-                                        )})}
-                                    </tbody>
-                                </Table>
                             </div>
-                        )}
-                        <div>
-                            <div className="infoPageEmail">
-                                <text>Showing 1 of 1 pages</text>
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                            <div className="secEmail">
+                                <div className="headEmail">
+                                    <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
+                                </div>
+                                <div className="searchEmail">
+                                </div>
+                            </div>
+                            {isGet === false ? (
+                                <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Tipe</th>
+                                                <th>Day</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                    </Table>
+                                    <div className="spin">
+                                        <Spinner type="grow" color="primary"/>
+                                        <Spinner type="grow" className="mr-3 ml-3" color="success"/>
+                                        <Spinner type="grow" color="warning"/>
+                                        <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
+                                        <Spinner type="grow" color="info"/>
+                                    </div>
+                                </div>    
+                            ) : (
+                                <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Tipe</th>
+                                                <th>Day</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {dataDate.length !== 0 && dataDate.map(item => {
+                                            return (
+                                            <tr>
+                                                <th scope="row">{(dataDate.indexOf(item) + 1)}</th>
+                                                <td>{item.jenis}</td>
+                                                <td>{item.jenis === 'monthly' ? moment(item.day).format('LL') : '-'}</td>
+                                                <td>{item.jenis === 'daily' ? moment(item.time).format('HH:mm') : '-'}</td>
+                                            </tr>
+                                            )})}
+                                        </tbody>
+                                    </Table>
+                                </div>
+                            )}
+                            <div>
+                                <div className="infoPageEmail">
+                                    <text>Showing 1 of 1 pages</text>
+                                    <div className="pageButton">
+                                        <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
+                                        <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </Container>
+                    </MaterialTitlePanel>
+                </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
                     <ModalHeader toggle={this.openModalAdd}>Add Master Alasan</ModalHeader>
                     <Formik

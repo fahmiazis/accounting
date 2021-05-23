@@ -12,7 +12,7 @@ import { Container, Collapse, Nav, Navbar,
 import Pdf from "../components/Pdf"
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineCheck, AiFillCheckCircle, AiOutlineClose, AiOutlineMinus, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
 import {BsCircle, BsDashCircleFill, BsFillCircleFill} from 'react-icons/bs'
 import {MdWatchLater} from 'react-icons/md'
@@ -26,6 +26,9 @@ import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
 import {default as axios} from 'axios'
 import { FcDocument } from 'react-icons/fc'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 
 const {REACT_APP_BACKEND_URL} = process.env
 
@@ -34,40 +37,53 @@ const alasanSchema = Yup.object().shape({
 });
 
 class LockDepo extends Component {
-    state = {
-        settingOpen: false,
-        alert: false,
-        isOpen: false,
-        openModal: false,
-        drop: false,
-        dropOpen: false,
-        dropLink: false,
-        dropOpenNum: false,
-        value: '',
-        onChange: new Date(),
-        openPdf: false,
-        openApprove: false,
-        openReject: false,
-        upload: false,
-        errMsg: '',
-        detail: {},
-        fileUpload: '',
-        file: '',
-        fileName: {},
-        alasan: '',
-        doc: [],
-        aktif: {},
-        act: [],
-        totalDoc: [],
-        tipe: 'daily',
-        appAct: {},
-        date: '',
-        time: '',
-        search: '',
-        limit: 10,
-        lock: {},
-        lockModal: false,
-        access: ''
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            settingOpen: false,
+            alert: false,
+            isOpen: false,
+            openModal: false,
+            drop: false,
+            dropOpen: false,
+            dropLink: false,
+            dropOpenNum: false,
+            value: '',
+            onChange: new Date(),
+            openPdf: false,
+            openApprove: false,
+            openReject: false,
+            upload: false,
+            errMsg: '',
+            detail: {},
+            fileUpload: '',
+            file: '',
+            fileName: {},
+            alasan: '',
+            doc: [],
+            aktif: {},
+            act: [],
+            totalDoc: [],
+            tipe: 'daily',
+            appAct: {},
+            date: '',
+            time: '',
+            search: '',
+            limit: 10,
+            lock: {},
+            lockModal: false,
+            access: ''
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     showAlert = () => {
@@ -378,6 +394,14 @@ class LockDepo extends Component {
         }
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+      }
 
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, lock, lockModal} = this.state
@@ -385,123 +409,106 @@ class LockDepo extends Component {
         const {notifSa, notifKasir, notif, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSaActive, dataKasirActive, dataDepo, pages} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
-        return (
-            <>
-                <Navbar color="light" light expand='lg' className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                                <Dropdown nav isOpen={this.state.dropLink} toggle={this.dropLink}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Document
+        
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <UncontrolledDropdown>
+                                <DropdownToggle nav>
+                                    <div className="optionType">
+                                        <BsBell size={20} className="white"/>
+                                        {notif.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : ( 
+                                            <div></div>
+                                        )}
+                                    </div>
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/dokumen">
-                                        Verifikasi Dokumen
-                                    </DropdownItem>
-                                    <DropdownItem href="/setting/dokumen">
-                                        Setting Dokumen
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                            <NavItem>
-                                <NavLink href="/dokumen" className="navDoc">Document</NavLink>
-                            </NavItem>
-                            )}
-                            {level === '1' ? (
-                                <Dropdown nav isOpen={drop} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Master
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/email">
-                                        Master Email
-                                    </DropdownItem>
-                                    <DropdownItem href="/master/dokumen">
-                                        Master Document
-                                    </DropdownItem>
-                                    <DropdownItem href="/pic">
-                                        Master PIC
-                                    </DropdownItem>
-                                    <DropdownItem href="/alasan">
-                                        Master Alasan
-                                    </DropdownItem>
-                                    <DropdownItem href="/depo">
-                                        Master Depo
-                                    </DropdownItem>
-                                    <DropdownItem href="/user">
-                                        Master User
-                                    </DropdownItem>
-                                    <DropdownItem href="/divisi">
-                                        Master Divisi
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Setting
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/lock">
-                                        Setting Access
-                                    </DropdownItem>
-                                    <DropdownItem href="/date">
-                                        Setting Date Clossing
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>
-                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
-                            </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav>
-                                <div className="optionType">
-                                    <BsBell size={20} />
-                                    {notif.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : ( 
-                                        <div></div>
-                                    )}
-                                </div>
-                            </DropdownToggle>
-                            {level === '2' || level === '3' ? (
-                                <DropdownMenu right>
-                                    {notifSa.length > 0 && notifSa.map(item => {
+                                {level === '2' || level === '3' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                        {notifSa.length > 0 && notifSa.map(item => {
+                                            return (
+                                            <DropdownItem href="/dokumen">
+                                                <div className="notif">
+                                                    <FcDocument size={60} className="mr-4"/>
+                                                    <div>
+                                                        <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                        <div>Kode Plant: {item.kode_plant}</div>
+                                                        <div>{item.dokumen.dokumen}</div>
+                                                        <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </DropdownItem>
+                                            )
+                                        })}
+                                        {notifKasir.length === 0 && notifSa.length === 0 && (
+                                        <DropdownItem>
+                                            <div className="grey">
+                                                You don't have any notifications 
+                                            </div>        
+                                        </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                ) : level === '4' || level === '5' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                    {notif.length > 0 && notif.map(item => {
                                         return (
                                         <DropdownItem href="/dokumen">
                                             <div className="notif">
-                                                <FcDocument size={60} className="mr-4"/>
+                                                <FcDocument size={40} className="mr-4"/>
                                                 <div>
-                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
-                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>Dokumen Anda Direject</div>
                                                     <div>{item.dokumen.dokumen}</div>
+                                                    <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
                                                     <div>{moment(item.active.createdAt).format('LLL')}</div>
                                                 </div>
                                             </div>
@@ -509,341 +516,342 @@ class LockDepo extends Component {
                                         </DropdownItem>
                                         )
                                     })}
-                                    {notifKasir.length === 0 && notifSa.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                            ) : level === '4' || level === '5' ? (
-                                <DropdownMenu right>
-                                {notif.length > 0 && notif.map(item => {
-                                    return (
-                                    <DropdownItem href="/dokumen">
-                                        <div className="notif">
-                                            <FcDocument size={40} className="mr-4"/>
-                                            <div>
-                                                <div>Dokumen Anda Direject</div>
-                                                <div>{item.dokumen.dokumen}</div>
-                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
-                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
-                                            </div>
-                                        </div>
-                                        <hr/>
-                                    </DropdownItem>
-                                    )
-                                })}
-                                {notif.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">    
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                )}
-                                </DropdownMenu>
-                            ) : (
-                                <DropdownMenu right>
-                                    <DropdownItem>
+                                    {notif.length === 0 && (
+                                        <DropdownItem>
                                             <div className="grey">    
                                                 You don't have any notifications 
                                             </div>        
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            )}
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
-                    <Alert color="danger" className="alertWrong" isOpen={upload}>
-                        <div>{errMsg}</div>
-                    </Alert>
-                    <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
-                        <div>{alertMsg}</div>
-                        <div>{alertM}</div>
-                    </Alert>
-                    <div className="bodyDashboard">
-                        <div className="titleDashboard">Lock / Unlock</div>
-                        <div className="secHeadDashboard">
-                            <div className="searchDash">
-                                <div className="secSearch mr-4">
-                                    <text className="mr-2">
-                                        Show: 
-                                    </text>
-                                    { level === '5' || level === '4' ? (
-                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.limit}
-                                        </DropdownToggle>
-                                        <DropdownMenu >
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
-                                    ) : (
-                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.limit}
-                                        </DropdownToggle>
-                                        <DropdownMenu >
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
+                                        </DropdownItem>
                                     )}
-                                </div>
-                                <div>
-                                    <text>Jenis: </text>
-                                    <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
-                                    <DropdownToggle caret color="light">
-                                        {this.state.tipe}
-                                    </DropdownToggle>
-                                    <DropdownMenu>
-                                        <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
-                                        <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
                                     </DropdownMenu>
-                                    </ButtonDropdown>
-                                </div>
-                            </div>
-                            <div className="secSearch">
-                                <text>Search: </text>
-                                <Input 
-                                className="search"
-                                onChange={this.onSearch}
-                                value={this.state.search}
-                                onKeyPress={this.onSearch}
-                                >
-                                    <FaSearch size={20} />
-                                </Input>
-                            </div>
-                        </div>
-                        <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                {level === '4' || level === '5' ? (
-                                        <tr>moment().month(0)
-                                            <th>No</th>
-                                            <th>Tanggal Dokumen</th>
-                                            <th>Tanggal Upload</th>
-                                            {dataDash !== undefined && dataDash.map(item => {
-                                                return (
-                                                <th>{(dataDash.indexOf(item) + 1)}</th>
-                                                )
-                                            })}
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                        </tr>
-                                        ): level === '6' || level === '3' || level === '1' || level === '2' ? (
-                                        <tr>
-                                            <th>No</th>
-                                            <th>PIC</th>
-                                            <th>Kode Plant</th>
-                                            <th>Nama Depo</th>
-                                            <th>User Area</th>
-                                            {totalDoc.length !== 0 && totalDoc.map(item => {
-                                                return (
-                                                <th>{this.state.tipe === 'monthly' ? moment().month(item - 1).format('MMMM') : item}</th>
-                                                )
-                                            })}
-                                        </tr>
-                                        ): (
-                                        <tr>
-                                            <th>No</th>
-                                            <th>PIC</th>
-                                            <th>Kode Plant</th>
-                                            <th>Nama Depo</th>
-                                            <th>1</th>
-                                            <th>2</th>
-                                            <th>3</th>
-                                            <th>4</th>
-                                            <th>5</th>
-                                            <th>6</th>
-                                            <th>7</th>
-                                            <th>8</th>
-                                            <th>9</th>
-                                            <th>10</th>
-                                            <th>11</th>
-                                            <th>12</th>
-                                            <th>13</th>
-                                            <th>14</th>
-                                            <th>Jumlah File Upload</th>
-                                            <th>Persentase</th>
-                                            <th>Status</th>
-                                        </tr>
-                                        )}
-                                </thead>
-                                    { level === '2' || level === '1' ? (
-                                <tbody>
-                                        {dataSaActive !== undefined && dataSaActive.map(x => {
-                                            return (
-                                            x !== null ? (
-                                                // onClick={() => this.openModalProses(this.setState({doc: dataSaActive[dataSaActive.indexOf(x)].dokumen, act: dataSaActive[dataSaActive.indexOf(x)].active}))}
-                                            <tr className="danger">
-                                                <th scope="row">{(dataSaActive.indexOf(x) + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
-                                                <td>{x.nama_pic_1}</td>
-                                                <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
-                                                <td>{x.nama_depo}</td>
-                                                <td>SA</td>
-                                                {this.state.tipe === 'daily' ? (
-                                                    x.active.length > 0 ? (
-                                                        totalDoc.map(y => {
-                                                            let cek =  []
-                                                            let data = []
-                                                            for (let i = 0; i < totalDoc.length; i++) {
-                                                                if (x.active[i] === undefined) {
-                                                                    cek.push('')
-                                                                } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
-                                                                    cek.push(x.active[i].access)
-                                                                    data.push(i)
-                                                                }
-                                                            }
-                                                            return (
-                                                                <td>
-                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
-                                                                        {cek}
-                                                                    </a>
-                                                                </td>
-                                                            )
-                                                        })
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td></td>
-                                                            )
-                                                        })
-                                                    )
-                                                ) : (
-                                                    x.active.length > 0 ? (
-                                                        totalDoc.map(y => {
-                                                            let cek =  []
-                                                            let data = []
-                                                            for (let i = 0; i < totalDoc.length; i++) {
-                                                                if (x.active[i] === undefined) {
-                                                                    cek.push('')
-                                                                } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
-                                                                    cek.push(x.active[i].access)
-                                                                    data.push(i)
-                                                                }
-                                                            }
-                                                            return (
-                                                                <td>
-                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
-                                                                        {cek}
-                                                                    </a>
-                                                                </td>
-                                                            )
-                                                        })
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td></td>
-                                                            )
-                                                        })
-                                                    )
-                                                )}
-                                            </tr>
-                                            ) : (
-                                                <div></div>
-                                            )
-                                            )
-                                        })}
-                                        {dataKasirActive !== undefined && dataKasirActive.map(x => {
-                                            return (
-                                            x !== null ? (
-                                                // onClick={() => this.openModalProses(this.setState({doc: dataKasirActive[dataKasirActive.indexOf(x)].dokumen, act: dataKasirActive[dataKasirActive.indexOf(x)].active}))}
-                                            <tr className="danger" >
-                                                <th scope="row">{(dataKasirActive.indexOf(x) + dataSaActive.length + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
-                                                <td>{x.nama_pic_1}</td>
-                                                <td>{x.kode_plant}</td>
-                                                <td>{x.nama_depo}</td>
-                                                <td>Kasir</td>
-                                                {this.state.tipe === 'daily' ? (
-                                                    x.active.length > 0 ? (
-                                                        totalDoc.map(y => {
-                                                            let cek =  []
-                                                            let data = []
-                                                            for (let i = 0; i < totalDoc.length; i++) {
-                                                                if (x.active[i] === undefined) {
-                                                                    cek.push('')
-                                                                } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
-                                                                    cek.push(x.active[i].access)
-                                                                    data.push(i)
-                                                                }
-                                                            }
-                                                            return (
-                                                                <td>
-                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
-                                                                        {cek}
-                                                                    </a>
-                                                                </td>
-                                                            )
-                                                        })
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td></td>
-                                                            )
-                                                        })
-                                                    )
-                                                ) : (
-                                                    x.active.length > 0 ? (
-                                                        totalDoc.map(y => {
-                                                            let cek =  []
-                                                            let data = []
-                                                            for (let i = 0; i < totalDoc.length; i++) {
-                                                                if (x.active[i] === undefined) {
-                                                                    cek.push('')
-                                                                } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
-                                                                    cek.push(x.active[i].access)
-                                                                    data.push(i)
-                                                                }
-                                                            }
-                                                            return (
-                                                                <td>
-                                                                    <a className="green" onClick={() => this.lockOpen(x.active[data])}>
-                                                                        {cek}
-                                                                    </a>
-                                                                </td>
-                                                            )
-                                                        })
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td></td>
-                                                            )
-                                                        })
-                                                    )
-                                                )}
-                                            </tr>
-                                            ) : (
-                                                <td></td>
-                                            )
-                                            )
-                                        })}
-                                </tbody>
-                                ): (
-                                    <tbody>
-                                    <tr className="danger">
-                                    </tr>
-                                    </tbody>
+                                ) : (
+                                    <DropdownMenu right>
+                                        <DropdownItem>
+                                                <div className="grey">    
+                                                    You don't have any notifications 
+                                                </div>        
+                                        </DropdownItem>
+                                    </DropdownMenu>
                                 )}
-                            </Table>
-                        </div>
-                        <div>
-                            <div className="infoPage">
-                                <text>Showing {pages.currentPage} of {pages.pages} pages</text>
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled={pages.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled={pages.nextLink === null ? true : false} onClick={this.next}>Next</button>
-                                </div>
-                            </div>
+                            </UncontrolledDropdown>
                         </div>
                     </div>
-                </Container>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
+        
+        return (
+            <>
+                <Sidebar {...sidebarProps}>
+                    <MaterialTitlePanel title={contentHeader}>
+                        <div className="background-logo">
+                            <Alert color="danger" className="alertWrong" isOpen={upload}>
+                                <div>{errMsg}</div>
+                            </Alert>
+                            <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                                <div>{alertMsg}</div>
+                                <div>{alertM}</div>
+                            </Alert>
+                            <div className="bodyDashboard">
+                                <div className="headMaster">
+                                    <div className="titleDashboard col-md-12">Lock / Unlock</div>
+                                </div>
+                                <div className="secHeadDashboard">
+                                    <div className="searchDash">
+                                        <div className="secSearch mr-4">
+                                            <text className="mr-2">
+                                                Show: 
+                                            </text>
+                                            { level === '5' || level === '4' ? (
+                                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                                <DropdownToggle caret color="light">
+                                                    {this.state.limit}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
+                                                </DropdownMenu>
+                                                </ButtonDropdown>
+                                            ) : (
+                                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                                <DropdownToggle caret color="light">
+                                                    {this.state.limit}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
+                                                    <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                                </DropdownMenu>
+                                                </ButtonDropdown>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <text>Jenis: </text>
+                                            <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                            <DropdownToggle caret color="light">
+                                                {this.state.tipe}
+                                            </DropdownToggle>
+                                            <DropdownMenu>
+                                                <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                                <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                            </DropdownMenu>
+                                            </ButtonDropdown>
+                                        </div>
+                                    </div>
+                                    <div className="secSearch">
+                                        <text>Search: </text>
+                                        <Input 
+                                        className="search"
+                                        onChange={this.onSearch}
+                                        value={this.state.search}
+                                        onKeyPress={this.onSearch}
+                                        >
+                                            <FaSearch size={20} />
+                                        </Input>
+                                    </div>
+                                </div>
+                                <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                        {level === '4' || level === '5' ? (
+                                                <tr>moment().month(0)
+                                                    <th>No</th>
+                                                    <th>Tanggal Dokumen</th>
+                                                    <th>Tanggal Upload</th>
+                                                    {dataDash !== undefined && dataDash.map(item => {
+                                                        return (
+                                                        <th>{(dataDash.indexOf(item) + 1)}</th>
+                                                        )
+                                                    })}
+                                                    <th>Jumlah File Upload</th>
+                                                    <th>Persentase</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                                ): level === '6' || level === '3' || level === '1' || level === '2' ? (
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>PIC</th>
+                                                    <th>Kode Plant</th>
+                                                    <th>Nama Depo</th>
+                                                    <th>User Area</th>
+                                                    {totalDoc.length !== 0 && totalDoc.map(item => {
+                                                        return (
+                                                        <th>{this.state.tipe === 'monthly' ? moment().month(item - 1).format('MMMM') : item}</th>
+                                                        )
+                                                    })}
+                                                </tr>
+                                                ): (
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>PIC</th>
+                                                    <th>Kode Plant</th>
+                                                    <th>Nama Depo</th>
+                                                    <th>1</th>
+                                                    <th>2</th>
+                                                    <th>3</th>
+                                                    <th>4</th>
+                                                    <th>5</th>
+                                                    <th>6</th>
+                                                    <th>7</th>
+                                                    <th>8</th>
+                                                    <th>9</th>
+                                                    <th>10</th>
+                                                    <th>11</th>
+                                                    <th>12</th>
+                                                    <th>13</th>
+                                                    <th>14</th>
+                                                    <th>Jumlah File Upload</th>
+                                                    <th>Persentase</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                                )}
+                                        </thead>
+                                            { level === '2' || level === '1' ? (
+                                        <tbody>
+                                                {dataSaActive !== undefined && dataSaActive.map(x => {
+                                                    return (
+                                                    x !== null ? (
+                                                        // onClick={() => this.openModalProses(this.setState({doc: dataSaActive[dataSaActive.indexOf(x)].dokumen, act: dataSaActive[dataSaActive.indexOf(x)].active}))}
+                                                    <tr className="danger">
+                                                        <th scope="row">{(dataSaActive.indexOf(x) + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                        <td>{x.nama_pic_1}</td>
+                                                        <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
+                                                        <td>{x.nama_depo}</td>
+                                                        <td>SA</td>
+                                                        {this.state.tipe === 'daily' ? (
+                                                            x.active.length > 0 ? (
+                                                                totalDoc.map(y => {
+                                                                    let cek =  []
+                                                                    let data = []
+                                                                    for (let i = 0; i < totalDoc.length; i++) {
+                                                                        if (x.active[i] === undefined) {
+                                                                            cek.push('')
+                                                                        } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                            cek.push(x.active[i].access)
+                                                                            data.push(i)
+                                                                        }
+                                                                    }
+                                                                    return (
+                                                                        <td>
+                                                                            <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                                {cek}
+                                                                            </a>
+                                                                        </td>
+                                                                    )
+                                                                })
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td></td>
+                                                                    )
+                                                                })
+                                                            )
+                                                        ) : (
+                                                            x.active.length > 0 ? (
+                                                                totalDoc.map(y => {
+                                                                    let cek =  []
+                                                                    let data = []
+                                                                    for (let i = 0; i < totalDoc.length; i++) {
+                                                                        if (x.active[i] === undefined) {
+                                                                            cek.push('')
+                                                                        } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
+                                                                            cek.push(x.active[i].access)
+                                                                            data.push(i)
+                                                                        }
+                                                                    }
+                                                                    return (
+                                                                        <td>
+                                                                            <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                                {cek}
+                                                                            </a>
+                                                                        </td>
+                                                                    )
+                                                                })
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td></td>
+                                                                    )
+                                                                })
+                                                            )
+                                                        )}
+                                                    </tr>
+                                                    ) : (
+                                                        <div></div>
+                                                    )
+                                                    )
+                                                })}
+                                                {dataKasirActive !== undefined && dataKasirActive.map(x => {
+                                                    return (
+                                                    x !== null ? (
+                                                        // onClick={() => this.openModalProses(this.setState({doc: dataKasirActive[dataKasirActive.indexOf(x)].dokumen, act: dataKasirActive[dataKasirActive.indexOf(x)].active}))}
+                                                    <tr className="danger" >
+                                                        <th scope="row">{(dataKasirActive.indexOf(x) + dataSaActive.length + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                        <td>{x.nama_pic_1}</td>
+                                                        <td>{x.kode_plant}</td>
+                                                        <td>{x.nama_depo}</td>
+                                                        <td>Kasir</td>
+                                                        {this.state.tipe === 'daily' ? (
+                                                            x.active.length > 0 ? (
+                                                                totalDoc.map(y => {
+                                                                    let cek =  []
+                                                                    let data = []
+                                                                    for (let i = 0; i < totalDoc.length; i++) {
+                                                                        if (x.active[i] === undefined) {
+                                                                            cek.push('')
+                                                                        } else if (parseInt(moment(x.active[i].createdAt).format('DD')) == y) {
+                                                                            cek.push(x.active[i].access)
+                                                                            data.push(i)
+                                                                        }
+                                                                    }
+                                                                    return (
+                                                                        <td>
+                                                                            <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                                {cek}
+                                                                            </a>
+                                                                        </td>
+                                                                    )
+                                                                })
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td></td>
+                                                                    )
+                                                                })
+                                                            )
+                                                        ) : (
+                                                            x.active.length > 0 ? (
+                                                                totalDoc.map(y => {
+                                                                    let cek =  []
+                                                                    let data = []
+                                                                    for (let i = 0; i < totalDoc.length; i++) {
+                                                                        if (x.active[i] === undefined) {
+                                                                            cek.push('')
+                                                                        } else if (parseInt(moment(x.active[i].createdAt).month()) + 1 == y) {
+                                                                            cek.push(x.active[i].access)
+                                                                            data.push(i)
+                                                                        }
+                                                                    }
+                                                                    return (
+                                                                        <td>
+                                                                            <a className="green" onClick={() => this.lockOpen(x.active[data])}>
+                                                                                {cek}
+                                                                            </a>
+                                                                        </td>
+                                                                    )
+                                                                })
+                                                            ): (
+                                                                totalDoc.map(item => {
+                                                                    return (
+                                                                        <td></td>
+                                                                    )
+                                                                })
+                                                            )
+                                                        )}
+                                                    </tr>
+                                                    ) : (
+                                                        <td></td>
+                                                    )
+                                                    )
+                                                })}
+                                        </tbody>
+                                        ): (
+                                            <tbody>
+                                            <tr className="danger">
+                                            </tr>
+                                            </tbody>
+                                        )}
+                                    </Table>
+                                </div>
+                                <div>
+                                    <div className="infoPage">
+                                        <text>Showing {pages.currentPage} of {pages.pages} pages</text>
+                                        <div className="pageButton">
+                                            <button className="btnPrev" color="info" disabled={pages.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                            <button className="btnPrev" color="info" disabled={pages.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </MaterialTitlePanel>
+                </Sidebar>
                 <Modal isOpen={openModal} size="lg" toggle={this.openModalProses}>
                     <ModalHeader toggle={this.openModalProses}>Proses Dokumen Daily</ModalHeader>
                     {level === '4' || level === '5' ? (

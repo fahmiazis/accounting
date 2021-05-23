@@ -22,6 +22,7 @@ import Report from './pages/Report'
 import tes from './pages/tes'
 import SettingDokumen from './pages/SettingDokumen'
 import LockDepo from './pages/LockDepo'
+import Coba from './pages/alasan'
 
 class App extends Component {
 
@@ -78,6 +79,9 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/date">
                     <DateClossing />
+                </PrivateRoute>
+                <PrivateRoute path="/coba">
+                    <Coba />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

@@ -10,7 +10,7 @@ import { Container, Collapse, Nav, Navbar,
 import Pdf from "../components/Pdf"
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineCheck, AiFillCheckCircle, AiOutlineClose, AiOutlineMinus, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
 import {BsCircle, BsDashCircleFill, BsFillCircleFill} from 'react-icons/bs'
 import {MdWatchLater} from 'react-icons/md'
@@ -24,6 +24,9 @@ import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
 import {default as axios} from 'axios'
 import { FcDocument } from 'react-icons/fc'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 moment.locales('id')
 
 const {REACT_APP_BACKEND_URL} = process.env
@@ -33,40 +36,54 @@ const alasanSchema = Yup.object().shape({
 });
 
 class Dashboard extends Component {
-    state = {
-        month: [],
-        alert: false,
-        isOpen: false,
-        openModal: false,
-        drop: false,
-        dropOpen: false,
-        dropLink: false,
-        dropOpenNum: false,
-        value: '',
-        onChange: new Date(),
-        openPdf: false,
-        openApprove: false,
-        openReject: false,
-        upload: false,
-        errMsg: '',
-        detail: {},
-        fileUpload: '',
-        file: '',
-        fileName: {},
-        alasan: '',
-        doc: [],
-        aktif: {},
-        act: [],
-        totalDoc: [],
-        settingOpen: false,
-        tipe: 'daily',
-        appAct: {},
-        date: '',
-        time: '',
-        search: '',
-        limit: 10,
-        moon: 0,
-        periode: false
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            month: [],
+            alert: false,
+            isOpen: false,
+            openModal: false,
+            drop: false,
+            dropOpen: false,
+            dropLink: false,
+            dropOpenNum: false,
+            value: '',
+            onChange: new Date(),
+            openPdf: false,
+            openApprove: false,
+            openReject: false,
+            upload: false,
+            errMsg: '',
+            detail: {},
+            fileUpload: '',
+            file: '',
+            fileName: {},
+            alasan: '',
+            doc: [],
+            aktif: {},
+            act: [],
+            totalDoc: [],
+            settingOpen: false,
+            tipe: 'daily',
+            appAct: {},
+            date: '',
+            time: '',
+            search: '',
+            limit: 10,
+            moon: 0,
+            periode: false
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     showAlert = () => {
@@ -386,6 +403,14 @@ class Dashboard extends Component {
         }
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+      }
 
     render() {
         const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
@@ -393,123 +418,106 @@ class Dashboard extends Component {
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
-        return (
-            <>
-                <Navbar color="light" light expand='lg' className="navbar">
-                    <NavbarBrand href="/home"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                                <Dropdown nav isOpen={this.state.dropLink} toggle={this.dropLink}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Document
+
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <UncontrolledDropdown>
+                                <DropdownToggle nav>
+                                    <div className="optionType">
+                                        <BsBell size={20} className="white"/>
+                                        {notif.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : ( 
+                                            <div></div>
+                                        )}
+                                    </div>
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/dokumen">
-                                        Verifikasi Dokumen
-                                    </DropdownItem>
-                                    <DropdownItem href="/setting/dokumen">
-                                        Setting Dokumen
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                            <NavItem>
-                                <NavLink href="/dokumen" className="navDoc">Document</NavLink>
-                            </NavItem>
-                            )}
-                            {level === '1' ? (
-                                <Dropdown nav isOpen={drop} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Master
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/email">
-                                        Master Email
-                                    </DropdownItem>
-                                    <DropdownItem href="/master/dokumen">
-                                        Master Document
-                                    </DropdownItem>
-                                    <DropdownItem href="/pic">
-                                        Master PIC
-                                    </DropdownItem>
-                                    <DropdownItem href="/alasan">
-                                        Master Alasan
-                                    </DropdownItem>
-                                    <DropdownItem href="/depo">
-                                        Master Depo
-                                    </DropdownItem>
-                                    <DropdownItem href="/user">
-                                        Master User
-                                    </DropdownItem>
-                                    <DropdownItem href="/divisi">
-                                        Master Divisi
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Setting
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/lock">
-                                        Setting Access
-                                    </DropdownItem>
-                                    <DropdownItem href="/date">
-                                        Setting Date Clossing
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>
-                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
-                            </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav>
-                                <div className="optionType">
-                                    <BsBell size={20} />
-                                    {notif.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : ( 
-                                        <div></div>
-                                    )}
-                                </div>
-                            </DropdownToggle>
-                            {level === '2' || level === '3' ? (
-                                <DropdownMenu right>
-                                    {notifSa.length > 0 && notifSa.map(item => {
+                                {level === '2' || level === '3' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                        {notifSa.length > 0 && notifSa.map(item => {
+                                            return (
+                                            <DropdownItem href="/dokumen">
+                                                <div className="notif">
+                                                    <FcDocument size={60} className="mr-4"/>
+                                                    <div>
+                                                        <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                        <div>Kode Plant: {item.kode_plant}</div>
+                                                        <div>{item.dokumen.dokumen}</div>
+                                                        <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </DropdownItem>
+                                            )
+                                        })}
+                                        {notifKasir.length === 0 && notifSa.length === 0 && (
+                                        <DropdownItem>
+                                            <div className="grey">
+                                                You don't have any notifications 
+                                            </div>        
+                                        </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                ) : level === '4' || level === '5' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                    {notif.length > 0 && notif.map(item => {
                                         return (
                                         <DropdownItem href="/dokumen">
                                             <div className="notif">
-                                                <FcDocument size={60} className="mr-4"/>
+                                                <FcDocument size={40} className="mr-4"/>
                                                 <div>
-                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
-                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>Dokumen Anda Direject</div>
                                                     <div>{item.dokumen.dokumen}</div>
+                                                    <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
                                                     <div>{moment(item.active.createdAt).format('LLL')}</div>
                                                 </div>
                                             </div>
@@ -517,53 +525,49 @@ class Dashboard extends Component {
                                         </DropdownItem>
                                         )
                                     })}
-                                    {notifKasir.length === 0 && notifSa.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                            ) : level === '4' || level === '5' ? (
-                                <DropdownMenu right>
-                                {notif.length > 0 && notif.map(item => {
-                                    return (
-                                    <DropdownItem href="/dokumen">
-                                        <div className="notif">
-                                            <FcDocument size={40} className="mr-4"/>
-                                            <div>
-                                                <div>Dokumen Anda Direject</div>
-                                                <div>{item.dokumen.dokumen}</div>
-                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
-                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
-                                            </div>
-                                        </div>
-                                        <hr/>
-                                    </DropdownItem>
-                                    )
-                                })}
-                                {notif.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">    
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                )}
-                                </DropdownMenu>
-                            ) : (
-                                <DropdownMenu right>
-                                    <DropdownItem>
+                                    {notif.length === 0 && (
+                                        <DropdownItem>
                                             <div className="grey">    
                                                 You don't have any notifications 
                                             </div>        
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            )}
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
+                                        </DropdownItem>
+                                    )}
+                                    </DropdownMenu>
+                                ) : (
+                                    <DropdownMenu right>
+                                        <DropdownItem>
+                                                <div className="grey">    
+                                                    You don't have any notifications 
+                                                </div>        
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                )}
+                            </UncontrolledDropdown>
+                        </div>
+                    </div>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
+        return (
+            <>
+            <Sidebar {...sidebarProps}>
+                <MaterialTitlePanel title={contentHeader}>
+                <div className="background-logo">
                     <Alert color="danger" className="alertWrong" isOpen={upload}>
                         <div>{errMsg}</div>
                     </Alert>
@@ -572,7 +576,9 @@ class Dashboard extends Component {
                         <div>{alertM}</div>
                     </Alert>
                     <div className="bodyDashboard">
-                        <div className="titleDashboard">Verifikasi Dokumen</div>
+                        <div className="headMaster">
+                            <div className="titleDashboard col-md-12">Dashboard</div>
+                        </div>
                         <div className="headDashboard">
                             {level === '5' || level === '4' ? (
                                 <div></div>
@@ -717,6 +723,7 @@ class Dashboard extends Component {
                                         ): level === '6' || level === '3' || level === '1' || level === '2' ? (
                                         <tr>
                                             <th>No</th>
+                                            <th>PIC</th>
                                             <th>Kode Plant</th>
                                             <th>Nama Depo</th>
                                             <th>Tanggal Dokumen</th>
@@ -830,6 +837,7 @@ class Dashboard extends Component {
                                             x !== null ? (
                                             <tr className="danger">
                                                 <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                <td>{x.nama_pic_1}</td>
                                                 <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
@@ -926,6 +934,7 @@ class Dashboard extends Component {
                                             x !== null ? (
                                             <tr className="danger">
                                                 <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                <td>{x.nama_pic_1}</td>
                                                 <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
@@ -1066,7 +1075,9 @@ class Dashboard extends Component {
                             </div>
                         </div>
                     </div>
-                </Container>
+                </div>
+                </ MaterialTitlePanel>
+            </Sidebar>
                 <Modal isOpen={openModal} size="lg" toggle={this.openModalProses}>
                     <ModalHeader toggle={this.openModalProses}>Proses Dokumen Daily</ModalHeader>
                     {level === '4' || level === '5' ? (

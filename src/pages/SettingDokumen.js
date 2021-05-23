@@ -6,10 +6,10 @@ import { Container, Collapse, Nav, Navbar,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner} from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import dokumen from '../redux/actions/dokumen'
 import divisi from '../redux/actions/divisi'
 import {connect} from 'react-redux'
@@ -19,6 +19,9 @@ import {BsBell} from 'react-icons/bs'
 import dashboard from '../redux/actions/dashboard'
 import { FcDocument } from 'react-icons/fc'
 import {BsFillCircleFill} from 'react-icons/bs'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 
 const dokumenSchema = Yup.object().shape({
     nama_dokumen: Yup.string().required(),
@@ -30,28 +33,41 @@ const dokumenSchema = Yup.object().shape({
 });
 
 class SettingDokumen extends Component {
-    state = {
-        alert: false,
-        confirm: "",
-        isOpen: false,
-        dropOpen: false,
-        dropOpenNum: false,
-        value: '',
-        onChange: new Date(),
-        sidebarOpen: false,
-        settingOpen: false,
-        modalAdd: false,
-        modalEdit: false,
-        modalUpload: false,
-        modalDownload: false,
-        modalConfirm: false,
-        detail: {},
-        dataDivisi: [],
-        upload: false,
-        errMsg: '',
-        fileUpload: '',
-        limit: 10,
-        search: ''
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            alert: false,
+            confirm: "",
+            isOpen: false,
+            dropOpen: false,
+            dropOpenNum: false,
+            value: '',
+            onChange: new Date(),
+            sidebarOpen: false,
+            settingOpen: false,
+            modalAdd: false,
+            modalEdit: false,
+            modalUpload: false,
+            modalDownload: false,
+            modalConfirm: false,
+            detail: {},
+            dataDivisi: [],
+            upload: false,
+            errMsg: '',
+            fileUpload: '',
+            limit: 10,
+            search: ''
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     showAlert = () => {
@@ -218,6 +234,15 @@ class SettingDokumen extends Component {
         await this.props.getDivisi(token, 100, '')
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+    }
+
 
     render() {
         const level = localStorage.getItem('level')
@@ -226,85 +251,106 @@ class SettingDokumen extends Component {
         const {dataDokumen, isGet, alertM, alertMsg, alertUpload, page} = this.props.dokumen
         const {dataDivisi} = this.props.divisi
         const {notif, notifSa, notifKasir} = this.props.dashboard
-        return (
-            <>
-                <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Document
+
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <UncontrolledDropdown>
+                                <DropdownToggle nav>
+                                    <div className="optionType">
+                                        <BsBell size={20} className="white"/>
+                                        {notif.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : notifSa.length > 0 || notifKasir.length > 0 ? (
+                                            <BsFillCircleFill className="red ball" size={10} />
+                                        ) : ( 
+                                            <div></div>
+                                        )}
+                                    </div>
                                 </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/dokumen">
-                                        Verifikasi Dokumen
-                                    </DropdownItem>
-                                    <DropdownItem href="/setting/dokumen">
-                                        Setting Dokumen
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                            {level === '2' ? (
-                            <Dropdown nav isOpen={this.state.settingOpen} toggle={this.dropSetting}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Setting
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/lock">
-                                        Setting Access
-                                    </DropdownItem>
-                                    <DropdownItem href="/date">
-                                        Setting Date Clossing
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>
-                            {level === '1' ? names + ' - ' + 'Super Admin': level === '2' ? names + ' - ' + 'SPV': level === '3' ? names + ' - ' + 'PIC': level === '4' ? names :level === '5' ? names: 'User'}
-                            </DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav>
-                                <div className="optionType">
-                                    <BsBell size={20} />
-                                    {notif.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : notifSa.length > 0 || notifKasir.length > 0 ? (
-                                        <BsFillCircleFill className="red ball" size={10} />
-                                    ) : ( 
-                                        <div></div>
-                                    )}
-                                </div>
-                            </DropdownToggle>
-                            {level === '2' || level === '3' ? (
-                                <DropdownMenu right>
-                                    {notifSa.length > 0 && notifSa.map(item => {
+                                {level === '2' || level === '3' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                        {notifSa.length > 0 && notifSa.map(item => {
+                                            return (
+                                            <DropdownItem href="/dokumen">
+                                                <div className="notif">
+                                                    <FcDocument size={60} className="mr-4"/>
+                                                    <div>
+                                                        <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
+                                                        <div>Kode Plant: {item.kode_plant}</div>
+                                                        <div>{item.dokumen.dokumen}</div>
+                                                        <div>{moment(item.active.createdAt).format('LLL')}</div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </DropdownItem>
+                                            )
+                                        })}
+                                        {notifKasir.length === 0 && notifSa.length === 0 && (
+                                        <DropdownItem>
+                                            <div className="grey">
+                                                You don't have any notifications 
+                                            </div>        
+                                        </DropdownItem>
+                                        )}
+                                    </DropdownMenu>
+                                ) : level === '4' || level === '5' ? (
+                                    <DropdownMenu right
+                                    modifiers={{
+                                        setMaxHeight: {
+                                          enabled: true,
+                                          order: 890,
+                                          fn: (data) => {
+                                            return {
+                                              ...data,
+                                              styles: {
+                                                ...data.styles,
+                                                overflow: 'auto',
+                                                maxHeight: '600px',
+                                              },
+                                            };
+                                          },
+                                        },
+                                      }}
+                                    >
+                                    {notif.length > 0 && notif.map(item => {
                                         return (
                                         <DropdownItem href="/dokumen">
                                             <div className="notif">
-                                                <FcDocument size={60} className="mr-4"/>
+                                                <FcDocument size={40} className="mr-4"/>
                                                 <div>
-                                                    <div>User Area {item.tipe} Telah Mengirim Dokumen</div>
-                                                    <div>Kode Plant: {item.kode_plant}</div>
+                                                    <div>Dokumen Anda Direject</div>
                                                     <div>{item.dokumen.dokumen}</div>
+                                                    <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
                                                     <div>{moment(item.active.createdAt).format('LLL')}</div>
                                                 </div>
                                             </div>
@@ -312,161 +358,159 @@ class SettingDokumen extends Component {
                                         </DropdownItem>
                                         )
                                     })}
-                                    {notifKasir.length === 0 && notifSa.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                            ) : level === '4' || level === '5' ? (
-                                <DropdownMenu right>
-                                {notif.length > 0 && notif.map(item => {
-                                    return (
-                                    <DropdownItem href="/dokumen">
-                                        <div className="notif">
-                                            <FcDocument size={40} className="mr-4"/>
-                                            <div>
-                                                <div>Dokumen Anda Direject</div>
-                                                <div>{item.dokumen.dokumen}</div>
-                                                <div>Jenis Dokumen: {item.active.jenis_dokumen}</div>
-                                                <div>{moment(item.active.createdAt).format('LLL')}</div>
-                                            </div>
-                                        </div>
-                                        <hr/>
-                                    </DropdownItem>
-                                    )
-                                })}
-                                {notif.length === 0 && (
-                                    <DropdownItem>
-                                        <div className="grey">    
-                                            You don't have any notifications 
-                                        </div>        
-                                    </DropdownItem>
-                                )}
-                                </DropdownMenu>
-                            ) : (
-                                <DropdownMenu right>
-                                    <DropdownItem>
+                                    {notif.length === 0 && (
+                                        <DropdownItem>
                                             <div className="grey">    
                                                 You don't have any notifications 
                                             </div>        
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            )}
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
-                    <Alert color="danger" className="alertWrong" isOpen={alert}>
-                        <div>{alertMsg}</div>
-                        <div>{alertM}</div>
-                        {alertUpload !== undefined && alertUpload.map(item => {
-                            return (
-                                <div>{item}</div>
-                            )
-                        })}
-                    </Alert>
-                    <Alert color="danger" className="alertWrong" isOpen={upload}>
-                        <div>{errMsg}</div>
-                    </Alert>
-                    <div className="bodyDashboard">
-                        <div className="headMaster">
-                            <div className="titleDashboard col-md-12">Setting Dokumen</div>
+                                        </DropdownItem>
+                                    )}
+                                    </DropdownMenu>
+                                ) : (
+                                    <DropdownMenu right>
+                                        <DropdownItem>
+                                                <div className="grey">    
+                                                    You don't have any notifications 
+                                                </div>        
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                )}
+                            </UncontrolledDropdown>
                         </div>
-                        <div className="secHeadDashboard">
-                            <div>
-                                <text>Show: </text>
-                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                <DropdownToggle caret color="light">
-                                    {this.state.limit}
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 10, search: ''})}>10</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 20, search: ''})}>20</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 50, search: ''})}>50</DropdownItem>
-                                </DropdownMenu>
-                                </ButtonDropdown>
-                                <text className="textEntries">entries</text>
-                            </div>
-                        </div>
-                        <div className="secEmail">
-                            <div className="headEmail">
-                                <Button color="success" size="lg">Download</Button>
-                            </div>
-                            <div className="searchEmail">
-                                <text>Search: </text>
-                                <Input 
-                                 className="search"
-                                 onChange={this.onSearch}
-                                 value={this.state.search}
-                                 onKeyPress={this.onSearch}
-                                >
-                                    <FaSearch size={20} />
-                                </Input>
-                            </div>
-                        </div>
-                        {isGet === false ? (
-                            <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama Dokumen</th>
-                                        <th>Jenis</th>
-                                        <th>Divisi</th>
-                                        <th>Status Depo</th>
-                                        <th>Create Date</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                            </Table>
-                            </div>                    
-                        ) : (
-                            <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama Dokumen</th>
-                                        <th>Jenis</th>
-                                        <th>Divisi</th>
-                                        <th>Status Depo</th>
-                                        <th>Diupload oleh</th>
-                                        <th>Create Date</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {dataDokumen.length !== 0 && dataDokumen.map(item => {
-                                        return (
-                                    <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                        <th scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
-                                        <td>{item.nama_dokumen}</td>
-                                        <td>{item.jenis_dokumen}</td>
-                                        <td>{item.divisi}</td>
-                                        <td>{item.status_depo}</td>
-                                        <td>{item.uploadedBy}</td>
-                                        <td>{moment(item.createdAt).format('DD MMMM, YYYY')}</td>
-                                        <td>{item.status}</td>
-                                    </tr>
-                                        )})}
-                                </tbody>
-                            </Table>
-                            </div>
-                        )}
-                        <div>
-                            <div className="infoPageEmail">
-                                <text>Showing {page.currentPage} of {page.pages} pages</text>
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                    </div>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
+        return (
+            <>
+                <Sidebar {...sidebarProps}>
+                    <MaterialTitlePanel title={contentHeader}>
+                        <div className="background-logo">
+                            <Alert color="danger" className="alertWrong" isOpen={alert}>
+                                <div>{alertMsg}</div>
+                                <div>{alertM}</div>
+                                {alertUpload !== undefined && alertUpload.map(item => {
+                                    return (
+                                        <div>{item}</div>
+                                    )
+                                })}
+                            </Alert>
+                            <Alert color="danger" className="alertWrong" isOpen={upload}>
+                                <div>{errMsg}</div>
+                            </Alert>
+                            <div className="bodyDashboard">
+                                <div className="headMaster">
+                                    <div className="titleDashboard col-md-12">Setting Dokumen</div>
+                                </div>
+                                <div className="secHeadDashboard">
+                                    <div>
+                                        <text>Show: </text>
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                        <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 10, search: ''})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 20, search: ''})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataDokumen({limit: 50, search: ''})}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                        <text className="textEntries">entries</text>
+                                    </div>
+                                </div>
+                                <div className="secEmail">
+                                    <div className="headEmail">
+                                        <Button color="success" size="lg">Download</Button>
+                                    </div>
+                                    <div className="searchEmail">
+                                        <text>Search: </text>
+                                        <Input 
+                                        className="search"
+                                        onChange={this.onSearch}
+                                        value={this.state.search}
+                                        onKeyPress={this.onSearch}
+                                        >
+                                            <FaSearch size={20} />
+                                        </Input>
+                                    </div>
+                                </div>
+                                {isGet === false ? (
+                                    <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Nama Dokumen</th>
+                                                <th>Jenis</th>
+                                                <th>Divisi</th>
+                                                <th>Status Depo</th>
+                                                <th>Create Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                    </Table>
+                                    </div>                    
+                                ) : (
+                                    <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Nama Dokumen</th>
+                                                <th>Jenis</th>
+                                                <th>Divisi</th>
+                                                <th>Status Depo</th>
+                                                <th>Diupload oleh</th>
+                                                <th>Create Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {dataDokumen.length !== 0 && dataDokumen.map(item => {
+                                                return (
+                                            <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                                <th scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                <td>{item.nama_dokumen}</td>
+                                                <td>{item.jenis_dokumen}</td>
+                                                <td>{item.divisi}</td>
+                                                <td>{item.status_depo}</td>
+                                                <td>{item.uploadedBy}</td>
+                                                <td>{moment(item.createdAt).format('DD MMMM, YYYY')}</td>
+                                                <td>{item.status}</td>
+                                            </tr>
+                                                )})}
+                                        </tbody>
+                                    </Table>
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="infoPageEmail">
+                                        <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                        <div className="pageButton">
+                                            <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                            <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </Container>
+                    </MaterialTitlePanel>
+                </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd} size="lg">
                     <ModalHeader toggle={this.openModalAdd}>Add Master Dokumen</ModalHeader>
                     <Formik

@@ -6,7 +6,7 @@ import { Container, Collapse, Nav, Navbar,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner} from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
@@ -14,6 +14,9 @@ import depo from '../redux/actions/depo'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
 import {default as axios} from 'axios'
+import Sidebar from "../components/Header";
+import MaterialTitlePanel from "../components/material_title_panel";
+import SidebarContent from "../components/sidebar_content";
 const {REACT_APP_BACKEND_URL} = process.env
 
 const depoSchema = Yup.object().shape({
@@ -37,26 +40,39 @@ const depoSchema = Yup.object().shape({
 });
 
 class MasterDepo extends Component {
-    state = {
-        alert: false,
-        confirm: "",
-        isOpen: false,
-        dropOpen: false,
-        dropOpenNum: false,
-        value: '',
-        onChange: new Date(),
-        sidebarOpen: false,
-        modalAdd: false,
-        modalEdit: false,
-        modalUpload: false,
-        modalDownload: false,
-        modalConfirm: false,
-        detail: {},
-        upload: false,
-        errMsg: '',
-        fileUpload: '',
-        limit: 10,
-        search: ''
+    constructor(props) {
+        super(props);
+        this.state = {
+            docked: false,
+            open: false,
+            transitions: true,
+            touch: true,
+            shadow: true,
+            pullRight: false,
+            touchHandleWidth: 20,
+            dragToggleDistance: 30,
+            alert: false,
+            confirm: "",
+            isOpen: false,
+            dropOpen: false,
+            dropOpenNum: false,
+            value: '',
+            onChange: new Date(),
+            sidebarOpen: false,
+            modalAdd: false,
+            modalEdit: false,
+            modalUpload: false,
+            modalDownload: false,
+            modalConfirm: false,
+            detail: {},
+            upload: false,
+            errMsg: '',
+            fileUpload: '',
+            limit: 10,
+            search: ''
+        }
+        this.onSetOpen = this.onSetOpen.bind(this);
+        this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     next = async () => {
@@ -241,219 +257,211 @@ class MasterDepo extends Component {
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+    }
+
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
         const {dataDepo, isGet, alertM, alertMsg, alertUpload, page} = this.props.depo
         const level = localStorage.getItem('level')
+        const names = localStorage.getItem('name')
+
+        const contentHeader =  (
+            <div className="navbar">
+                <NavbarBrand
+                    href="#"
+                    onClick={this.menuButtonClick}
+                    >
+                        <FaBars size={20} className="white" />
+                    </NavbarBrand>
+                    <div className="divLogo">
+                        <marquee className='marquee'>
+                            <span>WEB ACCOUNTING</span>
+                        </marquee>
+                        <div className="textLogo">
+                            <FaUserCircle size={24} className="mr-2" />
+                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                        </div>
+                    </div>
+            </div>
+        )
+
+        const sidebar = <SidebarContent />
+        const sidebarProps = {
+            sidebar,
+            docked: this.state.docked,
+            sidebarClassName: "custom-sidebar-class",
+            contentId: "custom-sidebar-content-id",
+            open: this.state.open,
+            touch: this.state.touch,
+            shadow: this.state.shadow,
+            pullRight: this.state.pullRight,
+            touchHandleWidth: this.state.touchHandleWidth,
+            dragToggleDistance: this.state.dragToggleDistance,
+            transitions: this.state.transitions,
+            onSetOpen: this.onSetOpen
+          };
         return (
             <>
-                <Navbar color="light" light expand="md" className="navbar">
-                    <NavbarBrand href="/"><img src={logo} alt="logo" className="logo" /></NavbarBrand>
-                    <NavbarToggler onClick={this.toggle} />
-                    <Collapse isOpen={isOpen} navbar>
-                        <Nav className="mr-auto" navbar>
-                            <NavItem>
-                                <NavLink href="/" className="navHome">Home</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dashboard" className="navDoc">Dashboard</NavLink>
-                            </NavItem>
-                            <NavItem>
-                                <NavLink href="/dokumen" className="navDoc">Document</NavLink>
-                            </NavItem>
-                            {level === "1" ? (
-                            <Dropdown nav isOpen={dropOpenNum} toggle={this.dropOpen}>
-                                <DropdownToggle nav caret className="navDoc">
-                                    Master
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem href="/email">
-                                        Master Email
-                                    </DropdownItem>
-                                    <DropdownItem href="/master/dokumen">
-                                        Master Document
-                                    </DropdownItem>
-                                    <DropdownItem href="/pic">
-                                        Master PIC
-                                    </DropdownItem>
-                                    <DropdownItem href="/alasan">
-                                        Master Alasan
-                                    </DropdownItem>
-                                    <DropdownItem href="/depo">
-                                        Master Depo
-                                    </DropdownItem>
-                                    <DropdownItem href="/user">
-                                        Master User
-                                    </DropdownItem>
-                                    <DropdownItem href="/divisi">
-                                        Master Divisi
-                                    </DropdownItem>
-                                </DropdownMenu>
-                            </Dropdown>
-                            ) : (
-                                <div></div>
-                            )}
-                            <NavItem>
-                                <NavLink href="/report" className="navReport">Report</NavLink>
-                            </NavItem>
-                        </Nav>
-                        <UncontrolledDropdown>
-                            <DropdownToggle nav caret>Super Admin</DropdownToggle>
-                            <DropdownMenu right>
-                                <DropdownItem onClick={() => this.props.logout()}>Log Out</DropdownItem>
-                            </DropdownMenu>
-                        </UncontrolledDropdown>
-                    </Collapse>
-                </Navbar>
-                <Container fluid={true} className="background-logo">
-                    <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
-                        <div>{alertMsg}</div>
-                        <div>{alertM}</div>
-                        {alertUpload !== undefined && alertUpload.map(item => {
-                            return (
-                                <div>{item}</div>
-                            )
-                        })}
-                    </Alert>
-                    <Alert color="danger" className="alertWrong" isOpen={upload}>
-                        <div>{errMsg}</div>
-                    </Alert>
-                    <div className="bodyDashboard">
-                        <div className="headMaster">
-                            <div className="titleDashboard col-md-12">Master Depo</div>
-                        </div>
-                        <div className="secHeadDashboard">
-                            <div>
-                                <text>Show: </text>
-                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                <DropdownToggle caret color="light">
-                                    {this.state.limit}
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 10, search: ''})}>10</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 20, search: ''})}>20</DropdownItem>
-                                    <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 50, search: ''})}>50</DropdownItem>
-                                </DropdownMenu>
-                                </ButtonDropdown>
-                                <text className="textEntries">entries</text>
-                            </div>
-                        </div>
-                        <div className="secEmail">
-                            <div className="headEmail">
-                                <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
-                            </div>
-                            <div className="searchEmail">
-                                <text>Search: </text>
-                                <Input 
-                                className="search"
-                                onChange={this.onSearch}
-                                value={this.state.search}
-                                onKeyPress={this.onSearch}
-                                >
-                                    <FaSearch size={20} />
-                                </Input>
-                            </div>
-                        </div>
-                        {isGet === false ? (
-                            <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Kode Depo</th>
-                                        <th>Nama Depo</th>
-                                        <th>Home Town</th>
-                                        <th>Channel</th>
-                                        <th>Distribution</th>
-                                        <th>Status Depo</th>
-                                        <th>Profit Center</th>
-                                        <th>Kode PLANT</th>
-                                        <th>Kode SAP 1</th>
-                                        <th>Kode SAP 2</th>
-                                        <th>Nama GROM</th>
-                                        <th>Nama BM</th>
-                                        <th>Nama ASS</th>
-                                        <th>Nama PIC 1</th>
-                                        <th>Nama PIC 2</th>
-                                        <th>Nama PIC 3</th>
-                                        <th>Nama PIC 4</th>
-                                    </tr>
-                                </thead>
-                            </Table>
-                            <div className="spin">
-                                    <Spinner type="grow" color="primary"/>
-                                    <Spinner type="grow" className="mr-3 ml-3" color="success"/>
-                                    <Spinner type="grow" color="warning"/>
-                                    <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
-                                    <Spinner type="grow" color="info"/>
-                            </div>
-                            </div>
-                        ) : (
-                            <div className="tableDashboard">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Kode Depo</th>
-                                        <th>Nama Depo</th>
-                                        <th>Home Town</th>
-                                        <th>Channel</th>
-                                        <th>Distribution</th>
-                                        <th>Status Depo</th>
-                                        <th>Profit Center</th>
-                                        <th>Kode PLANT</th>
-                                        <th>Kode SAP 1</th>
-                                        <th>Kode SAP 2</th>
-                                        <th>Nama GROM</th>
-                                        <th>Nama BM</th>
-                                        <th>Nama ASS</th>
-                                        <th>Nama PIC 1</th>
-                                        <th>Nama PIC 2</th>
-                                        <th>Nama PIC 3</th>
-                                        <th>Nama PIC 4</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {dataDepo.length !== 0 && dataDepo.map(item => {
-                                        return (
-                                        <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                            <th scope="row">{(dataDepo.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
-                                            <td>{item.kode_depo}</td>
-                                            <td>{item.nama_depo}</td>
-                                            <td>{item.home_town}</td>
-                                            <td>{item.channel}</td>
-                                            <td>{item.distribution}</td>
-                                            <td>{item.status_depo}</td>
-                                            <td>{item.profit_center}</td>
-                                            <td>{item.kode_plant}</td>
-                                            <td>{item.kode_sap_1}</td>
-                                            <td>{item.kode_sap_2}</td>
-                                            <td>{item.nama_grom}</td>
-                                            <td>{item.nama_bm}</td>
-                                            <td>{item.nama_ass}</td>
-                                            <td>{item.nama_pic_1}</td>
-                                            <td>{item.nama_pic_2}</td>
-                                            <td>{item.nama_pic_3}</td>
-                                            <td>{item.nama_pic_4}</td>
-                                        </tr>
-                                        )})}
-                                </tbody>
-                            </Table>
-                        </div>
-                        )}
-                        <div>
-                            <div className="infoPageEmail">
-                                <text>Showing {page.currentPage} of {page.pages} pages</text>
-                                <div className="pageButton">
-                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                <Sidebar {...sidebarProps}>
+                    <MaterialTitlePanel title={contentHeader}>
+                        <div className="background-logo">
+                            <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                                <div>{alertMsg}</div>
+                                <div>{alertM}</div>
+                                {alertUpload !== undefined && alertUpload.map(item => {
+                                    return (
+                                        <div>{item}</div>
+                                    )
+                                })}
+                            </Alert>
+                            <Alert color="danger" className="alertWrong" isOpen={upload}>
+                                <div>{errMsg}</div>
+                            </Alert>
+                            <div className="bodyDashboard">
+                                <div className="headMaster">
+                                    <div className="titleDashboard col-md-12">Master Depo</div>
+                                </div>
+                                <div className="secHeadDashboard">
+                                    <div>
+                                        <text>Show: </text>
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 10, search: ''})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 20, search: ''})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 50, search: ''})}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                        <text className="textEntries">entries</text>
+                                    </div>
+                                </div>
+                                <div className="secEmail">
+                                    <div className="headEmail">
+                                        <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
+                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                        <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
+                                    </div>
+                                    <div className="searchEmail">
+                                        <text>Search: </text>
+                                        <Input 
+                                        className="search"
+                                        onChange={this.onSearch}
+                                        value={this.state.search}
+                                        onKeyPress={this.onSearch}
+                                        >
+                                            <FaSearch size={20} />
+                                        </Input>
+                                    </div>
+                                </div>
+                                {isGet === false ? (
+                                    <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Kode Depo</th>
+                                                <th>Nama Depo</th>
+                                                <th>Home Town</th>
+                                                <th>Channel</th>
+                                                <th>Distribution</th>
+                                                <th>Status Depo</th>
+                                                <th>Profit Center</th>
+                                                <th>Kode PLANT</th>
+                                                <th>Kode SAP 1</th>
+                                                <th>Kode SAP 2</th>
+                                                <th>Nama GROM</th>
+                                                <th>Nama BM</th>
+                                                <th>Nama ASS</th>
+                                                <th>Nama PIC 1</th>
+                                                <th>Nama PIC 2</th>
+                                                <th>Nama PIC 3</th>
+                                                <th>Nama PIC 4</th>
+                                            </tr>
+                                        </thead>
+                                    </Table>
+                                    <div className="spin">
+                                            <Spinner type="grow" color="primary"/>
+                                            <Spinner type="grow" className="mr-3 ml-3" color="success"/>
+                                            <Spinner type="grow" color="warning"/>
+                                            <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
+                                            <Spinner type="grow" color="info"/>
+                                    </div>
+                                    </div>
+                                ) : (
+                                    <div className="tableDashboard">
+                                    <Table bordered responsive hover className="tab">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Kode Depo</th>
+                                                <th>Nama Depo</th>
+                                                <th>Home Town</th>
+                                                <th>Channel</th>
+                                                <th>Distribution</th>
+                                                <th>Status Depo</th>
+                                                <th>Profit Center</th>
+                                                <th>Kode PLANT</th>
+                                                <th>Kode SAP 1</th>
+                                                <th>Kode SAP 2</th>
+                                                <th>Nama GROM</th>
+                                                <th>Nama BM</th>
+                                                <th>Nama ASS</th>
+                                                <th>Nama PIC 1</th>
+                                                <th>Nama PIC 2</th>
+                                                <th>Nama PIC 3</th>
+                                                <th>Nama PIC 4</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dataDepo.length !== 0 && dataDepo.map(item => {
+                                                return (
+                                                <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                                    <th scope="row">{(dataDepo.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                    <td>{item.kode_depo}</td>
+                                                    <td>{item.nama_depo}</td>
+                                                    <td>{item.home_town}</td>
+                                                    <td>{item.channel}</td>
+                                                    <td>{item.distribution}</td>
+                                                    <td>{item.status_depo}</td>
+                                                    <td>{item.profit_center}</td>
+                                                    <td>{item.kode_plant}</td>
+                                                    <td>{item.kode_sap_1}</td>
+                                                    <td>{item.kode_sap_2}</td>
+                                                    <td>{item.nama_grom}</td>
+                                                    <td>{item.nama_bm}</td>
+                                                    <td>{item.nama_ass}</td>
+                                                    <td>{item.nama_pic_1}</td>
+                                                    <td>{item.nama_pic_2}</td>
+                                                    <td>{item.nama_pic_3}</td>
+                                                    <td>{item.nama_pic_4}</td>
+                                                </tr>
+                                                )})}
+                                        </tbody>
+                                    </Table>
+                                </div>
+                                )}
+                                <div>
+                                    <div className="infoPageEmail">
+                                        <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                        <div className="pageButton">
+                                            <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                            <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </Container>
+                    </MaterialTitlePanel>
+                </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd} size="lg">
                     <ModalHeader toggle={this.openModalAdd}>Add Master Depo</ModalHeader>
                     <Formik

@@ -100,8 +100,14 @@
 }
 .navbar {
     position: absolute;
-    background-color: white;
+    background-color: #A01E2A;
+    color: white;
     box-shadow: 0px 6px 40px rgba(173, 173, 173, 0.5);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 20%;
+    padding-bottom: 20%;
 }
 .navHome {
     color: #D83022;
@@ -168,6 +174,7 @@
 .titleDashboard {
   font-size: 50px;
   text-align: center;
+  margin-top: 2%;
 }
 .headDashboard {
   display: flex;
@@ -241,13 +248,14 @@
 }
 .btnPrev {
   border-radius: 4px;
-  border: 1px solid #9b9b9b;
+  border: 1px solid #28A745;
   background-color: white;
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
   padding-right: 10px;
   font-size: large;
+  color: #28A745;
 }
 .infoPage {
   display: flex;
@@ -266,10 +274,9 @@
   margin-bottom: 10px;
 }
 .background-logo {
-  position: relative;
-  background-image: url(../img/background.png);
-  /* background-position:top; */
-  height: 100%;
+  background-color: #F5F6FA;
+  padding-right: 2%;
+  padding-left: 2%;
 }
 .tab > tbody > tr > th{
   border: 1px solid #9b9b9b;
@@ -281,6 +288,7 @@
 }
 .tab > thead > tr > th{
   border: 1px solid #9b9b9b;
+  background-color: #C3E5CA;
   color: black;
 }
 .btnProses {
@@ -518,4 +526,73 @@
 }
 .uncon {
   max-height: max-content;
+}
+.img-side {
+  width: 50%;
+  height: auto;
+}
+.div-side {
+  background-color: white;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 10%;
+  padding-bottom: 10%;
+}
+.btn-side {
+  width: 100%;
+  background-color: transparent;
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: white;
+  margin-bottom: 10%;
+  font-size: 15px;
+}
+.btn-side1 {
+  width: 100%;
+  background-color: transparent;
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  margin-bottom: 10%;
+  font-size: 15px;
+}
+.margin-side {
+  margin-bottom: 50%;
+}
+.margin-side1 {
+  margin-bottom: 45%;
+}
+.margin-side2 {
+  margin-bottom: 60%;
+}
+.white {
+  color: white;
+}
+.divLogo {
+  width: 95%;
+  font-size: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.textLogo {
+  font-size: 17px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.marquee {
+  width: 82%;
+}
+.dropNotif {
+  /* height: 300px; */
+  position: absolute;
+  max-height: 300px;
 }

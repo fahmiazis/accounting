@@ -6,7 +6,7 @@ import { Container, Collapse, Nav, Navbar,
     Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner} from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
-import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
+import {FaSearch, FaBars, FaUser} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle } from 'react-icons/ai'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
@@ -25,9 +25,22 @@ const alasanSchema = Yup.object().shape({
     status: Yup.string().required()
 });
 
+const styles = {
+    contentHeaderMenuLink: {
+      textDecoration: "none",
+      color: "white",
+      padding: 8
+    },
+    content: {
+      padding: "16px"
+    }
+  };
+
 class MasterAlasan extends Component {
+
     constructor(props) {
-        super(props);
+        super(props)
+    
         this.state = {
             docked: false,
             open: false,
@@ -56,10 +69,10 @@ class MasterAlasan extends Component {
             fileUpload: '',
             limit: 10,
             search: ''
-        }
+        };
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
-    }
+      }
 
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
@@ -233,6 +246,15 @@ class MasterAlasan extends Component {
         });
     }
 
+    menuButtonClick(ev) {
+        ev.preventDefault();
+        this.onSetOpen(!this.state.open);
+    }
+
+    onSetOpen(open) {
+        this.setState({ open });
+      }
+
     getDataAlasan = async (value) => {
         const token = localStorage.getItem("token")
         const search = value === undefined ? '' : this.state.search
@@ -241,24 +263,13 @@ class MasterAlasan extends Component {
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
-    menuButtonClick(ev) {
-        ev.preventDefault();
-        this.onSetOpen(!this.state.open);
-    }
-
-    onSetOpen(open) {
-        this.setState({ open });
-    }
-
     render() {
         const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
         const {dataAlasan, isGet, alertM, alertMsg, alertUpload, page} = this.props.alasan
         const level = localStorage.getItem('level')
-        const names = localStorage.getItem('name')
-
-        const contentHeader =  (
-            <div className="navbar">
-                <NavbarBrand
+        const contentHeader = (
+              <div className="navbar">
+                    <NavbarBrand
                     href="#"
                     onClick={this.menuButtonClick}
                     >
@@ -269,12 +280,12 @@ class MasterAlasan extends Component {
                             <span>WEB ACCOUNTING</span>
                         </marquee>
                         <div className="textLogo">
-                            <FaUserCircle size={24} className="mr-2" />
-                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
+                            <text className="mr-4">Super admin</text>
+                            <FaUser size={18} />
                         </div>
                     </div>
-            </div>
-        )
+                </div>
+          );
 
         const sidebar = <SidebarContent />
         const sidebarProps = {
@@ -291,120 +302,117 @@ class MasterAlasan extends Component {
             transitions: this.state.transitions,
             onSetOpen: this.onSetOpen
           };
-
         return (
             <>
-                <Sidebar {...sidebarProps}>
-                    <MaterialTitlePanel title={contentHeader}>
-                        <div className="background-logo">
-                            <Alert color="danger" className="alertWrong" isOpen={alert}>
-                                <div>{alertMsg}</div>
-                                <div>{alertM}</div>
-                                {alertUpload !== undefined && alertUpload.map(item => {
-                                    return (
-                                        <div>{item}</div>
-                                    )
-                                })}
-                            </Alert>
-                            <Alert color="danger" className="alertWrong" isOpen={upload}>
-                                <div>{errMsg}</div>
-                            </Alert>
-                            <div className="bodyDashboard">
-                                <div className="headMaster">
-                                    <div className="titleDashboard col-md-12">Master Alasan</div>
-                                </div>
-                                <div className="secHeadDashboard">
-                                    <div>
-                                        <text>Show: </text>
-                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
-                                        <DropdownToggle caret color="light">
-                                            {this.state.limit}
-                                        </DropdownToggle>
-                                        <DropdownMenu>
-                                        <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
-                                        </DropdownMenu>
-                                        </ButtonDropdown>
-                                        <text className="textEntries">entries</text>
-                                    </div>
-                                </div>
-                                <div className="secEmail">
-                                    <div className="headEmail">
-                                        <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                        <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
-                                    </div>
-                                    <div className="searchEmail">
-                                        <text>Search: </text>
-                                        <Input 
-                                        className="search"
-                                        onChange={this.onSearch}
-                                        value={this.state.search}
-                                        onKeyPress={this.onSearch}
-                                        >
-                                            <FaSearch size={20} />
-                                        </Input>
-                                    </div>
-                                </div>
-                                {isGet === false ? (
-                                    <div className="tableDashboard">
-                                        <Table bordered responsive hover className="tab">
-                                            <thead>
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Kode Alasan</th>
-                                                    <th>Alasan</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                        </Table>
-                                        <div className="spin">
-                                            <Spinner type="grow" color="primary"/>
-                                            <Spinner type="grow" className="mr-3 ml-3" color="success"/>
-                                            <Spinner type="grow" color="warning"/>
-                                            <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
-                                            <Spinner type="grow" color="info"/>
-                                        </div>
-                                    </div>    
-                                ) : (
-                                    <div className="tableDashboard">
-                                        <Table bordered responsive hover className="tab">
-                                            <thead>
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Kode Alasan</th>
-                                                    <th>Alasan</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            {dataAlasan.length !== 0 && dataAlasan.map(item => {
-                                                return (
-                                                <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                                    <th scope="row">{(dataAlasan.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
-                                                    <td>{item.kode_alasan}</td>
-                                                    <td>{item.alasan}</td>
-                                                    <td>{item.status}</td>
-                                                </tr>
-                                                )})}
-                                            </tbody>
-                                        </Table>
-                                    </div>
-                                )}
-                                <div>
-                                    <div className="infoPageEmail">
-                                        <text>Showing {page.currentPage} of {page.pages} pages</text>
-                                        <div className="pageButton">
-                                            <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
-                                            <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
-                                        </div>
-                                    </div>
-                                </div>
+            <Sidebar {...sidebarProps}>
+                <MaterialTitlePanel title={contentHeader}>
+                <div className="background-logo">
+                    <Alert color="danger" className="alertWrong" isOpen={alert}>
+                        <div>{alertMsg}</div>
+                        <div>{alertM}</div>
+                        {alertUpload !== undefined && alertUpload.map(item => {
+                            return (
+                                <div>{item}</div>
+                            )
+                        })}
+                    </Alert>
+                    <Alert color="danger" className="alertWrong" isOpen={upload}>
+                        <div>{errMsg}</div>
+                    </Alert>
+                    <div className="bodyDashboard">
+                        <div className="headMaster">
+                            <div className="titleDashboard col-md-12">Master Alasan</div>
+                        </div>
+                        <div className="secHeadDashboard">
+                            <div>
+                                <text>Show: </text>
+                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                <DropdownToggle caret color="light">
+                                    {this.state.limit}
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
+                                </DropdownMenu>
+                                </ButtonDropdown>
+                                <text className="textEntries">entries</text>
                             </div>
                         </div>
-                    </MaterialTitlePanel>
-                </Sidebar>
+                        <div className="secEmail">
+                            <div className="headEmail">
+                                <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
+                                <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
+                            </div>
+                            <div className="searchEmail">
+                                <text>Search: </text>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
+                            </div>
+                        </div>
+                        {isGet === false ? (
+                            <div className="tableDashboard">
+                                <Table bordered responsive hover className="tab">
+                                    <thead>
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Kode Alasan</th>
+                                            <th>Alasan</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                </Table>
+                                <div className="spin">
+                                    <Spinner type="grow" color="primary"/>
+                                    <Spinner type="grow" className="mr-3 ml-3" color="success"/>
+                                    <Spinner type="grow" color="warning"/>
+                                    <Spinner type="grow" className="mr-3 ml-3" color="danger"/>
+                                    <Spinner type="grow" color="info"/>
+                                </div>
+                            </div>    
+                        ) : (
+                            <div className="tableDashboard">
+                                <Table bordered responsive hover className="tab">
+                                    <thead>
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Kode Alasan</th>
+                                            <th>Alasan</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {dataAlasan.length !== 0 && dataAlasan.map(item => {
+                                        return (
+                                        <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                            <th scope="row">{(dataAlasan.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                            <td>{item.kode_alasan}</td>
+                                            <td>{item.alasan}</td>
+                                            <td>{item.status}</td>
+                                        </tr>
+                                        )})}
+                                    </tbody>
+                                </Table>
+                            </div>
+                        )}
+                        <div className="infoPageEmail">
+                            <text>Showing {page.currentPage} of {page.pages} pages</text>
+                            <div className="pageButton">
+                                <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </MaterialTitlePanel>
+            </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
                     <ModalHeader toggle={this.openModalAdd}>Add Master Alasan</ModalHeader>
                     <Formik
