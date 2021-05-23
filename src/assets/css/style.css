@@ -106,8 +106,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding-top: 20%;
-    padding-bottom: 20%;
+    width: 100%;
 }
 .navHome {
     color: #D83022;
@@ -288,7 +287,7 @@
 }
 .tab > thead > tr > th{
   border: 1px solid #9b9b9b;
-  background-color: #C3E5CA;
+  background-color: #76923B;
   color: black;
 }
 .btnProses {
