@@ -173,7 +173,7 @@
 .titleDashboard {
   font-size: 50px;
   text-align: center;
-  margin-top: 2%;
+  margin-top: 4%;
 }
 .headDashboard {
   display: flex;
@@ -588,7 +588,7 @@
   align-items: center;
 }
 .marquee {
-  width: 82%;
+  width: 80%;
 }
 .dropNotif {
   /* height: 300px; */

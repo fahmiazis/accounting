@@ -736,7 +736,6 @@ class Dashboard extends Component {
                                             <th>Jumlah File Upload</th>
                                             <th>Persentase</th>
                                             <th>Status</th>
-                                            <th>Uploaded By</th>
                                         </tr>
                                         ): (
                                         <tr>
@@ -836,7 +835,7 @@ class Dashboard extends Component {
                                             return (
                                             x !== null ? (
                                             <tr className="danger">
-                                                <th scope="row">{(dataSa.indexOf(x) + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
+                                                <th scope="row">{(dataSa.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                 <td>{x.nama_pic_1}</td>
                                                 <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
@@ -922,104 +921,6 @@ class Dashboard extends Component {
                                                 ):(
                                                     <td>Belum Upload</td>
                                                 )}
-                                                <td>SA</td>
-                                            </tr>
-                                            ) : (
-                                                <div></div>
-                                            )
-                                            )
-                                        })}
-                                        {dataKasir !== undefined && dataKasir.map(x => {
-                                            return (
-                                            x !== null ? (
-                                            <tr className="danger">
-                                                <th scope="row">{(dataKasir.indexOf(x) + dataSa.length + ((((page.currentPage - 1) * page.limitPerPage) * 2) + 1))}</th>
-                                                <td>{x.nama_pic_1}</td>
-                                                <td>{x.kode_plant}</td>
-                                                <td>{x.nama_depo}</td>
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].jenis_dokumen === 'monthly' ? 
-                                                    <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                    : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
-                                                        <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                    :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                ):(
-                                                    <td>-</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    x.active[0].doc.length > 0 ? (
-                                                        x.active[0].doc.length <= totalDoc.length ? (
-                                                                totalDoc.map(y => {
-                                                                    return (
-                                                                        <td>
-                                                                            {x.active[0].doc[y] ? (
-                                                                                x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : (
-                                                                                    <div></div>
-                                                                                )
-                                                                            ): (
-                                                                                <AiOutlineMinus className="black" />
-                                                                            )}
-                                                                        </td>
-                                                                    )
-                                                                })
-                                                        ) : (
-                                                            x.active[0].doc.map(item => {
-                                                                return (
-                                                                    <td>
-                                                                        {item.status_dokumen === 1 ? (
-                                                                            <BsCircle className="black"/>
-                                                                        ) : (
-                                                                            <AiOutlineMinus className="black" />
-                                                                        )}
-                                                                    </td>
-                                                                )
-                                                            })
-                                                        )
-                                                    ): (
-                                                        totalDoc.map(item => {
-                                                            return (
-                                                                <td><AiOutlineMinus className="black" /></td>
-                                                            )
-                                                        }) 
-                                                    )
-                                                ): (
-                                                    totalDoc.map(item => {
-                                                        return (
-                                                            <td><AiOutlineMinus className="black" /></td>
-                                                        )
-                                                    })
-                                                )}
-                                                <td>{x.dokumen.length}</td>
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                ):(
-                                                    <td>0 %</td>
-                                                )}
-                                                {x.active.length > 0 ? (
-                                                    <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                ):(
-                                                    <td>Belum Upload</td>
-                                                )}
-                                                <td>Kasir</td>
                                             </tr>
                                             ) : (
                                                 <div></div>
