@@ -831,13 +831,13 @@ class Dashboard extends Component {
                                 </tbody>
                                 ): level === '6' || level === '3' || level === '2' || level === '1' ? (
                                 <tbody>
-                                        {dataSa !== undefined && dataSa.map(x => {
+                                        {dataKasir !== undefined && dataKasir.map(x => {
                                             return (
                                             x !== null ? (
                                             <tr className="danger">
-                                                <th scope="row">{(dataSa.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                 <td>{x.nama_pic_1}</td>
-                                                <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
+                                                <td>{x.kode_plant}</td>
                                                 <td>{x.nama_depo}</td>
                                                 {x.active.length > 0 ? (
                                                     x.active[0].jenis_dokumen === 'monthly' ? 

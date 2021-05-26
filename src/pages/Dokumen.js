@@ -832,13 +832,13 @@ class Dokumen extends Component {
                                         </tbody>
                                         ): level === '6' || level === '3' || level === '2' || level === '1' ? (
                                         <tbody>
-                                                {dataSa !== undefined && dataSa.map(x => {
+                                                {dataKasir !== undefined && dataKasir.map(x => {
                                                     return (
                                                     x !== null ? (
-                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataSa[dataSa.indexOf(x)].dokumen, act: dataSa[dataSa.indexOf(x)].active}))}>
-                                                        <th scope="row">{(dataSa.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active}))}>
+                                                        <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                         <td>{x.nama_pic_1}</td>
-                                                        <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
+                                                        <td>{x.kode_plant}</td>
                                                         <td>{x.nama_depo}</td>
                                                         {x.active.length > 0 ? (
                                                             x.active[0].jenis_dokumen === 'monthly' ? 
