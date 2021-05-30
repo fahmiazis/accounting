@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_EMAIL',
         payload: http(token).patch(`/email/update/${id}`, qs.stringify(data)),
     }),
-    getEmail: (token, limit, search) => ({
+    getEmail: (token, limit, search, page) => ({
         type: 'GET_EMAIL',
-        payload: http(token).get(`/email/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/email/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

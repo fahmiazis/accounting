@@ -327,6 +327,7 @@ class Dashboard extends Component {
     getDataDashboard = async (value) => {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
+        const { page } = this.props.dashboard
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
             setTimeout(() => {
@@ -334,7 +335,7 @@ class Dashboard extends Component {
             }, 1000)
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
-            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit)
+            await this.props.getDashboardPic(token, value === undefined ? 'daily' : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage)
             await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value})
         }

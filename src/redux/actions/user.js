@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_USER',
         payload: http(token).patch(`/user/update/${id}`, qs.stringify(data)),
     }),
-    getUser: (token, limit, search) => ({
+    getUser: (token, limit, search, page) => ({
         type: 'GET_USER',
-        payload: http(token).get(`/user/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/user/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

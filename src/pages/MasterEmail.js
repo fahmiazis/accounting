@@ -223,9 +223,10 @@ class MasterEmail extends Component {
 
     getDataEmail = async (value) => {
         const token = localStorage.getItem('token')
+        const { page } = this.props.email
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getEmail(token, limit, search)
+        await this.props.getEmail(token, limit, search, page.currentPage)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 

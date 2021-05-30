@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_DOKUMEN',
         payload: http(token).patch(`/dokumen/update/${id}`, qs.stringify(data)),
     }),
-    getDokumen: (token, limit, search) => ({
+    getDokumen: (token, limit, search, page) => ({
         type: 'GET_DOKUMEN',
-        payload: http(token).get(`/dokumen/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/dokumen/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

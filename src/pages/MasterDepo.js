@@ -251,9 +251,10 @@ class MasterDepo extends Component {
 
     getDataDepo = async (value) => {
         const token = localStorage.getItem("token")
+        const { page } = this.props.depo
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getDepo(token, limit, search)
+        await this.props.getDepo(token, limit, search, page.currentPage)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 

@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_PIC',
         payload: http(token).patch(`/pic/update/${id}`, qs.stringify(data)),
     }),
-    getPic: (token, limit, search) => ({
+    getPic: (token, limit, search, page) => ({
         type: 'GET_PIC',
-        payload: http(token).get(`/pic/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/pic/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

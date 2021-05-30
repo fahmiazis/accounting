@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_ALASAN',
         payload: http(token).patch(`/alasan/update/${id}`, qs.stringify(data)),
     }),
-    getAlasan: (token, limit, search) => ({
+    getAlasan: (token, limit, search, page) => ({
         type: 'GET_ALASAN',
-        payload: http(token).get(`/alasan/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/alasan/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

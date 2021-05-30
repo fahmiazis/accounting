@@ -235,9 +235,10 @@ class MasterAlasan extends Component {
 
     getDataAlasan = async (value) => {
         const token = localStorage.getItem("token")
+        const { page } = this.props.alasan
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getAlasan(token, limit, search)
+        await this.props.getAlasan(token, limit, search, page.currentPage)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 

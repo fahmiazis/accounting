@@ -264,10 +264,11 @@ class MasterUser extends Component {
     }
 
     getDataUser = async (value) => {
+        const { page } = this.props.user
         const token = localStorage.getItem("token")
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getUser(token, limit, search)
+        await this.props.getUser(token, limit, search, page.currentPage)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 

@@ -3,7 +3,7 @@ import { Container, Collapse, Nav, Navbar,
     NavbarToggler, NavbarBrand, NavItem, NavLink,
     UncontrolledDropdown, DropdownToggle, DropdownMenu, Dropdown,
     DropdownItem, Input, Button, ButtonDropdown,
-    } from 'reactstrap'
+    Modal, ModalHeader, ModalBody, ModalFooter, Alert, Spinner } from 'reactstrap'
 import logo from "../assets/img/logo.png"
 import '../assets/css/style.css'
 import auth from '../redux/actions/auth'
@@ -55,7 +55,8 @@ class Report extends Component {
             pic: '',
             from: '',
             to: '',
-            options: []
+            options: [],
+            alert: false
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -63,6 +64,16 @@ class Report extends Component {
 
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
+    }
+
+    showAlert = () => {
+        this.setState({alert: true})
+       
+         setTimeout(() => {
+            this.setState({
+                alert: false
+            })
+         }, 10000)
     }
 
     dropSetting = () => {
@@ -111,21 +122,41 @@ class Report extends Component {
         const level = localStorage.getItem('level')
         const token = localStorage.getItem("token")
         const depo = localStorage.getItem('kode')
+        const names = localStorage.getItem('name')
         let data = {}
         if (level === '1' || level === '2') {
             if (kode === '') {
-                data = {
-                    pic: pic,
-                    kode_plant: ''
+                if (level === '2' && pic === 'all') {
+                    data = {
+                        spv: names,
+                        pic: '',
+                        kode_plant: ''
+                    }
+                    console.log(data)
+                    await this.props.report(token, from, to, data, this.state.type)
+                } else {
+                    data = {
+                        pic: pic,
+                        kode_plant: ''
+                    }
+                    await this.props.report(token, from, to, data, this.state.type)
                 }
-                await this.props.report(token, from, to, data, this.state.type)
             } else if (pic === '') {
-                data = {
-                    pic: '',
-                    kode_plant: kode
+                if (level === '2' && kode === 'all') {
+                    data = {
+                        spv: names,
+                        pic: '',
+                        kode_plant: ''
+                    }
+                    await this.props.report(token, from, to, data, this.state.type)
+                } else {
+                    data = {
+                        pic: '',
+                        kode_plant: kode
+                    }
+                    await this.props.report(token, from, to, data, this.state.type)
                 }
-                await this.props.report(token, from, to, data, this.state.type)
-            }
+            } 
         } else if (level === '4' || level === '5') {
             data = {
                 pic: '',
@@ -133,18 +164,26 @@ class Report extends Component {
             }
             await this.props.report(token, from, to, data, this.state.type)
         } else if (level === '3') {
-            data = {
-                pic: '',
-                kode_plant: kode
+            if (kode === 'all') {
+                data = {
+                    pic: names,
+                    kode_plant: ''
+                }
+                await this.props.report(token, from, to, data, this.state.type)
+            } else {
+                data = {
+                    pic: '',
+                    kode_plant: kode
+                }
+                await this.props.report(token, from, to, data, this.state.type)
             }
-            await this.props.report(token, from, to, data, this.state.type)
         }
     }
 
     componentDidUpdate(){
         const level = localStorage.getItem('level')
         const { isGet } = this.props.depo
-        const { isReport, isDownload } = this.props.dashboard
+        const { isReport, isDownload, isError } = this.props.dashboard
         if (level === "1" && isGet) {
           this.preparePic()
           this.prepareSelect()
@@ -163,6 +202,9 @@ class Report extends Component {
         } else if (isDownload) {
             this.download()
             this.props.resetErrorReport()
+        } else if (isError) {
+            this.props.resetError()
+            this.showAlert()
         }
         console.log(this.state.to)
         console.log(this.state.from)
@@ -215,7 +257,8 @@ class Report extends Component {
         const { dataDepo } = this.props.depo
         const temp = []
         const data = [
-            {value: '', label: '-Pilih PIC-'}
+            {value: '', label: '-Pilih PIC-'},
+            {value: 'all', label: 'All'}
         ]
         if (dataDepo.length !== 0) {
             dataDepo.map(item => {
@@ -238,7 +281,8 @@ class Report extends Component {
         const { dataDepo } = this.props.depo
         const moon = []
         const temp = [
-            {value: '', label: '-Pilih Depo-'}
+            {value: '', label: '-Pilih Depo-'},
+            {value: 'all', label: 'All'}
         ]
         if (dataDepo.length !== 0) {
             dataDepo.map(item => {
@@ -419,6 +463,9 @@ class Report extends Component {
             <Sidebar {...sidebarProps}>
                 <MaterialTitlePanel title={contentHeader}>
                     <div className="background-logo">
+                        <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                            <div>Report not found</div>
+                        </Alert>
                         <div className="headMaster">
                             <div className="titleDashboard col-md-12">Report</div>
                         </div>
@@ -546,6 +593,16 @@ class Report extends Component {
                     </div>
                 </MaterialTitlePanel>
             </Sidebar>
+            <Modal isOpen={this.props.dashboard.isLoading ? true: false} size="sm">
+                    <ModalBody>
+                    <div>
+                        <div className="cekUpdate">
+                            <Spinner />
+                            <div sucUpdate>Waiting....</div>
+                        </div>
+                    </div>
+                    </ModalBody>
+            </Modal>
             </>
         )
     }

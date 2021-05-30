@@ -11,9 +11,9 @@ export default {
         type: 'UPDATE_DEPO',
         payload: http(token).patch(`/depo/update/${id}`, qs.stringify(data)),
     }),
-    getDepo: (token, limit, search) => ({
+    getDepo: (token, limit, search, page) => ({
         type: 'GET_DEPO',
-        payload: http(token).get(`/depo/get?limit=${limit}&search=${search}`)
+        payload: http(token).get(`/depo/get?limit=${limit}&search=${search}&page=${page === undefined ? 1 : page}`)
     }),
     uploadMaster: (token, data) => ({
         type: 'UPLOAD_MASTER',

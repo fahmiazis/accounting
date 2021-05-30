@@ -259,9 +259,10 @@ class MasterPic extends Component {
 
     getDataPic = async (value) => {
         const token = localStorage.getItem("token")
+        const { page } = this.props.pic
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getPic(token, limit, search)
+        await this.props.getPic(token, limit, search, page.currentPage)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
