@@ -595,3 +595,10 @@
   position: absolute;
   max-height: 300px;
 }
+.btnDocIo {
+  background-color: transparent;
+  border: 0px;
+  color: blue;
+  /* margin-bottom: 3%; */
+  text-align: start;
+}

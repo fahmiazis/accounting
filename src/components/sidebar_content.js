@@ -148,7 +148,7 @@ const SidebarContent = props => {
              Masterdata PIC
           </button>
         </Collapse>
-        {level === '2' ? (
+        {level === '2' || level === '1' ? (
           <button onClick={modalSet} className="btn-side1">
             <div>
               <AiFillSetting size={22} className="mr-2"/> Setting

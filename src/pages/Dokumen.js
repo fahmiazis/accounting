@@ -170,8 +170,8 @@ class Dokumen extends Component {
         if (size >= 20000000) {
             this.setState({errMsg: "Maximum upload size 20 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip') {
-            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7zip files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
+            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
             this.uploadAlert()
         } else {
             const {detail, aktif} = this.state
@@ -232,7 +232,6 @@ class Dokumen extends Component {
         await this.props.showDokumen(token, value.path.id)
         this.setState({date: value.path.createdAt})
         const {isShow} = this.props.dashboard
-        console.log(value)
         if (isShow) {
             this.downloadDataPic(value)
             this.openModalPdf()
@@ -245,8 +244,8 @@ class Dokumen extends Component {
         if (size >= 10000000) {
             this.setState({errMsg: "Maximum upload size 10 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf') {
-            this.setState({errMsg: 'Invalid file type. Only excel and pdf files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
+            this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
             this.uploadAlert()
         } else {
             const {detail, aktif} = this.state
@@ -1019,7 +1018,7 @@ class Dokumen extends Component {
                                             <Input
                                                 type="file"
                                                 name="file"
-                                                accept=".xls,.xlsx,.pdf"
+                                                accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
                                                 onClick={() => this.setState({detail: item})}
                                                 onChange={this.onChangeHandler}
                                             />
@@ -1033,7 +1032,7 @@ class Dokumen extends Component {
                                                 <Input
                                                 type="file"
                                                 name="file"
-                                                accept=".xls,.xlsx,.pdf"
+                                                accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
                                                 onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item.nama_dokumen)})}
                                                 onChange={this.onEditDokumen}
                                                 />
@@ -1102,9 +1101,9 @@ class Dokumen extends Component {
                                                     (
                                                     <div>
                                                         {/* this.setState({file: doc.find(({dokumen}) => dokumen === item.nama_dokumen).path, fileName: doc.find(({dokumen}) => dokumen === item.nama_dokumen)} */}
-                                                    <a onClick={() => this.showDok({path: act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen), active: act[0]})}>
+                                                    <button className='btnDocIo' onClick={() => this.showDok({path: act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen), active: act[0]})}>
                                                         {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).dokumen}
-                                                    </a>
+                                                    </button>
                                                     </div>
                                                     )}
                                                 </div>
@@ -1135,7 +1134,7 @@ class Dokumen extends Component {
                         <div></div>
                     )}
                 </Modal>
-                <Modal isOpen={openPdf} size="lg" toggle={this.openModalPdf} centered={true}>
+                <Modal isOpen={openPdf} size="xl" toggle={this.openModalPdf} centered={true}>
                 <ModalHeader toggle={this.openModalPdf}>Dokumen</ModalHeader>
                     <ModalBody>
                         <div className="readPdf">
