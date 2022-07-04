@@ -239,6 +239,10 @@
   margin-top: 20px;
   margin-bottom: 20px;
 }
+.divfoot {
+  display: flex;
+  flex-direction: row;
+}
 .pageButton {
   display: flex;
   flex-direction: row;

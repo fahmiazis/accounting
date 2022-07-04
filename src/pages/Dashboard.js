@@ -291,6 +291,27 @@ class Dashboard extends Component {
         });
     }
 
+    downloadDataAll = () => {
+        const {act} = this.state
+        const val = act[0].doc
+        for (let i = 0; i < val.length; i++) {
+            const download = val[i].path.split('/')
+            const cek = download[2].split('.')
+            axios({
+                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                method: 'GET',
+                responseType: 'blob', // important
+            }).then((response) => {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${val[i].kode_depo}_${val[i].dokumen}.${cek[1]}`); //or any other extension
+                document.body.appendChild(link)
+                link.click();
+            })
+        }
+    }
+
     next = async () => {
         const { page } = this.props.dashboard
         const token = localStorage.getItem('token')
@@ -1123,9 +1144,10 @@ class Dashboard extends Component {
                                     <div><BsCircle size={20} className="green" /><text>  Open</text></div>
                                     <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                 </div>
-                                <div>
-                                    <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button>
-                                    <Button color="secondary" onClick={this.openModalProses}>Cancel</Button>
+                                <div className='divfoot'>
+                                    <Button className="mr-2" color='success' size='sm' onClick={this.downloadDataAll}>Download All</Button>
+                                    {/* <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button> */}
+                                    <Button color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
                                 </div>
                             </div>
                     </ModalBody>

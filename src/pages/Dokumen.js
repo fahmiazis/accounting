@@ -285,9 +285,30 @@ class Dokumen extends Component {
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `${value.path.kode_depo}_${value.path.dokumen}.${cek[1]}`); //or any other extension
-            document.body.appendChild(link);
+            document.body.appendChild(link)
             link.click();
-        });
+        })
+    }
+
+    downloadDataAll = () => {
+        const {act} = this.state
+        const val = act[0].doc
+        for (let i = 0; i < val.length; i++) {
+            const download = val[i].path.split('/')
+            const cek = download[2].split('.')
+            axios({
+                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                method: 'GET',
+                responseType: 'blob', // important
+            }).then((response) => {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${val[i].kode_depo}_${val[i].dokumen}.${cek[1]}`); //or any other extension
+                document.body.appendChild(link)
+                link.click();
+            })
+        }
     }
 
     next = async () => {
@@ -982,7 +1003,7 @@ class Dokumen extends Component {
                     </MaterialTitlePanel>
                 </Sidebar>
                 <Modal isOpen={openModal} size="lg" toggle={this.openModalProses}>
-                    <ModalHeader toggle={this.openModalProses}>Proses Dokumen Daily</ModalHeader>
+                    <ModalHeader toggle={this.openModalProses}>Proses Dokumen</ModalHeader>
                     {level === '4' || level === '5' ? (
                             <ModalBody>
                             <div className="modal-dashboard">
@@ -1124,9 +1145,10 @@ class Dokumen extends Component {
                                     <div><BsCircle size={20} className="green" /><text>  Open</text></div>
                                     <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                 </div>
-                                <div>
-                                    <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button>
-                                    <Button color="secondary" onClick={this.openModalProses}>Cancel</Button>
+                                <div className='divfoot'>
+                                    <Button className="mr-2" color='success' size='sm' onClick={this.downloadDataAll}>Download All</Button>
+                                    {/* <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button> */}
+                                    <Button color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
                                 </div>
                             </div>
                     </ModalBody>
@@ -1147,7 +1169,7 @@ class Dokumen extends Component {
                             </div>
                         {level === '1' || level === '2' || level === '3' ? (
                             <div>
-                                <Button color="danger" onClick={this.openModalReject}>Reject</Button>
+                                <Button color="danger" className='mr-2' onClick={this.openModalReject}>Reject</Button>
                                 <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
                             </div>
                             ) : (
