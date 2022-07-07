@@ -242,6 +242,11 @@
 .divfoot {
   display: flex;
   flex-direction: row;
+  width: 40%;
+  justify-content: space-around;
+}
+.btndivfoot {
+  height: 80% !important;
 }
 .pageButton {
   display: flex;
@@ -310,6 +315,10 @@
   margin-left: 5px;
   margin-right: 10px;
 }
+.checall {
+  display: flex;
+  flex-direction: row;
+}
 .pdf {
   margin-right: 10px;
 }
@@ -317,13 +326,18 @@
   width: 50%;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-around;
   border: 1px solid #9b9b9b;
   border-radius: 5px;
   padding: 12px;
   align-self: flex-end;
   margin-right: 200px;
 
+}
+.signbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .btnFootModal {
   margin-right: 20px;

@@ -22,6 +22,7 @@ import * as Yup from 'yup'
 import alasan from '../redux/actions/alasan'
 import auth from '../redux/actions/auth'
 import {BsBell} from 'react-icons/bs'
+import {BiRevision} from 'react-icons/bi'
 import {default as axios} from 'axios'
 import { FcDocument } from 'react-icons/fc'
 import Sidebar from "../components/Header";
@@ -80,10 +81,60 @@ class Dokumen extends Component {
             search: '',
             limit: 10,
             moon: 0,
-            periode: false
+            periode: false,
+            listMut: [],
+            noindex: null,
+            sucupload: false,
+            confirm: '',
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
+    }
+
+    chekRej = (val) => {
+        const { listMut } = this.state
+        const data = []
+        for (let i = 0; i < listMut.length; i++) {
+            if (listMut[i] === val) {
+                data.push()
+            } else {
+                data.push(listMut[i])
+            }
+        }
+        this.setState({listMut: data})
+    }
+
+    chekApp = (val) => {
+        const { listMut } = this.state
+        listMut.push(val)
+        this.setState({listMut: listMut})
+    }
+
+    sucUpload = () => {
+        this.setState({sucupload: !this.state.sucupload})
+    }
+
+    afterUpload = async () => {
+        const token = localStorage.getItem('token')
+        const { noindex, tipe } = this.state
+        await this.props.getActivity(token, tipe)
+        await this.props.getDashboard(token, tipe)
+        const { active } = this.props.dashboard
+        const sear = active.find(({id}) => id === noindex.id)
+        this.setState({doc: active[noindex].doc, aktif: active[noindex]})
+        this.sucUpload()
+    }
+
+    afterAppRej = async () => {
+        const token = localStorage.getItem('token')
+        const { noindex } = this.state
+        const {page} = this.props.dashboard
+        const {tipe} = this.state
+        await this.props.getDashboardPic(token, tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage)
+        await this.props.getAlasan(token, 100, '')
+        const {dataKasir} = this.props.dashboard
+        this.setState({doc: dataKasir[noindex].dokumen, act: dataKasir[noindex].active})
+        this.sucUpload()
     }
 
     showAlert = () => {
@@ -121,6 +172,24 @@ class Dokumen extends Component {
         if (isReject) {
             this.getDataDashboard()
         }
+    }
+    
+    sendEmailArea = async () => {
+        const token = localStorage.getItem('token')
+        const {listMut} = this.state
+        const data = {
+            listMut: listMut
+        }
+        await this.props.sendEmailArea(token, data)
+    }
+
+    sendEmail = async () => {
+        const token = localStorage.getItem('token')
+        const {listMut} = this.state
+        const data = {
+            listMut: listMut
+        }
+        await this.props.sendEmail(token, data)
     }
 
     showDokumen = async (value) => {
@@ -358,7 +427,7 @@ class Dokumen extends Component {
             const {tipe} = this.state
             await this.props.getDashboardPic(token, value === undefined ? tipe : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage)
             await this.props.getAlasan(token, 100, '')
-            this.setState({tipe: value === undefined ? 'daily' : value})
+            this.setState({tipe: value === undefined ? 'daily' : value, })
         }
     }
 
@@ -386,42 +455,48 @@ class Dokumen extends Component {
         this.setState({totalDoc: res, month: moon, moon: moon[0]})
     }
 
-    componentDidUpdate() {
-        const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate} = this.props.dashboard
+    componentDidUpdate () {
+        const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate, isSend, sendArea} = this.props.dashboard
         if (isError) {
             this.props.resetError()
             this.showAlert()
+        } else if (sendArea === true) {
+            this.setState({confirm: 'sucsend'})
+            this.props.resetError()
+            this.sucUpload()
+        } else if (sendArea === false) {
+            this.setState({confirm: 'falsend'})
+            this.props.resetError()
+            this.sucUpload()
+        } else if (isSend === true) {
+            this.setState({confirm: 'sucsend'})
+            this.props.resetError()
+            this.sucUpload()
+        } else if (isSend === false) {
+            this.setState({confirm: 'falsend'})
+            this.props.resetError()
+            this.sucUpload()
         } else if (isUpload) {
-            setTimeout(() => {
-                this.props.resetError()
-             }, 2000)
-             setTimeout(() => {
-                this.getDataDashboard()
-                this.openModalProses()
-             }, 2100)
+            this.props.resetError()
+            // await this.getDataDashboard()
+            this.afterUpload()
         } else if (isUpdate) {
-            setTimeout(() => {
-                this.props.resetError()
-             }, 2000)
-             setTimeout(() => {
-                this.getDataDashboard()
-                this.openModalProses()
-             }, 2100)
+            this.props.resetError()
+            // await this.getDataDashboard()
+            this.afterUpload()
         } else if (isGetPic) {
             this.prepareDokumen()
             this.props.resetError()
         } else if (isApprove) {
-            this.setState({openModal: false, openPdf: false, openApprove: false})
-            setTimeout(() => {
-                this.getDataDashboard()
-            }, 500)
+            this.setState({openPdf: false, openApprove: false, confirm: 'approve'})
             this.props.resetError()
+            // this.getDataDashboard()
+            this.afterAppRej()
         } else if (isReject) {
-            this.setState({openModal: false, openPdf: false, openReject: false})
+            this.setState({openPdf: false, openReject: false, confirm: 'reject'})
             this.props.resetError()
-            setTimeout(() => {
-                this.getDataDashboard()
-            }, 500)
+            // this.getDataDashboard()
+            this.afterAppRej()
         }
     }
 
@@ -435,7 +510,7 @@ class Dokumen extends Component {
       }
 
     render() {
-        const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc} = this.state
+        const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, listMut} = this.state
         const level = localStorage.getItem('level')
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
@@ -720,10 +795,11 @@ class Dokumen extends Component {
                                         )}
                                     </div>
                                     <div className="statusSym">
-                                        <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
-                                        <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
-                                        <div><BsCircle size={20} className="green" /><text>  Open</text></div>
-                                        <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
+                                        <div className='mr-1 signbtn'><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
+                                        <div className='mr-1 signbtn'><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
+                                        <div className='mr-1 signbtn'><BsCircle size={20} className="green" /><text>  Upload</text></div>
+                                        <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
+                                        <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                     </div>
                                 </div>
                                 <div className="tableDashboard">
@@ -792,7 +868,7 @@ class Dokumen extends Component {
                                         <tbody>
                                                 {active !== undefined && active.map(x => {
                                                     return (
-                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)]}))}>
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)], noindex: active.indexOf(x)}))}>
                                                         <th scope="row">{(active.indexOf(x) + 1)}</th>
                                                         {x.jenis_dokumen == 'monthly' ? (
                                                             <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
@@ -828,6 +904,8 @@ class Dokumen extends Component {
                                                                                 <MdWatchLater className="red" size={20}/>
                                                                             ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
                                                                                 <MdWatchLater className="red" size={20}/>
+                                                                            ) : item.status_dokumen === 7 && item.dokumen === y.nama_dokumen ? (
+                                                                                <BiRevision className="black" size={20}/>
                                                                             ) : (
                                                                                 <div></div>
                                                                             )
@@ -857,7 +935,7 @@ class Dokumen extends Component {
                                                 {dataKasir !== undefined && dataKasir.map(x => {
                                                     return (
                                                     x !== null ? (
-                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active}))}>
+                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active, noindex: dataKasir.indexOf(x)}))}>
                                                         <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                         <td>{x.nama_pic_1}</td>
                                                         <td>{x.kode_plant}</td>
@@ -897,6 +975,8 @@ class Dokumen extends Component {
                                                                                             <MdWatchLater className="red" size={20}/>
                                                                                         ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                                             <MdWatchLater className="red" size={20}/>
+                                                                                        ) : x.active[0].doc[y].status_dokumen === 7 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                            <BiRevision className="black" size={20}/>
                                                                                         ) : (
                                                                                             <div></div>
                                                                                         )
@@ -955,11 +1035,11 @@ class Dokumen extends Component {
                                             <tbody>
                                             <tr className="danger" onClick={this.openModalProses}>
                                                 <th scope="row">1</th>
-                                                <td>Anjar</td>
-                                                <td>107</td>
-                                                <td>Garut</td>
-                                                <td>01 Januari 2021</td>
-                                                <td>02 Januari 2021</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
                                                 <td><AiOutlineCheck className="blue" /></td>
                                                 <td><AiOutlineCheck className="blue" /></td>
                                                 <td><AiOutlineCheck className="blue" /></td>
@@ -974,9 +1054,9 @@ class Dokumen extends Component {
                                                 <td><AiOutlineCheck className="blue" /></td>
                                                 <td><AiOutlineCheck className="blue" /></td>
                                                 <td><AiOutlineCheck className="blue" /></td>
-                                                <td>14</td>
-                                                <td>100%</td>
-                                                <td>Done</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
                                             </tr>
                                             </tbody>
                                         )}
@@ -1007,16 +1087,42 @@ class Dokumen extends Component {
                     {level === '4' || level === '5' ? (
                             <ModalBody>
                             <div className="modal-dashboard">
+                            {/* <div className='checall ml-3 mb-4'>
+                                <Input
+                                addon
+                                disabled={true}
+                                checked={false}
+                                type="checkbox"
+                                className='mr-1' />
+                                <text>Check All</text>
+                            </div> */}
                             {dataDash !== undefined && dataDash.map(item => {
                                     return (
                                 <div className="secModal">
                                     <div className="col-md-6">
+                                        {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                            <Input
+                                            addon
+                                            disabled={true}
+                                            checked={false}
+                                            type="checkbox"
+                                            className='mr-1' />
+                                        ) : (
+                                            <Input
+                                            addon
+                                            disabled={doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? false : true}
+                                            checked={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) !== undefined ? true : false}
+                                            type="checkbox"
+                                            className='mr-1'
+                                            onClick={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) === undefined ? () => this.chekApp(doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) : () => this.chekRej(doc.find(({dokumen}) => dokumen === item.nama_dokumen).id)}
+                                            value={item.no_asset} />
+                                        )}
                                         <text>{item.nama_dokumen}</text>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="bsCir">
                                             {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                <BsDashCircleFill size={25} className="black" />
+                                                <BsDashCircleFill size={23} className="black" />
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 ? (
                                                 <BsCircle className="green" size={25} />
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
@@ -1027,6 +1133,8 @@ class Dokumen extends Component {
                                                 <MdWatchLater className="red" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
                                                 <MdWatchLater className="red" size={25}/>
+                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? (
+                                                <BiRevision className="black" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
                                                 <AiOutlineClose className="red" size={25}/>
                                             ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 ? (
@@ -1053,6 +1161,7 @@ class Dokumen extends Component {
                                                 <Input
                                                 type="file"
                                                 name="file"
+                                                disabled={doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? false : true}
                                                 accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
                                                 onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item.nama_dokumen)})}
                                                 onChange={this.onEditDokumen}
@@ -1068,14 +1177,16 @@ class Dokumen extends Component {
                             <hr />
                             <div className="foot">
                                 <div className="statusSymModal">
-                                    <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
-                                    <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
-                                    <div><BsCircle size={20} className="green" /><text>  Open</text></div>
-                                    <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
+                                    <div className='mr-1 signbtn'><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
+                                    <div className='mr-1 signbtn'><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
+                                    <div className='mr-1 signbtn'><BsCircle size={20} className="green" /><text>  Upload</text></div>
+                                    <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
+                                    <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                 </div>
-                                <div>
-                                    <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button>
-                                    <Button color="secondary" onClick={this.openModalProses}>Cancel</Button>
+                                <div className='divfoot'>
+                                    <Button className='btndivfoot mr-2' size='sm' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmailArea}>Send info email</Button>
+                                    <Button className='btndivfoot mr-2' size='sm' color="primary" onClick={this.openModalProses}>Save</Button>
+                                    <Button className='btndivfoot ' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
                                 </div>
                             </div>
                     </ModalBody>
@@ -1086,13 +1197,30 @@ class Dokumen extends Component {
                                     return (
                                 <div className="secModal">
                                     <div className="col-md-6">
+                                        {act[0] === undefined || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                            <Input
+                                            addon
+                                            disabled={true}
+                                            checked={false}
+                                            type="checkbox"
+                                            className='mr-1' />
+                                        ) : (
+                                            <Input
+                                            addon
+                                            disabled={(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7) ? true : false}
+                                            checked={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) !== undefined ? true : false}
+                                            type="checkbox"
+                                            className='mr-1'
+                                            onClick={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) === undefined ? () => this.chekApp(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) : () => this.chekRej(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id)}
+                                            value={item.no_asset} />
+                                        )}
                                         <text>{item.nama_dokumen}</text>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="bsCir">
                                         {act.length > 0 && act[0].doc.length > 0 ? (
                                                 act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
-                                                    <BsDashCircleFill size={25} className="black cir" />
+                                                    <BsDashCircleFill size={23} className="black" />
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
                                                     <AiOutlineClose className="red" size={25} />
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 ? (
@@ -1107,11 +1235,13 @@ class Dokumen extends Component {
                                                     <MdWatchLater className="red" size={25}/>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
                                                     <MdWatchLater className="red" size={25}/>
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? (
+                                                    <BiRevision className="black" size={25}/>
                                                 ) : (
                                                     <div></div>
                                                 )
                                             ): (
-                                                <BsDashCircleFill size={25} className="black cir" />
+                                                <BsDashCircleFill size={23} className="black" />
                                             )}
                                             <AiOutlineFilePdf size={25} className="pdf" />
                                             {act.length > 0 && act[0].doc.length > 0 ? (
@@ -1140,15 +1270,17 @@ class Dokumen extends Component {
                             <hr />
                             <div className="foot">
                                 <div className="statusSymModal">
-                                    <div><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
-                                    <div><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
-                                    <div><BsCircle size={20} className="green" /><text>  Open</text></div>
-                                    <div><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
+                                    <div className='mr-1 signbtn'><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
+                                    <div className='mr-1 signbtn'><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
+                                    <div className='mr-1 signbtn'><BsCircle size={20} className="green" /><text>  Upload</text></div>
+                                    <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
+                                    <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                 </div>
                                 <div className='divfoot'>
-                                    <Button className="mr-2" color='success' size='sm' onClick={this.downloadDataAll}>Download All</Button>
+                                    <Button className='btndivfoot mr-2' size='sm' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmail}>Send info email</Button>
+                                    <Button className="btndivfoot mr-2" color='success' size='sm' onClick={this.downloadDataAll}>Download All</Button>
                                     {/* <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button> */}
-                                    <Button color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
+                                    <Button className='btndivfoot' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
                                 </div>
                             </div>
                     </ModalBody>
@@ -1261,14 +1393,45 @@ class Dokumen extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.dashboard.isUpload || this.props.dashboard.isUpdate ? true: false} size="sm">
+                <Modal isOpen={this.state.sucupload} toggle={this.sucUpload} size="sm">
                         <ModalBody>
-                        <div>
-                            <div className="cekUpdate">
-                                <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Mengupload File</div>
+                        {this.state.confirm === 'sucsend' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                    <div className="sucUpdate green">Berhasil mengirim info email</div>
+                                </div>
                             </div>
-                        </div>
+                        ) : this.state.confirm === 'approve' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                    <div className="sucUpdate green">Berhasil approve dokumen</div>
+                                </div>
+                            </div>
+                        ) : this.state.confirm === 'reject' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                    <div className="sucUpdate green">Berhasil reject dokumen</div>
+                                </div>
+                            </div>
+                        ) : this.state.confirm === 'falsend' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiOutlineClose size={80} className="red" />
+                                    <div className="sucUpdate green">Gagal mengirim info email</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                    <div className="sucUpdate green">Berhasil upload Dokumen</div>
+                                </div>
+                            </div>
+                        )}
+                        
                         </ModalBody>
                 </Modal>
             </>
@@ -1291,6 +1454,7 @@ const mapDispatchToProps = {
     showDokumen: dashboard.showDokumen,
     getDashboardPic: dashboard.getDashboardPic,
     sendEmail: dashboard.sendEmail,
+    sendEmailArea: dashboard.sendEmailArea,
     getAlasan: alasan.getAlasan,
     logout: auth.logout,
     download: dashboard.download,

@@ -22,7 +22,7 @@ const divisiState = {
     dataDepo: [],
     dataSa: [],
     dataKasir: [],
-    isSend: false,
+    isSend: null,
     page: {},
     pages: {},
     isReport: false,
@@ -36,7 +36,8 @@ const divisiState = {
     isGetNotif: false,
     notifSa: [],
     notifKasir: [],
-    notif: []
+    notif: [],
+    sendArea: null
 };
 
 export default (state=divisiState, action) => {
@@ -428,7 +429,6 @@ export default (state=divisiState, action) => {
                 return {
                     ...state,
                     isLoading: false,
-                    isError: false,
                     isSend: true,
                     alertMsg: 'send email Succesfully'
                 };
@@ -438,7 +438,29 @@ export default (state=divisiState, action) => {
                     ...state,
                     isLoading: false,
                     isSend: false,
-                    isError: true,
+                    alertMsg: action.payload.response.message,
+                };
+            }
+            case 'SEND_AREA_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'SEND_AREA_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    sendArea: true,
+                    alertMsg: 'send email Succesfully'
+                };
+            }
+            case 'SEND_AREA_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    sendArea: false,
                     alertMsg: action.payload.response.message,
                 };
             }
@@ -479,7 +501,9 @@ export default (state=divisiState, action) => {
                     alertM: '',
                     isReport: false,
                     isUpdate: false,
-                    isEdit: false
+                    isEdit: false,
+                    sendArea: null,
+                    isSend: null
                 }
             }
             case 'RESET_REPORT': {

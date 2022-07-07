@@ -43,9 +43,13 @@ export default {
         type: 'SHOW',
         payload: http(token).get(`/show/get/${id}`)
     }),
-    sendEmail: (token, id) => ({
+    sendEmail: (token, data) => ({
         type: 'SEND',
-        payload: http(token).post(`/dashboard/send/${id}`)
+        payload: http(token).post(`/dashboard/send`, qs.stringify(data))
+    }),
+    sendEmailArea: (token, data) => ({
+        type: 'SEND_AREA',
+        payload: http(token).post(`/dashboard/sendarea`, qs.stringify(data))
     }),
     download: (data) => ({
         type: 'DOWNLOAD',
