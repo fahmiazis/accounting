@@ -211,7 +211,7 @@
 }
 .search {
   border: 1px solid #9b9b9b;
-  width: 40%;
+  /* width: 40%; */
   margin-left: 10px;
 }
 .secSearch {
@@ -243,6 +243,12 @@
   display: flex;
   flex-direction: row;
   width: 40%;
+  justify-content: space-around;
+}
+.divfoot1 {
+  display: flex;
+  flex-direction: row;
+  width: auto;
   justify-content: space-around;
 }
 .btndivfoot {
@@ -388,6 +394,11 @@
   flex-direction: row;
   align-items: center;
 }
+.rowCenter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 .headEmail {
   display: flex;
   flex-direction: row;
@@ -396,11 +407,16 @@
   width: 20%;
   justify-content: space-between;
 }
+.headEmail1 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 .searchEmail {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 50px;
+  /* margin-top: 50px; */
 }
 .secEmail {
   display: flex;
@@ -420,11 +436,29 @@
   margin-bottom: 10px;
   align-items: center;
 }
+.addModalMenu {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+  align-items: stretch;
+}
+.listcek {
+  display: flex;
+  flex-direction: row;
+  flex-flow: row wrap;
+}
 .btnUpload {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   width: 75%;
+  margin-top: 10%;
+  margin-bottom: 10%;
+}
+.btnUpload1 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   margin-top: 10%;
   margin-bottom: 10%;
 }
@@ -497,12 +531,6 @@
   align-items: center;
   margin-top: 5%;
   margin-bottom: 5%;
-}
-.cekUpdate {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 .sucUpdate {
   font-size: 20px;
@@ -619,4 +647,25 @@
   color: blue;
   /* margin-bottom: 3%; */
   text-align: start;
+}
+.cekUpdate {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.btnApproveIo {
+  align-self: center;
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content:space-between;
+  width: 15%;
+  left: 50%;
+}
+.modalApprove {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }

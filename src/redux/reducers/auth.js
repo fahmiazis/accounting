@@ -50,7 +50,9 @@ export default (state=authState, action) => {
             case 'LOGOUT': {
                 localStorage.removeItem('token')
                 localStorage.removeItem('level')
-                return authState
+                return {
+                    state: undefined
+                }
             }
             case 'RESET': {
                 return {

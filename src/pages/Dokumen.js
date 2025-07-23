@@ -86,6 +86,8 @@ class Dokumen extends Component {
             noindex: null,
             sucupload: false,
             confirm: '',
+            dataDown: {},
+            dataDoc: []
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -94,20 +96,33 @@ class Dokumen extends Component {
     chekRej = (val) => {
         const { listMut } = this.state
         const data = []
-        for (let i = 0; i < listMut.length; i++) {
-            if (listMut[i] === val) {
-                data.push()
-            } else {
-                data.push(listMut[i])
+        if (val === 'all') {
+            this.setState({listMut: []})
+        } else {
+            for (let i = 0; i < listMut.length; i++) {
+                if (listMut[i] === val) {
+                    data.push()
+                } else {
+                    data.push(listMut[i])
+                }
             }
+            this.setState({listMut: data})
         }
-        this.setState({listMut: data})
     }
 
     chekApp = (val) => {
-        const { listMut } = this.state
-        listMut.push(val)
-        this.setState({listMut: listMut})
+        const { listMut, act } = this.state
+        if (val === 'all') {
+            const dok = act[0].doc
+            const cek = []
+            for (let i = 0; i < dok.length; i++) {
+                cek.push(dok[i].id)
+            }
+            this.setState({listMut: cek})
+        } else {
+            listMut.push(val)
+            this.setState({listMut: listMut})
+        }
     }
 
     sucUpload = () => {
@@ -158,16 +173,23 @@ class Dokumen extends Component {
     }
 
     approveDokumen = async () => {
-        const {fileName, appAct} = this.state
+        const {fileName, appAct, listMut, act} = this.state
         const token = localStorage.getItem('token')
-        await this.props.approve(token, fileName.id, appAct.id)
+        const data = {
+            list: listMut
+        }
+        await this.props.approve(token, fileName.id, act[0].id, data)
     }
 
     rejectDokumen = async (value) => {
-        const {fileName, appAct} = this.state
+        const {fileName, appAct, listMut, act} = this.state
         const token = localStorage.getItem('token')
         const {isReject} = this.props.dashboard
-        await this.props.reject(token, fileName.id, appAct.id, value)
+        const data = {
+            alasan: value.alasan,
+            list: listMut
+        }
+        await this.props.reject(token, fileName.id, act[0].id, data)
         // await this.props.sendEmail(token, fileName.id)
         if (isReject) {
             this.getDataDashboard()
@@ -195,10 +217,10 @@ class Dokumen extends Component {
     showDokumen = async (value) => {
         const token = localStorage.getItem('token')
         await this.props.showDokumen(token, value.id)
-        this.setState({date: value.path.createdAt})
+        this.setState({date: value.path.createdAt, dataDown: value})
         const {isShow} = this.props.dashboard
         if (isShow) {
-            this.downloadData(value)
+            // this.downloadData(value)
             this.openModalPdf()
         }
     }
@@ -234,12 +256,13 @@ class Dokumen extends Component {
     }
 
     onChangeHandler = e => {
-        const {size, type} = e.target.files[0]
+        const {size, type, name} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 20000000) {
-            this.setState({errMsg: "Maximum upload size 20 MB"})
+        const ext = name.split(".")
+        if (size >= 100000000) {
+            this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
+        } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
             this.uploadAlert()
         } else {
@@ -294,15 +317,46 @@ class Dokumen extends Component {
         this.getNotif()
     }
 
+    openProses = (value) => {
+        const { active, dataDash } = this.props.dashboard
+        const dok = []
+        for (let i = 0; i < dataDash.length; i++) {
+            dok.push(dataDash[i].nama_dokumen)
+        }
+        for (let i = 0; i < active[value].doc.length; i++) {
+            dok.push(active[value].doc[i].dokumen)
+        }
+        const setDoc = new Set(dok)
+        const dokumen = [...setDoc]
+        this.setState({dataDoc: dokumen, doc: active[value].doc, aktif: active[value], noindex: value})
+        this.openModalProses()
+    }
+
+    openProsesPic = (val) => {
+       const {dataKasir} = this.props.dashboard
+       const dok = []
+       const temp = dataKasir[val].active[0].doc
+        for (let i = 0; i < dataKasir[val].dokumen.length; i++) {
+            dok.push(dataKasir[val].dokumen[i].nama_dokumen)
+        }
+        for (let i = 0; i < temp.length; i++) {
+            dok.push(temp[i].dokumen)
+        }
+        const setDoc = new Set(dok)
+        const dokumen = [...setDoc]
+       this.setState({dataDoc: dokumen, doc: dataKasir[val].dokumen, act: dataKasir[val].active, noindex: val})
+       this.openModalProses()
+    }
+
     showDok = async (value) => {
         const token = localStorage.getItem('token')
         this.setState({fileName: value.path, appAct: value.active})
         // this.props.download(download[2])
         await this.props.showDokumen(token, value.path.id)
-        this.setState({date: value.path.createdAt})
+        this.setState({date: value.path.createdAt, dataDown: value})
         const {isShow} = this.props.dashboard
         if (isShow) {
-            this.downloadDataPic(value)
+            // this.downloadDataPic(value)
             this.openModalPdf()
         }
     }
@@ -360,23 +414,25 @@ class Dokumen extends Component {
     }
 
     downloadDataAll = () => {
-        const {act} = this.state
+        const {act, listMut} = this.state
         const val = act[0].doc
         for (let i = 0; i < val.length; i++) {
-            const download = val[i].path.split('/')
-            const cek = download[2].split('.')
-            axios({
-                url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
-                method: 'GET',
-                responseType: 'blob', // important
-            }).then((response) => {
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `${val[i].kode_depo}_${val[i].dokumen}.${cek[1]}`); //or any other extension
-                document.body.appendChild(link)
-                link.click();
-            })
+            if (listMut.find(element => element === val[i].id) !== undefined) {
+                const download = val[i].path.split('/')
+                const cek = download[2].split('.')
+                axios({
+                    url: `${REACT_APP_BACKEND_URL}/uploads/${download[2]}`,
+                    method: 'GET',
+                    responseType: 'blob', // important
+                }).then((response) => {
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `${val[i].kode_depo}_${val[i].dokumen}.${cek[1]}`); //or any other extension
+                    document.body.appendChild(link)
+                    link.click();
+                })
+            }
         }
     }
 
@@ -449,8 +505,10 @@ class Dokumen extends Component {
         for (let i = 0; i <= Math.max(...data)-1; i++) {
             res.push(i)
         }
-        for (let i = 0; i < 3; i++) {
-            moon.push(moment().subtract(i, 'month'))
+        for (let i = 0; i < 6; i++) {
+            const temp = moment().subtract(i, 'month')
+            console.log(temp)
+            moon.push(temp)
         }
         this.setState({totalDoc: res, month: moon, moon: moon[0]})
     }
@@ -510,7 +568,7 @@ class Dokumen extends Component {
       }
 
     render() {
-        const {isOpen, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, listMut} = this.state
+        const {isOpen, dataDoc, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, listMut} = this.state
         const level = localStorage.getItem('level')
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
@@ -712,26 +770,28 @@ class Dokumen extends Component {
                                         )
                                     ) : (
                                         level == "6" || level == '1' || level == '2' || level == '3' ? (
-                                        <div className="dateDash">
-                                            <div>Periode Dokumen: </div>
-                                            <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
-                                                <DropdownToggle caret color="light">
-                                                    {moment(this.state.moon).format('MMMM')}
-                                                </DropdownToggle>
-                                                <DropdownMenu >
-                                                    {this.state.month.length !== 0 && this.state.month.map(item => {
-                                                        return (
-                                                            <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM')}</DropdownItem>
-                                                        )
-                                                    })}
-                                                </DropdownMenu>
-                                            </ButtonDropdown>
-                                            {/* <div><FaCalendarAlt size={22} /></div> */}
-                                            {/* <Calendar
-                                            value={this.state.value}
-                                            onChange={this.state.onChange}
-                                            /> */}
-                                        </div>
+                                        <>
+                                            <div className="dateDash">
+                                                <div>Periode: </div>
+                                                <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
+                                                    <DropdownToggle caret color="light">
+                                                        {moment(this.state.moon).format('MMMM (YYYY)')}
+                                                    </DropdownToggle>
+                                                    <DropdownMenu >
+                                                        {this.state.month.length !== 0 && this.state.month.map(item => {
+                                                            return (
+                                                                <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM (YYYY)')}</DropdownItem>
+                                                            )
+                                                        })}
+                                                    </DropdownMenu>
+                                                </ButtonDropdown>
+                                                {/* <div><FaCalendarAlt size={22} /></div> */}
+                                                {/* <Calendar
+                                                value={this.state.value}
+                                                onChange={this.state.onChange}
+                                                /> */}
+                                            </div>
+                                        </>
                                         ) : (
                                             <div></div>
                                         )
@@ -806,258 +866,282 @@ class Dokumen extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                         {level === '4' || level === '5' ? (
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Tanggal Dokumen</th>
-                                                    <th>Tanggal Upload</th>
-                                                    {dataDash !== undefined && dataDash.map(item => {
-                                                        return (
-                                                        <th>{(dataDash.indexOf(item) + 1)}</th>
-                                                        )
-                                                    })}
-                                                    <th>Jumlah File Upload</th>
-                                                    <th>Persentase</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                                ): level === '6' || level === '3' || level === '1' || level === '2' ? (
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>PIC</th>
-                                                    <th>Kode Plant</th>
-                                                    <th>Nama Depo</th>
-                                                    <th>Tanggal Dokumen</th>
-                                                    <th>Tanggal Upload</th>
-                                                    {totalDoc.length !== 0 && totalDoc.map(item => {
-                                                        return (
-                                                        <th>{item + 1}</th>
-                                                        )
-                                                    })}
-                                                    <th>Jumlah File Upload</th>
-                                                    <th>Persentase</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                                ): (
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>PIC</th>
-                                                    <th>Kode Plant</th>
-                                                    <th>Nama Depo</th>
-                                                    <th>Tanggal Dokumen</th>
-                                                    <th>Tanggal Upload</th>
-                                                    <th>1</th>
-                                                    <th>2</th>
-                                                    <th>3</th>
-                                                    <th>4</th>
-                                                    <th>5</th>
-                                                    <th>6</th>
-                                                    <th>7</th>
-                                                    <th>8</th>
-                                                    <th>9</th>
-                                                    <th>10</th>
-                                                    <th>11</th>
-                                                    <th>12</th>
-                                                    <th>13</th>
-                                                    <th>14</th>
-                                                    <th>Jumlah File Upload</th>
-                                                    <th>Persentase</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                                )}
-                                        </thead>
-                                            {level === '4' || level === '5' ? (
-                                        <tbody>
-                                                {active !== undefined && active.map(x => {
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Tanggal Dokumen</th>
+                                                <th>Tanggal Upload</th>
+                                                {dataDash !== undefined && dataDash.map(item => {
                                                     return (
-                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: active[active.indexOf(x)].doc, aktif: active[active.indexOf(x)], noindex: active.indexOf(x)}))}>
-                                                        <th scope="row">{(active.indexOf(x) + 1)}</th>
-                                                        {x.jenis_dokumen == 'monthly' ? (
-                                                            <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
-                                                        ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
-                                                            <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                        ) : (
-                                                            <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                        )}
-                                                        {x.jenis_dokumen == 'monthly' ? (
-                                                            <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
-                                                        ) : (
-                                                            <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
-                                                        )}
-                                                        {dataDash !== undefined && dataDash.map(y => {
-                                                            return (
-                                                            <td>
-                                                                {x.doc.length === 0 ? (
-                                                                    <AiOutlineMinus className="black" />
-                                                                ):(
-                                                                    x.doc.map(item => {
-                                                                        return (
-                                                                            item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
-                                                                                <BsCircle className="black"/>
-                                                                            ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
-                                                                                <BsCircle className="green" />
-                                                                            ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
-                                                                                <AiOutlineCheck className="blue"/>
-                                                                            ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
-                                                                                <AiOutlineClose className="red" />
-                                                                            ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
-                                                                                <MdWatchLater className="red" size={20}/>
-                                                                            ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
-                                                                                <MdWatchLater className="red" size={20}/>
-                                                                            ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
-                                                                                <MdWatchLater className="red" size={20}/>
-                                                                            ) : item.status_dokumen === 7 && item.dokumen === y.nama_dokumen ? (
-                                                                                <BiRevision className="black" size={20}/>
-                                                                            ) : (
-                                                                                <div></div>
-                                                                            )
-                                                                        )
-                                                                    })
-                                                                )}
-                                                            </td>
-                                                            )
-                                                        })}
-                                                        <td>{dataDash.length}</td>
-                                                        {x.doc.length === 0 ? (
-                                                            <td>0 %</td>
-                                                        ) : (
-                                                            <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
-                                                        )}
-                                                        {x.doc.length > 0 ? (
-                                                            <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
-                                                        ):(
-                                                            <td>Belum Upload</td>
-                                                        )}
-                                                    </tr>
+                                                        <th>{(dataDash.indexOf(item) + 1)}</th>
                                                     )
                                                 })}
-                                        </tbody>
-                                        ): level === '6' || level === '3' || level === '2' || level === '1' ? (
-                                        <tbody>
-                                                {dataKasir !== undefined && dataKasir.map(x => {
+                                                <th>Jumlah File Upload</th>
+                                                <th>Persentase</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        ) : level === '6' || level === '3' || level === '1' || level === '2' ? (
+                                            <tr>
+                                                <th>No</th>
+                                                <th>PIC</th>
+                                                <th>Kode Plant</th>
+                                                <th>Nama Depo</th>
+                                                <th>Tanggal Dokumen</th>
+                                                <th>Tanggal Upload</th>
+                                                {totalDoc.length !== 0 && totalDoc.map(item => {
                                                     return (
-                                                    x !== null ? (
-                                                    <tr className="danger" onClick={() => this.openModalProses(this.setState({doc: dataKasir[dataKasir.indexOf(x)].dokumen, act: dataKasir[dataKasir.indexOf(x)].active, noindex: dataKasir.indexOf(x)}))}>
-                                                        <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
-                                                        <td>{x.nama_pic_1}</td>
-                                                        <td>{x.kode_plant}</td>
-                                                        <td>{x.nama_depo}</td>
-                                                        {x.active.length > 0 ? (
-                                                            x.active[0].jenis_dokumen === 'monthly' ? 
-                                                            <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
-                                                            : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
-                                                                <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
-                                                            :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
-                                                        ):(
-                                                            <td>-</td>
-                                                        )}
-                                                        {x.active.length > 0 ? (
-                                                            <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
-                                                        ):(
-                                                            <td>-</td>
-                                                        )}
-                                                        {x.active.length > 0 ? (
-                                                            x.active[0].doc.length > 0 ? (
-                                                                x.active[0].doc.length <= totalDoc.length ? (
-                                                                        totalDoc.map(y => {
+                                                        <th>{item + 1}</th>
+                                                    )
+                                                })}
+                                                <th>Jumlah File Upload</th>
+                                                <th>Persentase</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        ) : (
+                                            <tr>
+                                                <th>No</th>
+                                                <th>PIC</th>
+                                                <th>Kode Plant</th>
+                                                <th>Nama Depo</th>
+                                                <th>Tanggal Dokumen</th>
+                                                <th>Tanggal Upload</th>
+                                                <th>1</th>
+                                                <th>2</th>
+                                                <th>3</th>
+                                                <th>4</th>
+                                                <th>5</th>
+                                                <th>6</th>
+                                                <th>7</th>
+                                                <th>8</th>
+                                                <th>9</th>
+                                                <th>10</th>
+                                                <th>11</th>
+                                                <th>12</th>
+                                                <th>13</th>
+                                                <th>14</th>
+                                                <th>Jumlah File Upload</th>
+                                                <th>Persentase</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        )}
+                                        </thead>
+                                        {level === '4' || level === '5' ? (
+                                            <tbody>
+                                                    {active !== undefined && active.map(x => {
+                                                        return (
+                                                        <tr className="danger" onClick={() => this.openProses(active.indexOf(x))}>
+                                                            <th scope="row">{(active.indexOf(x) + 1)}</th>
+                                                            {x.jenis_dokumen == 'monthly' ? (
+                                                                <td>{moment(x.createdAt).format('MMMM YYYY')}</td>
+                                                            ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
+                                                                <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                            ) : (
+                                                                <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                            )}
+                                                            {x.jenis_dokumen == 'monthly' ? (
+                                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                            ) : (
+                                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                                            )}
+                                                            {dataDash !== undefined && dataDash.map(y => {
+                                                                return (
+                                                                <td>
+                                                                    {/* {x.doc.length === 0 ? (
+                                                                        <AiOutlineMinus className="black" />
+                                                                    ):(
+                                                                        x.doc.map(item => {
+                                                                            return (
+                                                                                item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <BsCircle className="black"/>
+                                                                                ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <BsCircle className="green" />
+                                                                                ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <AiOutlineCheck className="blue"/>
+                                                                                ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <AiOutlineClose className="red" />
+                                                                                ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <MdWatchLater className="red" size={20}/>
+                                                                                ) : item.status_dokumen === 7 && item.dokumen === y.nama_dokumen ? (
+                                                                                    <BiRevision className="black" size={20}/>
+                                                                                ) : (
+                                                                                    <AiOutlineMinus className="black" />
+                                                                                )
+                                                                            )
+                                                                        })
+                                                                    )} */}
+                                                                    {x.doc.length === 0 || x.doc[dataDash.indexOf(y)] === undefined ? (
+                                                                            <AiOutlineMinus className="black" />
+                                                                        ) : (
+                                                                            x.doc[dataDash.indexOf(y)].status_dokumen === 1 ? (
+                                                                                <BsCircle className="black"/>
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 2 ? (
+                                                                                <BsCircle className="green" />
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 3 ? (
+                                                                                <AiOutlineCheck className="blue"/>
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 0 ? (
+                                                                                <AiOutlineClose className="red" />
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 4 ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 5 ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 6 ? (
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 7 ? (
+                                                                                <BiRevision className="black" size={20}/>
+                                                                            ) : (
+                                                                                <AiOutlineMinus className="black" />
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                </td>
+                                                                )
+                                                            })}
+                                                            <td>{dataDash.length}</td>
+                                                            {x.doc.length === 0 ? (
+                                                                <td>0 %</td>
+                                                            ) : (
+                                                                <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
+                                                            )}
+                                                            {x.doc.length > 0 ? (
+                                                                <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
+                                                            ):(
+                                                                <td>Belum Upload</td>
+                                                            )}
+                                                        </tr>
+                                                        )
+                                                    })}
+                                            </tbody>
+                                        ): level === '6' || level === '3' || level === '2' || level === '1' ? (
+                                            <tbody>
+                                                    {dataKasir !== undefined && dataKasir.map(x => {
+                                                        return (
+                                                        x !== null ? (
+                                                        <tr className="danger" onClick={() => this.openProsesPic(dataKasir.indexOf(x))}>
+                                                            <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                            <td>{x.nama_pic_1}</td>
+                                                            <td>{x.kode_plant}</td>
+                                                            <td>{x.nama_depo}</td>
+                                                            {x.active.length > 0 ? (
+                                                                x.active[0].jenis_dokumen === 'monthly' ? 
+                                                                <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('MMMM, YYYY')}</td>
+                                                                : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                                    <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                                :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                                            ):(
+                                                                <td>-</td>
+                                                            )}
+                                                            {x.active.length > 0 ? (
+                                                                <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
+                                                            ):(
+                                                                <td>-</td>
+                                                            )}
+                                                            {x.active.length > 0 ? (
+                                                                x.active[0].doc.length > 0 ? (
+                                                                    x.active[0].doc.length <= totalDoc.length ? (
+                                                                            totalDoc.map(y => {
+                                                                                return (
+                                                                                    <td>
+                                                                                        {x.active[0].doc[y] ? (
+                                                                                            x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <BsCircle className="black"/>
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <BsCircle className="green" />
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <AiOutlineCheck className="blue"/>
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <AiOutlineClose className="red" />
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                            ) : x.active[0].doc[y].status_dokumen === 7 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                                                <BiRevision className="black" size={20}/>
+                                                                                            ) : (
+                                                                                                <div></div>
+                                                                                            )
+                                                                                        ): (
+                                                                                            <AiOutlineMinus className="black" />
+                                                                                        )}
+                                                                                    </td>
+                                                                                )
+                                                                            })
+                                                                    ) : (
+                                                                        x.active[0].doc.map(item => {
                                                                             return (
                                                                                 <td>
-                                                                                    {x.active[0].doc[y] ? (
-                                                                                        x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <BsCircle className="black"/>
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <BsCircle className="green" />
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <AiOutlineCheck className="blue"/>
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <AiOutlineClose className="red" />
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <MdWatchLater className="red" size={20}/>
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <MdWatchLater className="red" size={20}/>
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <MdWatchLater className="red" size={20}/>
-                                                                                        ) : x.active[0].doc[y].status_dokumen === 7 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                                            <BiRevision className="black" size={20}/>
-                                                                                        ) : (
-                                                                                            <div></div>
-                                                                                        )
-                                                                                    ): (
+                                                                                    {item.status_dokumen === 1 ? (
+                                                                                        <BsCircle className="black"/>
+                                                                                    ) : (
                                                                                         <AiOutlineMinus className="black" />
                                                                                     )}
                                                                                 </td>
                                                                             )
                                                                         })
-                                                                ) : (
-                                                                    x.active[0].doc.map(item => {
+                                                                    )
+                                                                ): (
+                                                                    totalDoc.map(item => {
                                                                         return (
-                                                                            <td>
-                                                                                {item.status_dokumen === 1 ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : (
-                                                                                    <AiOutlineMinus className="black" />
-                                                                                )}
-                                                                            </td>
+                                                                            <td><AiOutlineMinus className="black" /></td>
                                                                         )
-                                                                    })
+                                                                    }) 
                                                                 )
                                                             ): (
                                                                 totalDoc.map(item => {
                                                                     return (
                                                                         <td><AiOutlineMinus className="black" /></td>
                                                                     )
-                                                                }) 
-                                                            )
-                                                        ): (
-                                                            totalDoc.map(item => {
-                                                                return (
-                                                                    <td><AiOutlineMinus className="black" /></td>
-                                                                )
-                                                            })
-                                                        )}
-                                                        <td>{x.dokumen.length}</td>
-                                                        {x.active.length > 0 ? (
-                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
-                                                        ):(
-                                                            <td>0 %</td>
-                                                        )}
-                                                        {x.active.length > 0 ? (
-                                                            <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
-                                                        ):(
-                                                            <td>Belum Upload</td>
-                                                        )}
-                                                    </tr>
-                                                    ) : (
-                                                        <div></div>
-                                                    )
-                                                    )
-                                                })}
-                                        </tbody>
+                                                                })
+                                                            )}
+                                                            <td>{x.dokumen.length}</td>
+                                                            {x.active.length > 0 ? (
+                                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
+                                                            ):(
+                                                                <td>0 %</td>
+                                                            )}
+                                                            {x.active.length > 0 ? (
+                                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                                            ):(
+                                                                <td>Belum Upload</td>
+                                                            )}
+                                                        </tr>
+                                                        ) : (
+                                                            <div></div>
+                                                        )
+                                                        )
+                                                    })}
+                                            </tbody>
                                         ): (
                                             <tbody>
-                                            <tr className="danger" onClick={this.openModalProses}>
-                                                <th scope="row">1</th>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td><AiOutlineCheck className="blue" /></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                            </tr>
+                                                <tr className="danger" onClick={this.openModalProses}>
+                                                    <th scope="row">1</th>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td><AiOutlineCheck className="blue" /></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                </tr>
                                             </tbody>
                                         )}
                                     </Table>
@@ -1096,11 +1180,11 @@ class Dokumen extends Component {
                                 className='mr-1' />
                                 <text>Check All</text>
                             </div> */}
-                            {dataDash !== undefined && dataDash.map(item => {
+                            {dataDoc !== undefined && dataDoc.map(item => {
                                     return (
                                 <div className="secModal">
                                     <div className="col-md-6">
-                                        {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                        {doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                             <Input
                                             addon
                                             disabled={true}
@@ -1110,60 +1194,60 @@ class Dokumen extends Component {
                                         ) : (
                                             <Input
                                             addon
-                                            disabled={doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? false : true}
-                                            checked={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) !== undefined ? true : false}
+                                            disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? false : true}
+                                            checked={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) !== undefined ? true : false}
                                             type="checkbox"
                                             className='mr-1'
-                                            onClick={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) === undefined ? () => this.chekApp(doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) : () => this.chekRej(doc.find(({dokumen}) => dokumen === item.nama_dokumen).id)}
+                                            onClick={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) === undefined ? () => this.chekApp(doc.find(({dokumen}) => dokumen === item).id) : () => this.chekRej(doc.find(({dokumen}) => dokumen === item).id)}
                                             value={item.no_asset} />
                                         )}
-                                        <text>{item.nama_dokumen}</text>
+                                        <text>{item}</text>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="bsCir">
-                                            {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                            {doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                                 <BsDashCircleFill size={23} className="black" />
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 ? (
                                                 <BsCircle className="green" size={25} />
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
                                                 <AiOutlineCheck className="blue" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
                                                 <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
                                                 <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
                                                 <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
                                                 <BiRevision className="black" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 ? (
                                                 <AiOutlineClose className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 ? (
+                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 ? (
                                                 <BsCircle className="black" size={20} />
                                             ) : (
                                                 <div></div>
                                             )}
                                             <AiOutlineFilePdf size={25} className="pdf" />
-                                            {doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                            {doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                             <Input
                                                 type="file"
                                                 name="file"
                                                 accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
-                                                onClick={() => this.setState({detail: item})}
+                                                onClick={() => this.setState({detail: dataDash.find(({nama_dokumen}) => nama_dokumen === item)})}
                                                 onChange={this.onChangeHandler}
                                             />
                                             ) : 
                                             (
                                             <div>
-                                                {/* this.setState({file: doc.find(({dokumen}) => dokumen === item.nama_dokumen).path, fileName: doc.find(({dokumen}) => dokumen === item.nama_dokumen)} */}
-                                                <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item.nama_dokumen))}>
-                                                    {doc.find(({dokumen}) => dokumen === item.nama_dokumen).dokumen}
+                                                {/* this.setState({file: doc.find(({dokumen}) => dokumen === item).path, fileName: doc.find(({dokumen}) => dokumen === item)} */}
+                                                <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item))}>
+                                                    {doc.find(({dokumen}) => dokumen === item).dokumen}
                                                 </a>
                                                 <Input
                                                 type="file"
                                                 name="file"
-                                                disabled={doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 || doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? false : true}
+                                                disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? false : true}
                                                 accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
-                                                onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item.nama_dokumen)})}
+                                                onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item)})}
                                                 onChange={this.onEditDokumen}
                                                 />
                                             </div>
@@ -1193,11 +1277,31 @@ class Dokumen extends Component {
                     ) : level === '3' || level === '1' || level === '2' ? (
                         <ModalBody>
                             <div className="modal-dashboard">
-                            {doc !== undefined && doc.map(item => {
-                                    return (
+                                <div className="col-md-6 mb-3">
+                                    {act[0] === undefined || act[0].doc.length === 0 ? (
+                                        <Input
+                                        addon
+                                        disabled={true}
+                                        checked={false}
+                                        type="checkbox"
+                                        className='mr-1' />
+                                    ) : (
+                                        <Input
+                                        addon
+                                        disabled={act[0].doc.length === 0 ? true : false}
+                                        checked={listMut.length === act[0].doc.length ? true : false}
+                                        type="checkbox"
+                                        className='mr-1'
+                                        onClick={listMut.length === act[0].doc.length ? () => this.chekRej('all') : () => this.chekApp('all')}
+                                        value='all' />
+                                    )}
+                                    <text>Check All</text>
+                                </div>
+                            {dataDoc !== undefined && dataDoc.map(item => {
+                                return (
                                 <div className="secModal">
                                     <div className="col-md-6">
-                                        {act[0] === undefined || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                        {act[0] === undefined || act[0].doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                             <Input
                                             addon
                                             disabled={true}
@@ -1207,35 +1311,36 @@ class Dokumen extends Component {
                                         ) : (
                                             <Input
                                             addon
-                                            disabled={(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 || act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7) ? true : false}
-                                            checked={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) !== undefined ? true : false}
+                                            // disabled={(act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 7) ? true : false}
+                                            disabled={act[0] === undefined || act[0].doc.length === 0 ? true : false}
+                                            checked={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item).id) !== undefined ? true : false}
                                             type="checkbox"
                                             className='mr-1'
-                                            onClick={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) === undefined ? () => this.chekApp(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id) : () => this.chekRej(act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).id)}
-                                            value={item.no_asset} />
+                                            onClick={listMut.find(element => element === act[0].doc.find(({dokumen}) => dokumen === item).id) === undefined ? () => this.chekApp(act[0].doc.find(({dokumen}) => dokumen === item).id) : () => this.chekRej(act[0].doc.find(({dokumen}) => dokumen === item).id)}
+                                            />
                                         )}
-                                        <text>{item.nama_dokumen}</text>
+                                        <text>{item}</text>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="bsCir">
                                         {act.length > 0 && act[0].doc.length > 0 ? (
-                                                act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                                act[0].doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                                     <BsDashCircleFill size={23} className="black" />
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 0 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 ? (
                                                     <AiOutlineClose className="red" size={25} />
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 1 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 ? (
                                                     <BsCircle className="black" size={25} />
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 2 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 ? (
                                                     <BsCircle className="green" size={25}/>
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 3 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
                                                     <AiOutlineCheck className="blue" size={25}/>
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 4 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
                                                     <MdWatchLater className="red" size={25}/>
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 5 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
                                                     <MdWatchLater className="red" size={25}/>
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 6 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
                                                     <MdWatchLater className="red" size={25}/>
-                                                ) : act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).status_dokumen === 7 ? (
+                                                ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
                                                     <BiRevision className="black" size={25}/>
                                                 ) : (
                                                     <div></div>
@@ -1246,14 +1351,14 @@ class Dokumen extends Component {
                                             <AiOutlineFilePdf size={25} className="pdf" />
                                             {act.length > 0 && act[0].doc.length > 0 ? (
                                                 <div>
-                                                {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen) === undefined ? (
+                                                {act[0].doc.find(({dokumen}) => dokumen === item) === undefined ? (
                                                     <div>Belum Upload</div>
                                                     ) : 
                                                     (
                                                     <div>
-                                                        {/* this.setState({file: doc.find(({dokumen}) => dokumen === item.nama_dokumen).path, fileName: doc.find(({dokumen}) => dokumen === item.nama_dokumen)} */}
-                                                    <button className='btnDocIo' onClick={() => this.showDok({path: act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen), active: act[0]})}>
-                                                        {act[0].doc.find(({dokumen}) => dokumen === item.nama_dokumen).dokumen}
+                                                        {/* this.setState({file: doc.find(({dokumen}) => dokumen === item).path, fileName: doc.find(({dokumen}) => dokumen === item)} */}
+                                                    <button className='btnDocIo' onClick={() => this.showDok({path: act[0].doc.find(({dokumen}) => dokumen === item), active: act[0]})}>
+                                                        {act[0].doc.find(({dokumen}) => dokumen === item).dokumen}
                                                     </button>
                                                     </div>
                                                     )}
@@ -1269,18 +1374,24 @@ class Dokumen extends Component {
                             </div>
                             <hr />
                             <div className="foot">
-                                <div className="statusSymModal">
+                                {/* <div className="statusSymModal">
                                     <div className='mr-1 signbtn'><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
                                     <div className='mr-1 signbtn'><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
                                     <div className='mr-1 signbtn'><BsCircle size={20} className="green" /><text>  Upload</text></div>
                                     <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
                                     <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
-                                </div>
-                                <div className='divfoot'>
-                                    <Button className='btndivfoot mr-2' size='sm' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmail}>Send info email</Button>
-                                    <Button className="btndivfoot mr-2" color='success' size='sm' onClick={this.downloadDataAll}>Download All</Button>
+                                </div> */}
+                                <div className='divfoot1'>
+                                    <Button color="danger" className='mr-2' disabled={listMut.length === 0 ? true : false} onClick={this.openModalReject}>Reject</Button>
+                                    <Button color="primary" className='mr-2' disabled={listMut.length === 0 ? true : false} onClick={this.openModalApprove}>Approve</Button>
                                     {/* <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button> */}
-                                    <Button className='btndivfoot' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
+                                    {/* <Button className='btndivfoot' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button> */}
+                                </div>
+                                <div className='divfoot1'>
+                                    <Button className='mr-2' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmail}>Send info email</Button>
+                                    <Button className="mr-2" color='success' disabled={listMut.length === 0 ? true : false} onClick={this.downloadDataAll}>Download</Button>
+                                    {/* <Button className="btnFootModal" color="primary" onClick={this.openModalProses}>Save</Button> */}
+                                    {/* <Button className='btndivfoot' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button> */}
                                 </div>
                             </div>
                     </ModalBody>
@@ -1289,7 +1400,7 @@ class Dokumen extends Component {
                     )}
                 </Modal>
                 <Modal isOpen={openPdf} size="xl" toggle={this.openModalPdf} centered={true}>
-                <ModalHeader toggle={this.openModalPdf}>Dokumen</ModalHeader>
+                    <ModalHeader toggle={this.openModalPdf}>Dokumen</ModalHeader>
                     <ModalBody>
                         <div className="readPdf">
                             <Pdf pdf={REACT_APP_BACKEND_URL + dataShow} />
@@ -1299,27 +1410,21 @@ class Dokumen extends Component {
                             <div>
                                 <div>{moment(this.state.date).format('LLL')}</div>
                             </div>
-                        {level === '1' || level === '2' || level === '3' ? (
-                            <div>
-                                <Button color="danger" className='mr-2' onClick={this.openModalReject}>Reject</Button>
-                                <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
-                            </div>
+                            {level === '1' || level === '2' || level === '3' ? (
+                                <div>
+                                    {/* <Button color="danger" className='mr-2' onClick={this.openModalReject}>Reject</Button>
+                                    <Button color="primary" onClick={this.openModalApprove}>Approve</Button> */}
+                                    <Button color="success" className='mr-2' onClick={() => this.downloadDataPic(this.state.dataDown)}>Download</Button>
+                                    <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
+                                </div>
                             ) : (
-                                <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
+                                <div>
+                                    <Button color="success" className='mr-2' onClick={() => this.downloadData(this.state.dataDown)}>Download</Button>
+                                    <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
+                                </div>
                             )}
                         </div>
                     </ModalBody>
-                    {/* {level === '1' || level === '2' || level === '3' ? (
-                    
-                    <ModalFooter>
-                        <div>{moment(this.state.date).format('LL')}</div>
-                        <Button color="danger" onClick={this.openModalReject}>Reject</Button>
-                        <Button color="primary" onClick={this.openModalApprove}>Approve</Button>
-                    </ModalFooter>
-                    ) : (
-                    <ModalFooter>
-                        <Button color="primary" onClick={() => this.setState({openPdf: false})}>Close</Button>
-                    </ModalFooter>)} */}
                 </Modal>
                 <Modal isOpen={openApprove} toggle={this.openModalApprove} centered={true}>
                     <ModalBody>

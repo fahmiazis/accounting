@@ -10,6 +10,7 @@ import user from './user'
 import pic from './pic'
 import dashboard from './dashboard'
 import date from './date'
+import merge from './merge'
 
 export default combineReducers({
   auth,
@@ -21,5 +22,6 @@ export default combineReducers({
   user,
   pic,
   dashboard,
-  date
+  date,
+  merge
 })

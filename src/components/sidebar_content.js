@@ -170,6 +170,11 @@ const SidebarContent = props => {
             <AiOutlineClockCircle size={22} className="mr-2"/> Setting Date Clossing
           </button>
         </Collapse>
+        {(level === '2' || level === '1') && (
+          <button onClick={() => goHome('uploadsales')} className="btn-side">
+              <FaFileArchive size={20} className="mr-2"/> Upload Sales Tax
+          </button>
+        )}
         <button onClick={() => goHome('report')} className={level === '1' ? "btn-side margin-side" : level === '2' ? "btn-side margin-side1" : "btn-side margin-side2"}>
             <FaFileArchive size={20} className="mr-2"/> Report
         </button>

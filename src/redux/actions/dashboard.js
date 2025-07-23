@@ -31,9 +31,9 @@ export default {
         type: 'UPLOAD_DOKUMEN',
         payload: http(token).post(`/dashboard/upload/${id}/${idAct}`, data)
     }),
-    approve: (token, id, idAct) => ({
+    approve: (token, id, idAct, data) => ({
         type: 'APPROVE',
-        payload: http(token).patch(`/dashboard/approve/${id}/${idAct}`)
+        payload: http(token).patch(`/dashboard/approve/${id}/${idAct}`, qs.stringify(data))
     }),
     reject: (token, id, idAct, data) => ({
         type: 'REJECT',

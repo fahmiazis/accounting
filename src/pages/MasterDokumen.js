@@ -12,6 +12,7 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import dokumen from '../redux/actions/dokumen'
 import divisi from '../redux/actions/divisi'
+import depo from '../redux/actions/depo'
 import {connect} from 'react-redux'
 import moment from 'moment'
 import auth from '../redux/actions/auth'
@@ -61,7 +62,8 @@ class MasterDokumen extends Component {
             errMsg: '',
             fileUpload: '',
             limit: 10,
-            search: ''
+            search: '',
+            listDepo: []
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -146,7 +148,12 @@ class MasterDokumen extends Component {
 
     addDokumen = async (values) => {
         const token = localStorage.getItem("token")
-        await this.props.addDokumen(token, values)
+        const {listDepo} = this.state
+        const data = {
+            ...values,
+            access: listDepo.toString()
+        }
+        await this.props.addDokumen(token, data)
         const {isAdd} = this.props.dokumen
         if (isAdd) {
             this.setState({confirm: 'add'})
@@ -156,6 +163,20 @@ class MasterDokumen extends Component {
                 this.getDataDokumen()
             }, 500)
         }
+    }
+
+    prosesAdd = async () => {
+        const token = localStorage.getItem("token")
+        await this.props.getDepo(token, 1000, '')
+        this.openModalAdd()
+    }
+
+    prosesEdit = async (val) => {
+        const token = localStorage.getItem("token")
+        await this.props.getDepo(token, 1000, '')
+        const arrdep = val.access !== null ? val.access.split(',') : []
+        this.setState({detail: val, listDepo: arrdep})
+        this.openModalEdit()
     }
 
     DownloadMaster = () => {
@@ -201,7 +222,12 @@ class MasterDokumen extends Component {
 
     editDokumen = async (values, id) => {
         const token = localStorage.getItem("token")
-        await this.props.updateDokumen(token, id, values)
+        const {listDepo} = this.state
+        const data = {
+            ...values,
+            access: listDepo.toString()
+        }
+        await this.props.updateDokumen(token, id, data)
         const {isUpdate} = this.props.dokumen
         if (isUpdate) {
             this.setState({confirm: 'edit'})
@@ -239,7 +265,8 @@ class MasterDokumen extends Component {
         }
     }
 
-    componentDidMount() {
+    async componentDidMount() {
+        const token = localStorage.getItem("token")
         this.getDataDokumen()
         this.getDataDivisi()
     }
@@ -267,12 +294,46 @@ class MasterDokumen extends Component {
         this.setState({ open });
     }
 
+    checkDepApp = (val) => {
+        const { listDepo } = this.state
+        const { dataDepo } = this.props.depo
+        if (val === 'all') {
+            const data = []
+            for (let i = 0; i < dataDepo.length; i++) {
+                data.push(dataDepo[i].kode_plant)
+            }
+            this.setState({listDepo: data})
+        } else {
+            listDepo.push(val)
+            this.setState({listDepo: listDepo})
+        }
+    }
+
+    checkDepRej = (val) => {
+        const { listDepo } = this.state
+        if (val === 'all') {
+            const data = []
+            this.setState({listDepo: data})
+        } else {
+            const data = []
+            for (let i = 0; i < listDepo.length; i++) {
+                if (listDepo[i] === val) {
+                    data.push()
+                } else {
+                    data.push(listDepo[i])
+                }
+            }
+            this.setState({listDepo: data})
+        }
+    }
+
     render() {
-        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
+        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg, listDepo} = this.state
         const {dataDokumen, isGet, alertM, alertMsg, alertUpload, page} = this.props.dokumen
         const {dataDivisi} = this.props.divisi
         const level = localStorage.getItem('level')
         const names = localStorage.getItem('name')
+        const {dataDepo} = this.props.depo
 
         const contentHeader =  (
             <div className="navbar">
@@ -346,11 +407,11 @@ class MasterDokumen extends Component {
                                         <text className="textEntries">entries</text>
                                     </div>
                                 </div>
-                                <div className="secEmail">
-                                    <div className="headEmail">
-                                        <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                        <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
+                                <div className="secEmail mt-4">
+                                    <div className="headEmail1">
+                                        <Button onClick={this.prosesAdd} color="primary" size="lg">Add</Button>
+                                        <Button onClick={this.openModalUpload} className='ml-2' color="warning" size="lg">Upload</Button>
+                                        <Button onClick={this.ExportMaster} className='ml-2' color="success" size="lg">Download</Button>
                                     </div>
                                     <div className="searchEmail">
                                         <text>Search: </text>
@@ -375,6 +436,7 @@ class MasterDokumen extends Component {
                                                 <th>Divisi</th>
                                                 <th>Status Depo</th>
                                                 <th>Create Date</th>
+                                                <th>Hak akses</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -392,13 +454,14 @@ class MasterDokumen extends Component {
                                                 <th>Status Depo</th>
                                                 <th>Diupload oleh</th>
                                                 <th>Create Date</th>
+                                                <th>Hak akses</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                         {dataDokumen.length !== 0 && dataDokumen.map(item => {
                                                 return (
-                                            <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                            <tr onClick={() => this.prosesEdit(item)}>
                                                 <th scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                 <td>{item.nama_dokumen}</td>
                                                 <td>{item.jenis_dokumen}</td>
@@ -406,6 +469,10 @@ class MasterDokumen extends Component {
                                                 <td>{item.status_depo}</td>
                                                 <td>{item.uploadedBy}</td>
                                                 <td>{moment(item.createdAt).format('DD MMMM, YYYY')}</td>
+                                                <td>{item.access !== null && item.access.split(',').length > 0 
+                                                    ? item.access.slice(0, 20) + `...(${item.access.split(',').length} area lainnya)`
+                                                    : item.access}
+                                                </td>
                                                 <td>{item.status}</td>
                                             </tr>
                                                 )})}
@@ -570,12 +637,50 @@ class MasterDokumen extends Component {
                                 ) : null}
                             </div>
                         </div>
+                        <div className="addModalMenu">
+                            <text className="col-md-3">
+                                Hak akses
+                            </text>
+                            <div className="col-md-9 listcek">
+                                <div className='listcek mr-2'>
+                                    <Input 
+                                    type="checkbox" 
+                                    name="access"
+                                    className='ml-1'
+                                    checked={listDepo.length === 0 ? false : listDepo.length === dataDepo.length ? true : false}
+                                    onChange={() => listDepo.length === dataDepo.length ? this.checkDepRej('all') : this.checkDepApp('all')}
+                                    />
+                                    <text className='ml-4'>all</text>
+                                </div>
+                                {dataDepo.length > 0 && dataDepo.map(item => {
+                                    return (
+                                        <div className='listcek mr-2'>
+                                            <Input 
+                                            type="checkbox" 
+                                            name="access"
+                                            checked={listDepo.find(element => element === item.kode_plant) !== undefined ? true : false}
+                                            className='ml-1'
+                                            onChange={listDepo.find(element => element === item.kode_plant) === undefined ? () => this.checkDepApp(item.kode_plant) : () => this.checkDepRej(item.kode_plant)}
+                                            />
+                                            <text className='ml-4'>{item.nama_depo}</text>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
                         <hr/>
                         <div className="foot">
                             <div></div>
                             <div>
-                                <Button className="mr-2" onClick={handleSubmit} color="primary">Save</Button>
-                                <Button className="mr-5" onClick={this.openModalAdd}>Cancel</Button>
+                                <Button 
+                                className="mr-2" 
+                                onClick={handleSubmit} 
+                                color="primary" 
+                                disabled={listDepo.length === 0 ? true : false}
+                                >
+                                    Save
+                                </Button>
+                                <Button className="mr-3" onClick={this.openModalAdd}>Cancel</Button>
                             </div>
                         </div>
                     </ModalBody>
@@ -591,7 +696,7 @@ class MasterDokumen extends Component {
                         divisi: detail.divisi,
                         status_depo: detail.status_depo,
                         uploadedBy: detail.uploadedBy,
-                        createdAt: moment(detail.createdAt).format('YYYY-DD-MM'),
+                        createdAt: detail.createdAt,
                         status: detail.status
                     }}
                     validationSchema={dokumenSchema}
@@ -711,9 +816,10 @@ class MasterDokumen extends Component {
                             </text>
                             <div className="col-md-9">
                                 <Input 
-                                type="datetime-local"
+                                type="date"
                                 name="createdAt"
-                                value={values.createdAt}
+                                value={moment(values.createdAt).format('YYYY-MM-DD')}
+                                disabled
                                 onChange={handleChange('createdAt')}
                                 onBlur={handleBlur('createdAt')}
                                 />
@@ -743,11 +849,49 @@ class MasterDokumen extends Component {
                                 ) : null}
                             </div>
                         </div>
+                        <div className="addModalMenu">
+                            <text className="col-md-3">
+                                Hak akses
+                            </text>
+                            <div className="col-md-9 listcek">
+                                <div className='listcek mr-2'>
+                                    <Input 
+                                    type="checkbox" 
+                                    name="access"
+                                    className='ml-1'
+                                    checked={listDepo.length === 0 ? false : listDepo.length === dataDepo.length ? true : false}
+                                    onChange={() => listDepo.length === dataDepo.length ? this.checkDepRej('all') : this.checkDepApp('all')}
+                                    />
+                                    <text className='ml-4'>all</text>
+                                </div>
+                                {dataDepo.length > 0 && dataDepo.map(item => {
+                                    return (
+                                        <div className='listcek mr-2'>
+                                            <Input 
+                                            type="checkbox" 
+                                            name="access"
+                                            checked={listDepo.find(element => element === item.kode_plant) !== undefined ? true : false}
+                                            className='ml-1'
+                                            onChange={listDepo.find(element => element === item.kode_plant) === undefined ? () => this.checkDepApp(item.kode_plant) : () => this.checkDepRej(item.kode_plant)}
+                                            />
+                                            <text className='ml-4'>{item.nama_depo}</text>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
                         <hr/>
                         <div className="foot">
                             <div></div>
                             <div>
-                                <Button className="mr-2" onClick={handleSubmit} color="primary">Save</Button>
+                                <Button 
+                                className="mr-2" 
+                                onClick={handleSubmit} 
+                                color="primary"
+                                disabled={listDepo.length === 0 ? true : false}
+                                >
+                                    Save
+                                </Button>
                                 <Button className="mr-5" onClick={this.openModalEdit}>Cancel</Button>
                             </div>
                         </div>
@@ -803,7 +947,7 @@ class MasterDokumen extends Component {
                         )}
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.dokumen.isLoading ? true: false} size="sm">
+                <Modal isOpen={this.props.dokumen.isLoading || this.props.depo.isLoading ? true: false} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -830,7 +974,8 @@ class MasterDokumen extends Component {
 
 const mapStateToProps = state => ({
     dokumen: state.dokumen,
-    divisi: state.divisi
+    divisi: state.divisi,
+    depo: state.depo
 })
 
 const mapDispatchToProps = {
@@ -842,7 +987,8 @@ const mapDispatchToProps = {
     getDivisi: divisi.getDivisi,
     uploadMaster: dokumen.uploadMaster,
     nextPage: dokumen.nextPage,
-    exportMaster: dokumen.exportMaster
+    exportMaster: dokumen.exportMaster,
+    getDepo: depo.getDepo,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDokumen)

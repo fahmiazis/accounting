@@ -31,9 +31,9 @@ export default {
         type: 'NEXT_DATA_PIC',
         payload: http(token).get(`${link}`)
     }),
-    deletePic: (token, id) => ({
+    deletePic: (token, data) => ({
         type: 'DELETE_PIC',
-        payload: http(token).delete(`/pic/delete/${id}`)
+        payload: http(token).patch(`/pic/delete`, data)
     }),
     resetError: () => ({
         type: 'RESET'

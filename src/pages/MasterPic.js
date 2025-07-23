@@ -59,7 +59,9 @@ class MasterPic extends Component {
             errMsg: '',
             fileUpload: '',
             limit: 10,
-            search: ''
+            search: '',
+            modalDelete: false,
+            listPic: []
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -225,6 +227,56 @@ class MasterPic extends Component {
         }
     }
 
+    openModalDelete = () => {
+        this.setState({modalDelete: !this.state.modalDelete})
+    }
+
+    chekApp = (val) => {
+        const { listPic } = this.state
+        const {dataPic} = this.props.pic
+        if (val === 'all') {
+            const data = []
+            for (let i = 0; i < dataPic.length; i++) {
+                data.push(dataPic[i].id)
+            }
+            this.setState({listPic: data})
+        } else {
+            listPic.push(val)
+            this.setState({listPic: listPic})
+        }
+    }
+
+    chekRej = (val) => {
+        const {listPic} = this.state
+        if (val === 'all') {
+            const data = []
+            this.setState({listPic: data})
+        } else {
+            const data = []
+            for (let i = 0; i < listPic.length; i++) {
+                if (listPic[i] === val) {
+                    data.push()
+                } else {
+                    data.push(listPic[i])
+                }
+            }
+            this.setState({listPic: data})
+        }
+    }
+
+    prosesDelete = async () => {
+        const token = localStorage.getItem("token")
+        const { listPic } = this.state
+        const data = {
+            listId: listPic
+        }
+        await this.props.deletePic(token, data)
+        this.getDataPic()
+        this.openModalDelete()
+        this.setState({confirm: 'delete'})
+        this.openConfirm()
+    }
+
     componentDidUpdate() {
         const {isError, isUpload, isExport} = this.props.pic
         if (isError) {
@@ -286,7 +338,7 @@ class MasterPic extends Component {
     }
 
     render() {
-        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
+        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg, listPic} = this.state
         const {dataPic, isGet, alertM, alertMsg, alertUpload, page} = this.props.pic
         const {dataDivisi} = this.props.divisi
         const {dataDepo} = this.props.depo
@@ -365,11 +417,12 @@ class MasterPic extends Component {
                                         <text className="textEntries">entries</text>
                                     </div>
                                 </div>
-                                <div className="secEmail">
-                                    <div className="headEmail">
+                                <div className="secEmail mt-4">
+                                    <div className="rowCenter">
                                         <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                        <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
+                                        <Button className='ml-1' disabled={listPic.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                        <Button className='ml-1' onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                        <Button className='ml-1' onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                                     </div>
                                     <div className="searchEmail">
                                         <text>Search: </text>
@@ -411,6 +464,14 @@ class MasterPic extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                             <tr>
+                                                <th>
+                                                    <input  
+                                                    className='mr-2'
+                                                    type='checkbox'
+                                                    checked={listPic.length === 0 ? false : listPic.length === dataPic.length ? true : false}
+                                                    onChange={() => listPic.length === dataPic.length ? this.chekRej('all') : this.chekApp('all')}
+                                                    />
+                                                </th>
                                                 <th>No</th>
                                                 <th>PIC</th>
                                                 <th>SPV</th>
@@ -418,19 +479,32 @@ class MasterPic extends Component {
                                                 <th>Kode Depo</th>
                                                 <th>Nama Depo</th>
                                                 <th>Status</th>
+                                                <th>Opsi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                         {dataPic.length !== 0 && dataPic.map(item => {
                                                 return (
-                                                <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                                    <th scope="row">{(dataPic.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                <tr>
+                                                     <td>
+                                                        <input 
+                                                        type='checkbox'
+                                                        checked={listPic.find(element => element === item.id) !== undefined ? true : false}
+                                                        onChange={listPic.find(element => element === item.id) === undefined ? () => this.chekApp(item.id) : () => this.chekRej(item.id)}
+                                                        />
+                                                    </td>
+                                                    <td scope="row">{(dataPic.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
                                                     <td>{item.pic}</td>
                                                     <td>{item.spv}</td>
                                                     <td>{item.divisi}</td>
                                                     <td>{item.kode_depo}</td>
                                                     <td>{item.nama_depo}</td>
                                                     <td>{item.status}</td>
+                                                    <td>
+                                                        <Button color='success' onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                                            Detail
+                                                        </Button>
+                                                    </td>
                                                 </tr>
                                                 )})}
                                         </tbody>
@@ -753,6 +827,13 @@ class MasterPic extends Component {
                                 <div className="sucUpdate green">Berhasil Mengupload Master PIC</div>
                             </div>
                             </div>
+                        ) : this.state.confirm === 'delete' ?(
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Delete Data PIC</div>
+                            </div>
+                            </div>
                         ) : (
                             <div></div>
                         )}
@@ -778,6 +859,21 @@ class MasterPic extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
+                <Modal isOpen={this.state.modalDelete} size="md" toggle={this.openModalDelete} centered={true}>
+                    <ModalBody>
+                        <div className='modalApprove'>
+                            <div>
+                                <text>
+                                    Anda yakin untuk delete data pic ?
+                                </text>
+                            </div>
+                            <div className='btnApproveIo'>
+                                <Button color="primary" className='mr-2' onClick={this.prosesDelete}>Ya</Button>
+                                <Button color="secondary" onClick={this.openModalDelete}>Tidak</Button>
+                            </div>
+                        </div>
+                    </ModalBody>
+                </Modal>
             </>
         )
     }
@@ -799,7 +895,8 @@ const mapDispatchToProps = {
     getDepo: depo.getDepo,
     uploadMaster: pic.uploadMaster,
     nextPage: pic.nextPage,
-    exportMaster: pic.exportMaster
+    exportMaster: pic.exportMaster,
+    deletePic: pic.deletePic
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterPic)

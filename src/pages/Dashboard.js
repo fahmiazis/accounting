@@ -14,6 +14,7 @@ import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineCheck, AiFillCheckCircle, AiOutlineClose, AiOutlineMinus, AiOutlineFilePdf, AiOutlineFileExcel} from 'react-icons/ai'
 import {BsCircle, BsDashCircleFill, BsFillCircleFill} from 'react-icons/bs'
 import {MdWatchLater} from 'react-icons/md'
+import {BiRevision} from 'react-icons/bi'
 import dashboard from '../redux/actions/dashboard'
 import moment from 'moment'
 import {connect} from 'react-redux'
@@ -167,8 +168,8 @@ class Dashboard extends Component {
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 20000000) {
-            this.setState({errMsg: "Maximum upload size 20 MB"})
+        if (size >= 100000000) {
+            this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
         } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7zip files are allowed.'})
@@ -808,30 +809,28 @@ class Dashboard extends Component {
                                                 {dataDash !== undefined && dataDash.map(y => {
                                                     return (
                                                     <td>
-                                                        {x.doc.length === 0 ? (
+                                                        {x.doc.length === 0 || x.doc[dataDash.indexOf(y)] === undefined ? (
                                                             <AiOutlineMinus className="black" />
-                                                        ):(
-                                                            x.doc.map(item => {
-                                                                return (
-                                                                    item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="black"/>
-                                                                    ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
-                                                                        <BsCircle className="green" />
-                                                                    ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineCheck className="blue"/>
-                                                                    ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
-                                                                        <AiOutlineClose className="red" />
-                                                                    ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
-                                                                        <MdWatchLater className="red" size={20}/>
-                                                                    ) : (
-                                                                        <div></div>
-                                                                    )
-                                                                )
-                                                            })
+                                                        ) : (
+                                                            x.doc[dataDash.indexOf(y)].status_dokumen === 1 ? (
+                                                                <BsCircle className="black"/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 2 ? (
+                                                                <BsCircle className="green" />
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 3 ? (
+                                                                <AiOutlineCheck className="blue"/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 0 ? (
+                                                                <AiOutlineClose className="red" />
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 4 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 5 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 6 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 7 ? (
+                                                                <BiRevision className="black" size={20}/>
+                                                            ) : (
+                                                                <AiOutlineMinus className="black" />
+                                                            )
                                                         )}
                                                     </td>
                                                     )

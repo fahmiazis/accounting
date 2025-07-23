@@ -67,7 +67,9 @@ class MasterUser extends Component {
             errMsg: '',
             fileUpload: '',
             limit: 10,
-            search: ''
+            search: '',
+            listUser: [],
+            modalDelete: false
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -136,6 +138,56 @@ class MasterUser extends Component {
     }
     openModalDownload = () => {
         this.setState({modalUpload: !this.state.modalUpload})
+    }
+
+    openModalDelete = () => {
+        this.setState({modalDelete: !this.state.modalDelete})
+    }
+
+    chekApp = (val) => {
+        const { listUser } = this.state
+        const {dataUser} = this.props.user
+        if (val === 'all') {
+            const data = []
+            for (let i = 0; i < dataUser.length; i++) {
+                data.push(dataUser[i].id)
+            }
+            this.setState({listUser: data})
+        } else {
+            listUser.push(val)
+            this.setState({listUser: listUser})
+        }
+    }
+
+    chekRej = (val) => {
+        const {listUser} = this.state
+        if (val === 'all') {
+            const data = []
+            this.setState({listUser: data})
+        } else {
+            const data = []
+            for (let i = 0; i < listUser.length; i++) {
+                if (listUser[i] === val) {
+                    data.push()
+                } else {
+                    data.push(listUser[i])
+                }
+            }
+            this.setState({listUser: data})
+        }
+    }
+
+    prosesDelete = async () => {
+        const token = localStorage.getItem("token")
+        const { listUser } = this.state
+        const data = {
+            listId: listUser
+        }
+        await this.props.deleteUser(token, data)
+        this.getDataUser()
+        this.openModalDelete()
+        this.setState({confirm: 'delete'})
+        this.openConfirm()
     }
 
     DownloadTemplate = () => {
@@ -287,7 +339,7 @@ class MasterUser extends Component {
     }
 
     render() {
-        const {isOpen, dropOpen, dropOpenNum, detail, level, upload, errMsg} = this.state
+        const {isOpen, dropOpen, dropOpenNum, detail, level, upload, errMsg, listUser} = this.state
         const {dataUser, isGet, alertM, alertMsg, alertUpload, page} = this.props.user
         const { dataDepo } = this.props.depo
         const levels = localStorage.getItem('level')
@@ -365,11 +417,12 @@ class MasterUser extends Component {
                                         <text className="textEntries">entries</text>
                                     </div>
                                 </div>
-                                <div className="secEmail">
-                                    <div className="headEmail">
+                                <div className="secEmail mt-4">
+                                    <div className="rowCenter">
                                         <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                        <Button onClick={this.ExportMaster} color="success" size="lg">Download</Button>
+                                        <Button className='ml-1' disabled={listUser.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                        <Button className='ml-1' onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                        <Button className='ml-1' onClick={this.ExportMaster} color="success" size="lg">Download</Button>
                                     </div>
                                     <div className="searchEmail">
                                         <text>Search: </text>
@@ -410,24 +463,45 @@ class MasterUser extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                             <tr>
+                                                <th>
+                                                    <input  
+                                                    className='mr-2'
+                                                    type='checkbox'
+                                                    checked={listUser.length === 0 ? false : listUser.length === dataUser.length ? true : false}
+                                                    onChange={() => listUser.length === dataUser.length ? this.chekRej('all') : this.chekApp('all')}
+                                                    />
+                                                </th>
                                                 <th>No</th>
                                                 <th>User Name</th>
                                                 <th>Kode Depo</th>
                                                 <th>Nama Depo</th>
                                                 <th>User Level</th>
                                                 <th>Status</th>
+                                                <th>Opsi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                         {dataUser.length !== 0 && dataUser.map(item => {
                                                 return (
-                                                <tr onClick={()=>this.openModalEdit(this.setState({detail: item}))}>
-                                                    <th scope="row">{(dataUser.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                <tr>
+                                                    <td>
+                                                        <input 
+                                                        type='checkbox'
+                                                        checked={listUser.find(element => element === item.id) !== undefined ? true : false}
+                                                        onChange={listUser.find(element => element === item.id) === undefined ? () => this.chekApp(item.id) : () => this.chekRej(item.id)}
+                                                        />
+                                                    </td>
+                                                    <td scope="row">{(dataUser.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
                                                     <td>{item.username}</td>
-                                                    <td>{item.kode_depo === 0 ? "" : item.kode_depo}</td>
-                                                    <td>{item.nama_depo === "null" || item.nama_depo === null ? "" : item.nama_depo}</td>
+                                                    <td>{item.kode_depo === 0 ? "-" : item.kode_depo}</td>
+                                                    <td>{item.nama_depo === "null" || item.nama_depo === null ? "-" : item.nama_depo}</td>
                                                     <td>{item.user_level}</td>
                                                     <td>{item.status}</td>
+                                                    <td>
+                                                        <Button color='success' onClick={()=>this.openModalEdit(this.setState({detail: item}))}>
+                                                            Detail
+                                                        </Button>
+                                                    </td>
                                                 </tr>
                                                 )})}
                                         </tbody>
@@ -448,7 +522,7 @@ class MasterUser extends Component {
                     </MaterialTitlePanel>
                 </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
-                    <ModalHeader toggle={this.openModalAdd}>Add Master User</ModalHeader>
+                    <ModalHeader toggle={this.openModalAdd}>Add Data User</ModalHeader>
                     <Formik
                     initialValues={{
                     username: "",
@@ -579,7 +653,7 @@ class MasterUser extends Component {
                     </Formik>
                 </Modal>
                 <Modal toggle={this.openModalEdit} isOpen={this.state.modalEdit}>
-                    <ModalHeader toggle={this.openModalEdit}>Edit Master User</ModalHeader>
+                    <ModalHeader toggle={this.openModalEdit}>Edit Data User</ModalHeader>
                     <Formik
                     initialValues={{
                     username: detail.username,
@@ -626,32 +700,7 @@ class MasterUser extends Component {
                             ) : null}
                             </div>
                         </div> */}
-                        <div className="addModalDepo">
-                            <text className="col-md-3">
-                                Depo
-                            </text>
-                            <div className="col-md-9">
-                            <Input 
-                                type="select" 
-                                name="select"
-                                value={values.depo}
-                                onChange={handleChange("depo")}
-                                onBlur={handleBlur("depo")}
-                                >
-                                    <option>-Pilih Depo-</option>
-                                    {dataDepo.length !== 0 && dataDepo.map(item => {
-                                        return (
-                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
-                                        )
-                                    })}
-                                    {/* <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
-                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option> */}
-                                </Input>
-                                {errors.depo ? (
-                                    <text className="txtError">{errors.depo}</text>
-                                ) : null}
-                            </div>
-                        </div>
+                        
                         <div className="addModalDepo">
                             <text className="col-md-3">
                                 User Level
@@ -673,6 +722,33 @@ class MasterUser extends Component {
                                 </Input>
                                 {errors.user_level ? (
                                     <text className="txtError">{errors.user_level}</text>
+                                ) : null}
+                            </div>
+                        </div>
+                        <div className="addModalDepo">
+                            <text className="col-md-3">
+                                Depo
+                            </text>
+                            <div className="col-md-9">
+                            <Input 
+                                type="select" 
+                                name="select"
+                                disabled={parseInt(values.user_level) === 2 || parseInt(values.user_level) === 3 ? true : false}
+                                value={values.depo}
+                                onChange={handleChange("depo")}
+                                onBlur={handleBlur("depo")}
+                                >
+                                    <option>-Pilih Depo-</option>
+                                    {dataDepo.length !== 0 && dataDepo.map(item => {
+                                        return (
+                                            <option value={item.kode_plant + '-' + item.nama_depo}>{item.kode_plant + '-' + item.nama_depo}</option>
+                                        )
+                                    })}
+                                    {/* <option value="50-MEDAN TIMUR">50-MEDAN TIMUR</option>
+                                    <option value="53-MEDAN BARAT">53-MEDAN BARAT</option> */}
+                                </Input>
+                                {errors.depo ? (
+                                    <text className="txtError">{errors.depo}</text>
                                 ) : null}
                             </div>
                         </div>
@@ -752,6 +828,13 @@ class MasterUser extends Component {
                                 <div className="sucUpdate green">Berhasil Mengupload Master User</div>
                             </div>
                             </div>
+                        ) : this.state.confirm === 'delete' ?(
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Delete Data User</div>
+                            </div>
+                            </div>
                         ) : (
                             <div></div>
                         )}
@@ -777,6 +860,21 @@ class MasterUser extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
+                <Modal isOpen={this.state.modalDelete} size="md" toggle={this.openModalDelete} centered={true}>
+                    <ModalBody>
+                        <div className='modalApprove'>
+                            <div>
+                                <text>
+                                    Anda yakin untuk delete user ?
+                                </text>
+                            </div>
+                            <div className='btnApproveIo'>
+                                <Button color="primary" className='mr-2' onClick={this.prosesDelete}>Ya</Button>
+                                <Button color="secondary" onClick={this.openModalDelete}>Tidak</Button>
+                            </div>
+                        </div>
+                    </ModalBody>
+                </Modal>
             </>
         )
     }
@@ -796,7 +894,8 @@ const mapDispatchToProps = {
     getDepo: depo.getDepo,
     uploadMaster: user.uploadMaster,
     nextPage: user.nextPage,
-    exportMaster: user.exportMaster
+    exportMaster: user.exportMaster,
+    deleteUser: user.deleteUser
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterUser)

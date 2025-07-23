@@ -31,9 +31,9 @@ export default {
         type: 'NEXT_DATA_USER',
         payload: http(token).get(`${link}`)
     }),
-    deleteUser: (token, id) => ({
+    deleteUser: (token, data) => ({
         type: 'DELETE_USER',
-        payload: http(token).delete(`/user/delete/${id}`)
+        payload: http(token).patch(`/user/delete`, data)
     }),
     resetError: () => ({
         type: 'RESET'

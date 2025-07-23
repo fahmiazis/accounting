@@ -10,7 +10,8 @@ import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
 import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
 import {Formik} from 'formik'
 import * as Yup from 'yup'
-import depo from '../redux/actions/depo'
+import merge from '../redux/actions/merge'
+import moment from 'moment'
 import {connect} from 'react-redux'
 import auth from '../redux/actions/auth'
 import {default as axios} from 'axios'
@@ -67,24 +68,23 @@ class MasterDepo extends Component {
             detail: {},
             upload: false,
             errMsg: '',
-            fileUpload: '',
+            fileUpload: null,
             limit: 10,
             search: '',
-            listDepo: [],
-            modalDelete: false
+            typeSort: 'ASC'
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
     next = async () => {
-        const { page } = this.props.depo
+        const { page } = this.props.merge
         const token = localStorage.getItem('token')
         await this.props.nextPage(token, page.nextLink)
     }
 
     prev = async () => {
-        const { page } = this.props.depo
+        const { page } = this.props.merge
         const token = localStorage.getItem('token')
         await this.props.nextPage(token, page.prevLink)
     }
@@ -101,14 +101,14 @@ class MasterDepo extends Component {
 
     DownloadTemplate = () => {
         axios({
-            url: `${REACT_APP_BACKEND_URL}/masters/depo.xlsx`,
+            url: `${REACT_APP_BACKEND_URL}/masters/merge.xlsx`,
             method: 'GET',
             responseType: 'blob',
         }).then((response) => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', "depo.xlsx");
+            link.setAttribute('download', "merge.xlsx");
             document.body.appendChild(link);
             link.click();
         });
@@ -153,7 +153,7 @@ class MasterDepo extends Component {
         this.setState({modalEdit: !this.state.modalEdit})
     }
     openModalUpload = () => {
-        this.setState({modalUpload: !this.state.modalUpload})
+        this.setState({modalUpload: !this.state.modalUpload, fileUpload: null})
     }
     openModalDownload = () => {
         this.setState({modalUpload: !this.state.modalUpload})
@@ -162,102 +162,60 @@ class MasterDepo extends Component {
     addDepo = async (values) => {
         const token = localStorage.getItem("token")
         await this.props.addDepo(token, values)
-        const {isAdd} = this.props.depo
+        const {isAdd} = this.props.merge
         if (isAdd) {
             this.setState({confirm: 'add'})
             this.openConfirm()
             this.openModalAdd()
             setTimeout(() => {
-                this.getDataDepo()
+                this.getDataMerge()
             }, 500)
         }
     }
 
-    openModalDelete = () => {
-        this.setState({modalDelete: !this.state.modalDelete})
-    }
-
-    chekApp = (val) => {
-        const { listDepo } = this.state
-        const {dataDepo} = this.props.depo
-        if (val === 'all') {
-            const data = []
-            for (let i = 0; i < dataDepo.length; i++) {
-                data.push(dataDepo[i].id)
-            }
-            this.setState({listDepo: data})
-        } else {
-            listDepo.push(val)
-            this.setState({listDepo: listDepo})
-        }
-    }
-
-    chekRej = (val) => {
-        const {listDepo} = this.state
-        if (val === 'all') {
-            const data = []
-            this.setState({listDepo: data})
-        } else {
-            const data = []
-            for (let i = 0; i < listDepo.length; i++) {
-                if (listDepo[i] === val) {
-                    data.push()
-                } else {
-                    data.push(listDepo[i])
-                }
-            }
-            this.setState({listDepo: data})
-        }
-    }
-
-    prosesDelete = async () => {
-        const token = localStorage.getItem("token")
-        const { listDepo } = this.state
-        const data = {
-            listId: listDepo
-        }
-        await this.props.deleteDepo(token, data)
-        this.getDataDepo()
-        this.openModalDelete()
-        this.setState({confirm: 'delete'})
-        this.openConfirm()
-    }
-
-
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
-        if (size >= 5120000) {
-            this.setState({errMsg: "Maximum upload size 5 MB"})
-            this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
-            this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
-            this.uploadAlert()
-        } else {
-            this.setState({fileUpload: e.target.files[0]})
+        if (size !== undefined || type !== undefined) {
+            if (size > 500000000) {
+                this.setState({errMsg: "Maximum upload size 500 MB"})
+                this.uploadAlert()
+            } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
+                this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
+                this.uploadAlert()
+            } else {
+                const temp = []
+                for (let i = 0; i < e.target.files.length; i++) {
+                    temp.push(e.target.files[i])
+                }
+                this.setState({fileUpload: temp})
+            }
         }
     }
 
     uploadMaster = async () => {
         const token = localStorage.getItem('token')
+        const {fileUpload} = this.state
         const data = new FormData()
-        data.append('master', this.state.fileUpload)
+        for (let i = 0; i < fileUpload.length; i++) {
+            data.append('master', fileUpload[i])
+        }
         await this.props.uploadMaster(token, data)
     }
 
     editDepo = async (values, id) => {
         const token = localStorage.getItem("token")
         await this.props.updateDepo(token, id, values)
-        const {isUpdate} = this.props.depo
+        const {isUpdate} = this.props.merge
         if (isUpdate) {
             this.setState({confirm: 'edit'})
             this.openConfirm()
-            this.getDataDepo()
+            this.getDataMerge()
             this.openModalEdit()
         }
     }
 
     componentDidUpdate() {
-        const {isError, isUpload, isExport} = this.props.depo
+        const {isError, isUpload, isExport} = this.props.merge
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -267,7 +225,7 @@ class MasterDepo extends Component {
                 this.setState({modalUpload: false})
              }, 2000)
              setTimeout(() => {
-                this.getDataDepo()
+                this.getDataMerge()
              }, 2100)
         } else if (isExport) {
             this.props.resetError()
@@ -276,7 +234,7 @@ class MasterDepo extends Component {
     }
 
     DownloadMaster = () => {
-        const {link} = this.props.depo
+        const {link} = this.props.merge
         axios({
             url: `${link}`,
             method: 'GET',
@@ -285,29 +243,29 @@ class MasterDepo extends Component {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', "master depo.xlsx"); //or any other extension
+            link.setAttribute('download', "master merge.xlsx"); //or any other extension
             document.body.appendChild(link);
             link.click();
         });
     }
 
     componentDidMount() {
-        this.getDataDepo()
+        this.getDataMerge()
     }
 
     onSearch = (e) => {
         this.setState({search: e.target.value})
         if(e.key === 'Enter'){
-            this.getDataDepo({limit: 10, search: this.state.search})
+            this.getDataMerge({limit: 10, search: this.state.search})
         }
     }
 
-    getDataDepo = async (value) => {
+    getDataMerge = async (value) => {
         const token = localStorage.getItem("token")
-        const { page } = this.props.depo
+        const { page } = this.props.merge
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getDepo(token, limit, search, page.currentPage)
+        await this.props.getMerge(token, limit, search, page.currentPage, this.state.typeSort)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
@@ -321,8 +279,8 @@ class MasterDepo extends Component {
     }
 
     render() {
-        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg, listDepo} = this.state
-        const {dataDepo, isGet, alertM, alertMsg, alertUpload, page} = this.props.depo
+        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg} = this.state
+        const {dataMerge, isGet, alertM, alertMsg, alertUpload, page} = this.props.merge
         const level = localStorage.getItem('level')
         const names = localStorage.getItem('name')
 
@@ -380,7 +338,7 @@ class MasterDepo extends Component {
                             </Alert>
                             <div className="bodyDashboard">
                                 <div className="headMaster">
-                                    <div className="titleDashboard col-md-12">Master Depo</div>
+                                    <div className="titleDashboard col-md-12">Data Upload Sales</div>
                                 </div>
                                 <div className="secHeadDashboard">
                                     <div>
@@ -390,20 +348,19 @@ class MasterDepo extends Component {
                                             {this.state.limit}
                                         </DropdownToggle>
                                         <DropdownMenu>
-                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 10, search: ''})}>10</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 20, search: ''})}>20</DropdownItem>
-                                            <DropdownItem className="item" onClick={() => this.getDataDepo({limit: 50, search: ''})}>50</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataMerge({limit: 10, search: ''})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataMerge({limit: 20, search: ''})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataMerge({limit: 50, search: ''})}>50</DropdownItem>
                                         </DropdownMenu>
                                         </ButtonDropdown>
                                         <text className="textEntries">entries</text>
                                     </div>
                                 </div>
                                 <div className="secEmail mt-4">
-                                    <div className="rowCenter">
-                                        <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
-                                        <Button className='ml-1' disabled={listDepo.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
-                                        <Button className='ml-1' onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
-                                        <Button className='ml-1' color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
+                                    <div className="headMaster">
+                                        {/* <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button> */}
+                                        <Button onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                        <Button className='ml-2' color="success" size="lg" onClick={() => this.props.history.push('/logupload')}>Log File Upload</Button>
                                     </div>
                                     <div className="searchEmail">
                                         <text>Search: </text>
@@ -423,23 +380,32 @@ class MasterDepo extends Component {
                                         <thead>
                                             <tr>
                                                 <th>No</th>
-                                                <th>Kode Depo</th>
-                                                <th>Nama Depo</th>
-                                                <th>Home Town</th>
-                                                <th>Channel</th>
-                                                <th>Distribution</th>
-                                                <th>Status Depo</th>
-                                                <th>Profit Center</th>
-                                                <th>Kode PLANT</th>
-                                                <th>Kode SAP 1</th>
-                                                <th>Kode SAP 2</th>
-                                                <th>Nama GROM</th>
-                                                <th>Nama BM</th>
-                                                <th>Nama ASS</th>
-                                                <th>Nama PIC 1</th>
-                                                <th>Nama PIC 2</th>
-                                                <th>Nama PIC 3</th>
-                                                <th>Nama PIC 4</th>
+                                                {/* <th>KODE_DEPO</th> */}
+                                                <th>NAMA_DEPO</th>
+                                                <th>KODE_OUTLET</th>
+                                                <th>NAMA_OUTLET</th>
+                                                <th>KODE_SALES</th>
+                                                <th>NAMA_SALES</th>
+                                                <th>TGL_FAKTUR</th>
+                                                <th>NO_FAKTUR</th>
+                                                <th>GROSS_SALES</th>
+                                                <th>RP_DISCPC</th>
+                                                <th>DISC1</th>
+                                                <th>DISC2</th>
+                                                <th>PRO_AMOUNT</th>
+                                                <th>CASH_DISCT</th>
+                                                <th>PPN</th>
+                                                <th>TOTAL</th>
+                                                <th>TYPE</th>
+                                                <th>PCODE</th>
+                                                <th>NAMA_PRODUK</th>
+                                                <th>QTY_PCS</th>
+                                                <th>KODE_RETUR</th>
+                                                <th>NAMA_RETUR</th>
+                                                <th>TGL_RETUR</th>
+                                                <th>INVORT</th>
+                                                <th>REMARK</th>
+                                                <th>KETERANGAN</th>
                                             </tr>
                                         </thead>
                                     </Table>
@@ -456,69 +422,67 @@ class MasterDepo extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                             <tr>
-                                                <th>
-                                                    <input  
-                                                    className='mr-2'
-                                                    type='checkbox'
-                                                    checked={listDepo.length === 0 ? false : listDepo.length === dataDepo.length ? true : false}
-                                                    onChange={() => listDepo.length === dataDepo.length ? this.chekRej('all') : this.chekApp('all')}
-                                                    />
-                                                </th>
-                                                <th>Opsi</th>
-                                                <th>No</th>
-                                                <th>Kode Depo</th>
-                                                <th>Nama Depo</th>
-                                                <th>Home Town</th>
-                                                <th>Channel</th>
-                                                <th>Distribution</th>
-                                                <th>Status Depo</th>
-                                                <th>Profit Center</th>
-                                                <th>Kode PLANT</th>
-                                                <th>Kode SAP 1</th>
-                                                <th>Kode SAP 2</th>
-                                                <th>Nama GROM</th>
-                                                <th>Nama BM</th>
-                                                <th>Nama ASS</th>
-                                                <th>Nama PIC 1</th>
-                                                <th>Nama PIC 2</th>
-                                                <th>Nama PIC 3</th>
-                                                <th>Nama PIC 4</th>
+                                                <th onClick={() =>{this.setState({typeSort: this.state.typeSort === 'ASC' ? 'DESC' : 'ASC'}); this.getDataMerge()}}>No</th>
+                                                {/* <th>KODE_DEPO</th> */}
+                                                <th>NAMA_DEPO</th>
+                                                <th>KODE_OUTLET</th>
+                                                <th>NAMA_OUTLET</th>
+                                                <th>KODE_SALES</th>
+                                                <th>NAMA_SALES</th>
+                                                <th>TGL_FAKTUR</th>
+                                                <th>NO_FAKTUR</th>
+                                                <th>GROSS_SALES</th>
+                                                <th>RP_DISCPC</th>
+                                                <th>DISC1</th>
+                                                <th>DISC2</th>
+                                                <th>PRO_AMOUNT</th>
+                                                <th>CASH_DISCT</th>
+                                                <th>PPN</th>
+                                                <th>TOTAL</th>
+                                                <th>TYPE</th>
+                                                <th>PCODE</th>
+                                                <th>NAMA_PRODUK</th>
+                                                <th>QTY_PCS</th>
+                                                <th>KODE_RETUR</th>
+                                                <th>NAMA_RETUR</th>
+                                                <th>TGL_RETUR</th>
+                                                <th>INVORT</th>
+                                                <th>REMARK</th>
+                                                <th>KETERANGAN</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {dataDepo.length !== 0 && dataDepo.map(item => {
+                                            {dataMerge.length !== 0 && dataMerge.map(item => {
                                                 return (
-                                                <tr >
-                                                    <td>
-                                                        <input 
-                                                        type='checkbox'
-                                                        checked={listDepo.find(element => element === item.id) !== undefined ? true : false}
-                                                        onChange={listDepo.find(element => element === item.id) === undefined ? () => this.chekApp(item.id) : () => this.chekRej(item.id)}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <Button color='success' onClick={() => this.openModalEdit(this.setState({detail: item}))}>
-                                                            Detail
-                                                        </Button>
-                                                    </td>
-                                                    <td scope="row">{(dataDepo.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
-                                                    <td>{item.kode_depo}</td>
+                                                // <tr onClick={() => this.openModalEdit(this.setState({detail: item}))}>
+                                                <tr>
+                                                    <th scope="row">{(dataMerge.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                    {/* <td>{item.kode_depo}</td> */}
                                                     <td>{item.nama_depo}</td>
-                                                    <td>{item.home_town}</td>
-                                                    <td>{item.channel}</td>
-                                                    <td>{item.distribution}</td>
-                                                    <td>{item.status_depo}</td>
-                                                    <td>{item.profit_center}</td>
-                                                    <td>{item.kode_plant}</td>
-                                                    <td>{item.kode_sap_1}</td>
-                                                    <td>{item.kode_sap_2}</td>
-                                                    <td>{item.nama_grom}</td>
-                                                    <td>{item.nama_bm}</td>
-                                                    <td>{item.nama_ass}</td>
-                                                    <td>{item.nama_pic_1}</td>
-                                                    <td>{item.nama_pic_2}</td>
-                                                    <td>{item.nama_pic_3}</td>
-                                                    <td>{item.nama_pic_4}</td>
+                                                    <td>{item.kode_outlet}</td>
+                                                    <td>{item.nama_outlet}</td>
+                                                    <td>{item.kode_sales}</td>
+                                                    <td>{item.nama_sales}</td>
+                                                    <td>{item.tgl_faktur !== null && item.tgl_faktur !== undefined && item.tgl_faktur !== '' ? moment(item.tgl_faktur).format('DD MMMM YYYY') : ''}</td>
+                                                    <td>{item.no_faktur}</td>
+                                                    <td>{item.gross_sales}</td>
+                                                    <td>{item.rp_discpc}</td>
+                                                    <td>{item.disc1}</td>
+                                                    <td>{item.disc2}</td>
+                                                    <td>{item.pro_amount}</td>
+                                                    <td>{item.cash_disct}</td>
+                                                    <td>{item.ppn}</td>
+                                                    <td>{item.total}</td>
+                                                    <td>{item.type}</td>
+                                                    <td>{item.pcode}</td>
+                                                    <td>{item.nama_produk}</td>
+                                                    <td>{item.qty_pcs}</td>
+                                                    <td>{item.kode_retur}</td>
+                                                    <td>{item.nama_retur}</td>
+                                                    <td>{item.tgl_retur !== null && item.tgl_retur !== undefined && item.tgl_retur !== '' ? moment(item.tgl_retur).format('DD MMMM YYYY') : ''}</td>
+                                                    <td>{item.invort}</td>
+                                                    <td>{item.remark}</td>
+                                                    <td>{item.keterangan}</td>
                                                 </tr>
                                                 )})}
                                         </tbody>
@@ -539,7 +503,7 @@ class MasterDepo extends Component {
                     </MaterialTitlePanel>
                 </Sidebar>
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd} size="lg">
-                    <ModalHeader toggle={this.openModalAdd}>Add Master Depo</ModalHeader>
+                    <ModalHeader toggle={this.openModalAdd}>Add Sales Tax</ModalHeader>
                     <Formik
                     initialValues={{
                         kode_depo: "",
@@ -887,7 +851,7 @@ class MasterDepo extends Component {
                     </Formik>
                 </Modal>
                 <Modal toggle={this.openModalEdit} isOpen={this.state.modalEdit} size="lg">
-                    <ModalHeader toggle={this.openModalEdit}>Edit Master Depo</ModalHeader>
+                    <ModalHeader toggle={this.openModalEdit}>Edit Sales Tax</ModalHeader>
                     <Formik
                     initialValues={{
                         kode_depo: detail.kode_depo,
@@ -1235,7 +1199,7 @@ class MasterDepo extends Component {
                     </Formik>
                 </Modal>
                 <Modal toggle={this.openModalUpload} isOpen={this.state.modalUpload} >
-                    <ModalHeader>Upload Master Depo</ModalHeader>
+                    <ModalHeader>Upload Sales Tax</ModalHeader>
                     <ModalBody className="modalUpload">
                         <div className="titleModalUpload">
                             <text>Upload File: </text>
@@ -1244,17 +1208,18 @@ class MasterDepo extends Component {
                                 <div className="ml-3">
                                     <Input
                                     type="file"
+                                    multiple
                                     name="file"
-                                    accept=".xls,.xlsx"
+                                    accept=".xls,.xlsx,.xlsb"
                                     onChange={this.onChangeHandler}
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="btnUpload">
-                            <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button>
-                            <Button color="primary" disabled={this.state.fileUpload === "" ? true : false } onClick={this.uploadMaster}>Upload</Button>
-                            <Button onClick={this.openModalUpload}>Cancel</Button>
+                        <div className="btnUpload1">
+                            {/* <Button color="info" onClick={this.DownloadTemplate}>Download Template</Button> */}
+                            <Button color="primary" disabled={this.state.fileUpload === null ? true : false } onClick={this.uploadMaster}>Upload</Button>
+                            <Button className='ml-2' onClick={this.openModalUpload}>Cancel</Button>
                         </div>
                     </ModalBody>
                 </Modal>
@@ -1274,14 +1239,7 @@ class MasterDepo extends Component {
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Mengupload Master Depo</div>
-                            </div>
-                            </div>
-                        ) : this.state.confirm === 'delete' ?(
-                            <div>
-                                <div className="cekUpdate">
-                                    <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Delete Data Depo</div>
+                                <div className="sucUpdate green">Berhasil Mengupload Sales Tax</div>
                             </div>
                             </div>
                         ) : (
@@ -1289,7 +1247,7 @@ class MasterDepo extends Component {
                         )}
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.depo.isLoading ? true: false} size="sm">
+                <Modal isOpen={this.props.merge.isLoading ? true: false} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -1299,30 +1257,15 @@ class MasterDepo extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.depo.isUpload ? true: false} size="sm">
+                <Modal isOpen={this.props.merge.isUpload ? true: false} size="md">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
                                 <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Mengupload Master</div>
+                                <div className="sucUpdate green">Berhasil Mengupload Sales Tax</div>
                             </div>
                         </div>
                         </ModalBody>
-                </Modal>
-                <Modal isOpen={this.state.modalDelete} size="md" toggle={this.openModalDelete} centered={true}>
-                    <ModalBody>
-                        <div className='modalApprove'>
-                            <div>
-                                <text>
-                                    Anda yakin untuk delete data depo ?
-                                </text>
-                            </div>
-                            <div className='btnApproveIo'>
-                                <Button color="primary" className='mr-2' onClick={this.prosesDelete}>Ya</Button>
-                                <Button color="secondary" onClick={this.openModalDelete}>Tidak</Button>
-                            </div>
-                        </div>
-                    </ModalBody>
                 </Modal>
             </>
         )
@@ -1330,19 +1273,16 @@ class MasterDepo extends Component {
 }
 
 const mapStateToProps = state => ({
-    depo: state.depo
+    merge: state.merge
 })
 
 const mapDispatchToProps = {
     logout: auth.logout,
-    addDepo: depo.addDepo,
-    updateDepo: depo.updateDepo,
-    getDepo: depo.getDepo,
-    resetError: depo.resetError,
-    uploadMaster: depo.uploadMaster,
-    nextPage: depo.nextPage,
-    exportMaster: depo.exportMaster,
-    deleteDepo: depo.deleteDepo
+    getMerge: merge.getMerge,
+    resetError: merge.resetError,
+    uploadMaster: merge.uploadMaster,
+    nextPage: merge.nextPage,
+    exportMaster: merge.exportMaster
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDepo)

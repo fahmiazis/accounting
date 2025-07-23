@@ -24,6 +24,10 @@ import SettingDokumen from './pages/SettingDokumen'
 import LockDepo from './pages/LockDepo'
 import Coba from './pages/alasan'
 
+// Upload Sales Tax
+import UploadSales from './pages/UploadSales'
+import LogUpload from './pages/LogUpload'
+
 class App extends Component {
 
     componentDidMount(){
@@ -82,6 +86,12 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/coba">
                     <Coba />
+                </PrivateRoute>
+                <PrivateRoute path="/uploadsales">
+                    <UploadSales />
+                </PrivateRoute>
+                <PrivateRoute path="/logupload">
+                    <LogUpload />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>
