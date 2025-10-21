@@ -63,7 +63,9 @@ class MasterDokumen extends Component {
             fileUpload: '',
             limit: 10,
             search: '',
-            listDepo: []
+            listDepo: [],
+            listDokumen: [],
+            modalDelete: false
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -327,8 +329,59 @@ class MasterDokumen extends Component {
         }
     }
 
+    chekApp = (val) => {
+        const { listDokumen } = this.state
+        const {dataDokumen} = this.props.dokumen
+        if (val === 'all') {
+            const data = []
+            for (let i = 0; i < dataDokumen.length; i++) {
+                data.push(dataDokumen[i].id)
+            }
+            this.setState({listDokumen: data})
+        } else {
+            listDokumen.push(val)
+            this.setState({listDokumen: listDokumen})
+        }
+    }
+
+    chekRej = (val) => {
+        const {listDokumen} = this.state
+        if (val === 'all') {
+            const data = []
+            this.setState({listDokumen: data})
+        } else {
+            const data = []
+            for (let i = 0; i < listDokumen.length; i++) {
+                if (listDokumen[i] === val) {
+                    data.push()
+                } else {
+                    data.push(listDokumen[i])
+                }
+            }
+            this.setState({listDokumen: data})
+        }
+    }
+
+    openModalDelete = () => {
+        this.setState({modalDelete: !this.state.modalDelete})
+    }
+
+    prosesDelete = async () => {
+        const token = localStorage.getItem("token")
+        const { listDokumen } = this.state
+        const data = {
+            listId: listDokumen
+        }
+        await this.props.deleteDokumen(token, data)
+        this.getDataDokumen()
+        this.openModalDelete()
+        this.setState({confirm: 'delete'})
+        this.openConfirm()
+    }
+
+
     render() {
-        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg, listDepo} = this.state
+        const {isOpen, dropOpen, dropOpenNum, detail, alert, upload, errMsg, listDepo, listDokumen} = this.state
         const {dataDokumen, isGet, alertM, alertMsg, alertUpload, page} = this.props.dokumen
         const {dataDivisi} = this.props.divisi
         const level = localStorage.getItem('level')
@@ -410,8 +463,9 @@ class MasterDokumen extends Component {
                                 <div className="secEmail mt-4">
                                     <div className="headEmail1">
                                         <Button onClick={this.prosesAdd} color="primary" size="lg">Add</Button>
-                                        <Button onClick={this.openModalUpload} className='ml-2' color="warning" size="lg">Upload</Button>
-                                        <Button onClick={this.ExportMaster} className='ml-2' color="success" size="lg">Download</Button>
+                                        <Button className='ml-1' disabled={listDokumen.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                        <Button onClick={this.openModalUpload} className='ml-1' color="warning" size="lg">Upload</Button>
+                                        <Button onClick={this.ExportMaster} className='ml-1' color="success" size="lg">Download</Button>
                                     </div>
                                     <div className="searchEmail">
                                         <text>Search: </text>
@@ -447,6 +501,14 @@ class MasterDokumen extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                             <tr>
+                                                <th>
+                                                    <input  
+                                                    className='mr-2'
+                                                    type='checkbox'
+                                                    checked={listDokumen.length === 0 ? false : listDokumen.length === dataDokumen.length ? true : false}
+                                                    onChange={() => listDokumen.length === dataDokumen.length ? this.chekRej('all') : this.chekApp('all')}
+                                                    />
+                                                </th>
                                                 <th>No</th>
                                                 <th>Nama Dokumen</th>
                                                 <th>Jenis</th>
@@ -456,13 +518,21 @@ class MasterDokumen extends Component {
                                                 <th>Create Date</th>
                                                 <th>Hak akses</th>
                                                 <th>Status</th>
+                                                <th>Opsi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                         {dataDokumen.length !== 0 && dataDokumen.map(item => {
-                                                return (
-                                            <tr onClick={() => this.prosesEdit(item)}>
-                                                <th scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                            return (
+                                            <tr >
+                                                <td>
+                                                    <input 
+                                                    type='checkbox'
+                                                    checked={listDokumen.find(element => element === item.id) !== undefined ? true : false}
+                                                    onChange={listDokumen.find(element => element === item.id) === undefined ? () => this.chekApp(item.id) : () => this.chekRej(item.id)}
+                                                    />
+                                                </td>
+                                                <td scope="row">{(dataDokumen.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
                                                 <td>{item.nama_dokumen}</td>
                                                 <td>{item.jenis_dokumen}</td>
                                                 <td>{item.divisi}</td>
@@ -474,8 +544,13 @@ class MasterDokumen extends Component {
                                                     : item.access}
                                                 </td>
                                                 <td>{item.status}</td>
+                                                <td>
+                                                    <Button color='success' onClick={() => this.prosesEdit(item)}>
+                                                        Detail
+                                                    </Button>
+                                                </td>
                                             </tr>
-                                                )})}
+                                            )})}
                                         </tbody>
                                     </Table>
                                     </div>
@@ -586,8 +661,18 @@ class MasterDokumen extends Component {
                                     <option>-Pilih Status Depo-</option>
                                     <option value="Cabang SAP">Cabang SAP</option>
                                     <option value="Cabang Scylla">Cabang Scylla</option>
+                                    <option value="Cabang EDS">Cabang EDS</option>
                                     <option value="Depo SAP">Depo SAP</option>
                                     <option value="Depo Scylla">Depo Scylla</option>
+                                    <option value="Depo EDS">Depo EDS</option>
+                                    <option value="Central Point SAP">Central Point SAP</option>
+                                    <option value="Central Point EDS">Central Point EDS</option>
+                                    <option value="Indirect SAP">Indirect SAP</option>
+                                    <option value="Indirect EDS">Indirect EDS</option>
+                                    <option value="Local Distribution Center SAP">Local Distribution Center SAP</option>
+                                    <option value="Local Distribution Center EDS">Local Distribution Center EDS</option>
+                                    <option value="Sales Point SAP">Sales Point SAP</option>
+                                    <option value="Sales Point EDS">Sales Point EDS</option>
                                 </Input>
                                 {errors.status_depo ? (
                                     <text className="txtError">{errors.status_depo}</text>
@@ -781,8 +866,18 @@ class MasterDokumen extends Component {
                                     <option>-Pilih Status Depo-</option>
                                     <option value="Cabang SAP">Cabang SAP</option>
                                     <option value="Cabang Scylla">Cabang Scylla</option>
+                                    <option value="Cabang EDS">Cabang EDS</option>
                                     <option value="Depo SAP">Depo SAP</option>
                                     <option value="Depo Scylla">Depo Scylla</option>
+                                    <option value="Depo EDS">Depo EDS</option>
+                                    <option value="Central Point SAP">Central Point SAP</option>
+                                    <option value="Central Point EDS">Central Point EDS</option>
+                                    <option value="Indirect SAP">Indirect SAP</option>
+                                    <option value="Indirect EDS">Indirect EDS</option>
+                                    <option value="Local Distribution Center SAP">Local Distribution Center SAP</option>
+                                    <option value="Local Distribution Center EDS">Local Distribution Center EDS</option>
+                                    <option value="Sales Point SAP">Sales Point SAP</option>
+                                    <option value="Sales Point EDS">Sales Point EDS</option>
                                 </Input>
                                 {errors.status_depo ? (
                                     <text className="txtError">{errors.status_depo}</text>
@@ -942,6 +1037,13 @@ class MasterDokumen extends Component {
                                 <div className="sucUpdate green">Berhasil Mengupload Master Dokumen</div>
                             </div>
                             </div>
+                        ) : this.state.confirm === 'delete' ?(
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiFillCheckCircle size={80} className="green" />
+                                <div className="sucUpdate green">Berhasil Delete Data Dokumen</div>
+                            </div>
+                            </div>
                         ) : (
                             <div></div>
                         )}
@@ -967,6 +1069,21 @@ class MasterDokumen extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
+                <Modal isOpen={this.state.modalDelete} size="md" toggle={this.openModalDelete} centered={true}>
+                    <ModalBody>
+                        <div className='modalApprove'>
+                            <div>
+                                <text>
+                                    Anda yakin untuk delete data dokumen ?
+                                </text>
+                            </div>
+                            <div className='btnApproveIo'>
+                                <Button color="primary" className='mr-2' onClick={this.prosesDelete}>Ya</Button>
+                                <Button color="secondary" onClick={this.openModalDelete}>Tidak</Button>
+                            </div>
+                        </div>
+                    </ModalBody>
+                </Modal>
             </>
         )
     }
@@ -989,6 +1106,7 @@ const mapDispatchToProps = {
     nextPage: dokumen.nextPage,
     exportMaster: dokumen.exportMaster,
     getDepo: depo.getDepo,
+    deleteDokumen: dokumen.deleteDokumen
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MasterDokumen)

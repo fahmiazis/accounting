@@ -5,7 +5,7 @@ const dokumenState = {
     isUpdate: false,
     isGet: false,
     isDetail: false,
-    isDelete: false,
+    isDelete: null,
     token: '',
     isLoading: false,
     isError: false,
@@ -16,7 +16,8 @@ const dokumenState = {
     alertUpload: [],
     page: {},
     isExport: false,
-    link: ''
+    link: '',
+    dataAll: []
 };
 
 export default (state=dokumenState, action) => {
@@ -44,6 +45,29 @@ export default (state=dokumenState, action) => {
                     isLoading: false,
                     isExport: false,
                     isError: true,
+                    alertMsg: 'Failed export data'
+                };
+            }
+            case 'DELETE_DOKUMEN_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'DELETE_DOKUMEN_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isDelete: true,
+                    alertMsg: 'success export data'
+                };
+            }
+            case 'DELETE_DOKUMEN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isDelete: false,
                     alertMsg: 'Failed export data'
                 };
             }
@@ -214,7 +238,8 @@ export default (state=dokumenState, action) => {
                     ...state,
                     isError: false,
                     isUpload: false,
-                    isExport: false
+                    isExport: false,
+                    isDelete: null
                 }
             }
             default: {

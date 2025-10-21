@@ -29,7 +29,8 @@ export default (state=authState, action) => {
                     isLogin: true,
                     isError: false,
                     token: action.payload.data.Token,
-                    alertMsg: 'Login Succesfully'
+                    alertMsg: 'Login Succesfully',
+                    isLoading: false,
                 };
             }
             case 'AUTH_USER_REJECTED': {
@@ -37,7 +38,8 @@ export default (state=authState, action) => {
                     ...state,
                     isLogin: false,
                     isError: true,
-                    alertMsg: 'Login Failed'
+                    alertMsg: 'Login Failed',
+                    isLoading: false,
                 };
             }
             case 'SET_TOKEN': {

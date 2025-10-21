@@ -77,7 +77,6 @@ class Dokumen extends Component {
             tipe: 'daily',
             appAct: {},
             date: '',
-            time: '',
             search: '',
             limit: 10,
             moon: 0,
@@ -87,7 +86,8 @@ class Dokumen extends Component {
             sucupload: false,
             confirm: '',
             dataDown: {},
-            dataDoc: []
+            dataDoc: [],
+            time: moment().format('YYYY-MM-DD'),
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -147,8 +147,8 @@ class Dokumen extends Component {
         const {tipe} = this.state
         await this.props.getDashboardPic(token, tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage)
         await this.props.getAlasan(token, 100, '')
-        const {dataKasir} = this.props.dashboard
-        this.setState({doc: dataKasir[noindex].dokumen, act: dataKasir[noindex].active})
+        const {dataAll} = this.props.dashboard
+        this.setState({doc: dataAll[noindex].dokumen, act: dataAll[noindex].active})
         this.sucUpload()
     }
 
@@ -229,7 +229,7 @@ class Dokumen extends Component {
         this.setState({search: e.target.value})
         const token = localStorage.getItem('token')
         if(e.key === 'Enter'){
-            await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, e.target.value, this.state.limit)
+            this.getDataDashboard(this.state.tipe)
         }
     }
 
@@ -333,18 +333,18 @@ class Dokumen extends Component {
     }
 
     openProsesPic = (val) => {
-       const {dataKasir} = this.props.dashboard
+       const {dataAll} = this.props.dashboard
        const dok = []
-       const temp = dataKasir[val].active[0].doc
-        for (let i = 0; i < dataKasir[val].dokumen.length; i++) {
-            dok.push(dataKasir[val].dokumen[i].nama_dokumen)
+       const temp = dataAll[val].active[0].doc
+        for (let i = 0; i < dataAll[val].dokumen.length; i++) {
+            dok.push(dataAll[val].dokumen[i].nama_dokumen)
         }
         for (let i = 0; i < temp.length; i++) {
             dok.push(temp[i].dokumen)
         }
         const setDoc = new Set(dok)
         const dokumen = [...setDoc]
-       this.setState({dataDoc: dokumen, doc: dataKasir[val].dokumen, act: dataKasir[val].active, noindex: val})
+       this.setState({dataDoc: dokumen, doc: dataAll[val].dokumen, act: dataAll[val].active, noindex: val})
        this.openModalProses()
     }
 
@@ -364,10 +364,10 @@ class Dokumen extends Component {
     onEditDokumen = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 10000000) {
-            this.setState({errMsg: "Maximum upload size 10 MB"})
+        if (size >= 100000000) {
+            this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
+        } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
             this.uploadAlert()
         } else {
@@ -473,6 +473,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
         const { page } = this.props.dashboard
+        const finalPage = page.currentPage
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
             setTimeout(() => {
@@ -481,7 +482,7 @@ class Dokumen extends Component {
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             const {tipe} = this.state
-            await this.props.getDashboardPic(token, value === undefined ? tipe : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage)
+            await this.props.getDashboardPic(token, value === undefined ? tipe : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, finalPage)
             await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value, })
         }
@@ -536,11 +537,9 @@ class Dokumen extends Component {
             this.sucUpload()
         } else if (isUpload) {
             this.props.resetError()
-            // await this.getDataDashboard()
             this.afterUpload()
         } else if (isUpdate) {
             this.props.resetError()
-            // await this.getDataDashboard()
             this.afterUpload()
         } else if (isGetPic) {
             this.prepareDokumen()
@@ -548,12 +547,10 @@ class Dokumen extends Component {
         } else if (isApprove) {
             this.setState({openPdf: false, openApprove: false, confirm: 'approve'})
             this.props.resetError()
-            // this.getDataDashboard()
             this.afterAppRej()
         } else if (isReject) {
             this.setState({openPdf: false, openReject: false, confirm: 'reject'})
             this.props.resetError()
-            // this.getDataDashboard()
             this.afterAppRej()
         }
     }
@@ -570,7 +567,7 @@ class Dokumen extends Component {
     render() {
         const {isOpen, dataDoc, dropOpen, act, errMsg, dropOpenNum, doc, openModal, openPdf, openApprove, openReject, drop, upload, totalDoc, listMut} = this.state
         const level = localStorage.getItem('level')
-        const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page} = this.props.dashboard
+        const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page, dataAll} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
 
@@ -757,7 +754,7 @@ class Dokumen extends Component {
                                             <div className="dateDash">
                                                 <div>Tanggal Upload: </div>
                                                 <div className="inputCalendar">
-                                                    <Input  type="date" onChange={this.chooseTime}/>
+                                                    <Input value={this.state.time} type="date" onChange={this.chooseTime}/>
                                                 </div>
                                                 {/* <div><FaCalendarAlt size={22} /></div> */}
                                                 {/* <Calendar
@@ -1016,11 +1013,11 @@ class Dokumen extends Component {
                                             </tbody>
                                         ): level === '6' || level === '3' || level === '2' || level === '1' ? (
                                             <tbody>
-                                                    {dataKasir !== undefined && dataKasir.map(x => {
+                                                    {dataAll !== undefined && dataAll.map(x => {
                                                         return (
                                                         x !== null ? (
-                                                        <tr className="danger" onClick={() => this.openProsesPic(dataKasir.indexOf(x))}>
-                                                            <th scope="row">{(dataKasir.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
+                                                        <tr className="danger" onClick={() => this.openProsesPic(dataAll.indexOf(x))}>
+                                                            <th scope="row">{(dataAll.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</th>
                                                             <td>{x.nama_pic_1}</td>
                                                             <td>{x.kode_plant}</td>
                                                             <td>{x.nama_depo}</td>

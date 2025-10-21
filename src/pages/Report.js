@@ -21,6 +21,7 @@ import {BsFillCircleFill} from 'react-icons/bs'
 import Sidebar from "../components/Header";
 import MaterialTitlePanel from "../components/material_title_panel";
 import SidebarContent from "../components/sidebar_content";
+import * as XLSX from "xlsx";
 
 class Report extends Component {
 
@@ -117,7 +118,7 @@ class Report extends Component {
         this.getNotif()
     }
 
-    createReport = async () => {
+    createReportOld = async () => {
         const {kode, pic, from, to} = this.state
         const level = localStorage.getItem('level')
         const token = localStorage.getItem("token")
@@ -177,6 +178,73 @@ class Report extends Component {
                 }
                 await this.props.report(token, from, to, data, this.state.type)
             }
+        }
+    }
+
+    createReport = async () => {
+        const { kode, pic, from, to, type } = this.state
+        const level = localStorage.getItem("level")
+        const token = localStorage.getItem("token")
+        const depo = localStorage.getItem("kode")
+        const names = localStorage.getItem("name")
+        
+        let data = {}
+        
+        // 🔑 Logic per level
+        if (level === '1' || level === '2') {
+            if (kode === '') {
+            if (level === '2' && pic === 'all') {
+                data = { spv: names, pic: '', kode_plant: '' }
+            } else {
+                data = { pic: pic, kode_plant: '' }
+            }
+            } else if (pic === '') {
+            if (level === '2' && kode === 'all') {
+                data = { spv: names, pic: '', kode_plant: '' }
+            } else {
+                data = { pic: '', kode_plant: kode }
+            }
+            }
+        } else if (level === '4' || level === '5') {
+            data = { pic: '', kode_plant: depo }
+        } else if (level === '3') {
+            if (kode === 'all') {
+            data = { pic: names, kode_plant: '' }
+            } else {
+            data = { pic: '', kode_plant: kode }
+            }
+        }
+        
+        try {
+            // 🔎 Panggil API (props.report harus return axios/fetch response)
+            await this.props.report(token, from, to, data, type)
+            const {dataReport} = this.props.dashboard
+            if (dataReport.length > 1) {
+            const body = dataReport
+        
+            // ✨ Buat workbook & sheet
+            const wb = XLSX.utils.book_new()
+            const ws = XLSX.utils.aoa_to_sheet(body)
+            XLSX.utils.book_append_sheet(wb, ws, "Report")
+        
+            // 📥 Simpan file ke user
+            const colWidths = body[0].map((_, colIndex) => {
+                const maxLength = Math.max(
+                    ...body.map(row => row[colIndex] ? row[colIndex].toString().length : 0)
+                )
+                return { wch: Math.min(maxLength + 2, 25) }
+            })
+
+            ws['!cols'] = colWidths
+
+            XLSX.writeFile(wb, `Report_${Date.now()}.xlsx`)
+        
+            } else {
+            alert("Tidak ada data untuk periode/parameter yang dipilih")
+            }
+        } catch (err) {
+            console.error("Error create report:", err)
+            alert("Gagal membuat report, coba lagi.")
         }
     }
 

@@ -1,5 +1,6 @@
 /* eslint-disable import/no-anonymous-default-export */
 import http from '../../helpers/http'
+import httpsync from '../../helpers/httpsync'
 import qs from 'qs'
 
 export default {
@@ -57,7 +58,7 @@ export default {
     }),
     report: (token, fr, to, data, tipe) => ({
         type: 'REPORT',
-        payload: http(token).post(`/dashboard/report?from=${fr}&to=${to}&tipe=${tipe}`, qs.stringify(data))
+        payload: httpsync(token).post(`/dashboard/report?from=${fr}&to=${to}&tipe=${tipe}`, qs.stringify(data))
     }),
     downloadReport: (link) => ({
         type: 'DOWNLOAD_REPORT',

@@ -27,13 +27,13 @@ export default {
         type: 'GET_DETAIL_DOKUMEN',
         payload: http(token).get(`/dokumen/detail/${id}`)
     }),
-    deleteDokumen: (token, id) => ({
-        type: 'DELETE_DOKUMEN',
-        payload: http(token).delete(`/dokumen/delete/${id}`)
-    }),
     nextPage: (token, link) => ({
         type: 'NEXT_DATA_DOKUMEN',
         payload: http(token).get(`${link}`)
+    }),
+    deleteDokumen: (token, data) => ({
+        type: 'DELETE_DOKUMEN',
+        payload: http(token).patch(`/dokumen/delete`, data)
     }),
     resetError: () => ({
         type: 'RESET'

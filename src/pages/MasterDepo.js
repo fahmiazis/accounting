@@ -675,8 +675,18 @@ class MasterDepo extends Component {
                                         <option>-Pilih Status Depo-</option>
                                         <option value="Cabang SAP">Cabang SAP</option>
                                         <option value="Cabang Scylla">Cabang Scylla</option>
+                                        <option value="Cabang EDS">Cabang EDS</option>
                                         <option value="Depo SAP">Depo SAP</option>
                                         <option value="Depo Scylla">Depo Scylla</option>
+                                        <option value="Depo EDS">Depo EDS</option>
+                                        <option value="Central Point SAP">Central Point SAP</option>
+                                        <option value="Central Point EDS">Central Point EDS</option>
+                                        <option value="Indirect SAP">Indirect SAP</option>
+                                        <option value="Indirect EDS">Indirect EDS</option>
+                                        <option value="Local Distribution Center SAP">Local Distribution Center SAP</option>
+                                        <option value="Local Distribution Center EDS">Local Distribution Center EDS</option>
+                                        <option value="Sales Point SAP">Sales Point SAP</option>
+                                        <option value="Sales Point EDS">Sales Point EDS</option>
                                     </Input>
                                     {errors.status_depo ? (
                                         <text className="txtError">{errors.status_depo}</text>
@@ -1023,8 +1033,18 @@ class MasterDepo extends Component {
                                         <option>-Pilih Status Depo-</option>
                                         <option value="Cabang SAP">Cabang SAP</option>
                                         <option value="Cabang Scylla">Cabang Scylla</option>
+                                        <option value="Cabang EDS">Cabang EDS</option>
                                         <option value="Depo SAP">Depo SAP</option>
                                         <option value="Depo Scylla">Depo Scylla</option>
+                                        <option value="Depo EDS">Depo EDS</option>
+                                        <option value="Central Point SAP">Central Point SAP</option>
+                                        <option value="Central Point EDS">Central Point EDS</option>
+                                        <option value="Indirect SAP">Indirect SAP</option>
+                                        <option value="Indirect EDS">Indirect EDS</option>
+                                        <option value="Local Distribution Center SAP">Local Distribution Center SAP</option>
+                                        <option value="Local Distribution Center EDS">Local Distribution Center EDS</option>
+                                        <option value="Sales Point SAP">Sales Point SAP</option>
+                                        <option value="Sales Point EDS">Sales Point EDS</option>
                                     </Input>
                                     {errors.status_depo ? (
                                         <text className="txtError">{errors.status_depo}</text>

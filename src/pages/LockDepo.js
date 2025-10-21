@@ -222,7 +222,7 @@ class LockDepo extends Component {
 
     componentDidMount(){
         this.getDataDashboard()
-        this.getNotif()
+        // this.getNotif()
     }
 
     showDok = async (value) => {
@@ -630,7 +630,7 @@ class LockDepo extends Component {
                                     <Table bordered responsive hover className="tab">
                                         <thead>
                                         {level === '4' || level === '5' ? (
-                                                <tr>moment().month(0)
+                                                <tr>
                                                     <th>No</th>
                                                     <th>Tanggal Dokumen</th>
                                                     <th>Tanggal Upload</th>
@@ -682,14 +682,14 @@ class LockDepo extends Component {
                                                 </tr>
                                                 )}
                                         </thead>
-                                            { level === '2' || level === '1' ? (
+                                    { level === '2' || level === '1' ? (
                                         <tbody>
-                                                {dataSaActive !== undefined && dataSaActive.map(x => {
+                                                {dataSaActive !== undefined && dataSaActive.filter(x => x !== null).map((x, index) => {
                                                     return (
                                                     x !== null ? (
                                                         // onClick={() => this.openModalProses(this.setState({doc: dataSaActive[dataSaActive.indexOf(x)].dokumen, act: dataSaActive[dataSaActive.indexOf(x)].active}))}
                                                     <tr className="danger">
-                                                        <th scope="row">{(dataSaActive.indexOf(x) + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                        <th scope="row">{(index + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
                                                         <td>{x.nama_pic_1}</td>
                                                         <td>{x.kode_plant === null ? x.kode_depo : x.kode_plant}</td>
                                                         <td>{x.nama_depo}</td>
@@ -757,12 +757,12 @@ class LockDepo extends Component {
                                                     )
                                                     )
                                                 })}
-                                                {dataKasirActive !== undefined && dataKasirActive.map(x => {
+                                                {dataKasirActive !== undefined && dataKasirActive.filter(x => x !== null).map((x, index) => {
                                                     return (
                                                     x !== null ? (
                                                         // onClick={() => this.openModalProses(this.setState({doc: dataKasirActive[dataKasirActive.indexOf(x)].dokumen, act: dataKasirActive[dataKasirActive.indexOf(x)].active}))}
                                                     <tr className="danger" >
-                                                        <th scope="row">{(dataKasirActive.indexOf(x) + dataSaActive.length + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
+                                                        <th scope="row">{(index + dataSaActive.filter(x => x !== null).length + ((((pages.currentPage - 1) * pages.limitPerPage) * 2) + 1))}</th>
                                                         <td>{x.nama_pic_1}</td>
                                                         <td>{x.kode_plant}</td>
                                                         <td>{x.nama_depo}</td>

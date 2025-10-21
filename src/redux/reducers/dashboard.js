@@ -26,7 +26,7 @@ const divisiState = {
     page: {},
     pages: {},
     isReport: false,
-    dataReport: '',
+    dataReport: [],
     isDownload: false,
     dataDownload: '',
     dataSaActive: [],
@@ -84,6 +84,7 @@ export default (state=divisiState, action) => {
                     dataSa: action.payload.data.sa,
                     dataKasir: action.payload.data.kasir,
                     dataDepo: action.payload.data.results.rows,
+                    dataAll: action.payload.data.all,
                     page: action.payload.data.pageInfo
                 };
             }
@@ -169,6 +170,7 @@ export default (state=divisiState, action) => {
                     dataSaActive: action.payload.data.sa,
                     dataKasirActive: action.payload.data.kasir,
                     dataDepoActive: action.payload.data.results.rows,
+                    dataAll: action.payload.data.all,
                 };
             }
             case 'NEXT_DATA_REJECTED': {
@@ -405,7 +407,7 @@ export default (state=divisiState, action) => {
                     isLoading: false,
                     isError: false,
                     isReport: true,
-                    dataReport: action.payload.data.link,
+                    dataReport: action.payload.data.data,
                     alertMsg: 'report dokumen Succesfully'
                 };
             }
