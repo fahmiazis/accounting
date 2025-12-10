@@ -3,14 +3,14 @@ import PropTypes from "prop-types";
 import MaterialTitlePanel from "./material_title_panel";
 import { Collapse } from 'reactstrap';
 import logo from '../assets/img/logo.png'
-import { FaDatabase, FaHome, FaFileArchive } from 'react-icons/fa'
+import { FaDatabase, FaHome, FaFileArchive, FaArchive } from 'react-icons/fa'
 import { RiDashboardFill, RiFileUnknowLine, RiFileSettingsLine } from 'react-icons/ri'
 import { HiDocumentReport } from 'react-icons/hi'
 import {FiLogOut, FiUser, FiUsers, FiMail} from 'react-icons/fi'
 import { useHistory } from 'react-router-dom'
 import { BsClipboardData, BsHouseDoor, BsFileCheck } from 'react-icons/bs'
 import { GiFamilyTree } from 'react-icons/gi'
-import { MdKeyboardArrowLeft, MdKeyboardArrowDown } from 'react-icons/md'
+import { MdKeyboardArrowLeft, MdKeyboardArrowDown, MdStorage, MdCompareArrows } from 'react-icons/md'
 import { AiFillSetting, AiOutlineClockCircle, AiOutlineUnlock } from 'react-icons/ai'
 import { GrDocumentVerified } from 'react-icons/gr'
 import { useDispatch } from 'react-redux'
@@ -49,10 +49,12 @@ const SidebarContent = props => {
   const [isOpen, setIsOpen] = useState(false);
   const [openDoc, setOpenDoc] = useState(false);
   const [openSet, setOpenSet] = useState(false);
+  const [openInv, setOpenInv] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
   const modalOpen = () => setOpenDoc(!openDoc)
   const modalSet = () => setOpenSet(!openSet)
+  const modalInv = () => setOpenInv(!openInv)
 
   const history = useHistory()
 
@@ -175,9 +177,37 @@ const SidebarContent = props => {
               <FaFileArchive size={20} className="mr-2"/> Upload Sales Tax
           </button>
         )}
+        {(level === '2' || level === '1' || level === '3') && (
+          <button onClick={modalInv} className="btn-side1">
+            <div>
+              <MdStorage size={22} className="mr-2"/> Inventory
+            </div>
+            {openInv === true ? (
+                <MdKeyboardArrowDown size={20} />
+              ) : (
+                <MdKeyboardArrowLeft size={20} />
+              )}
+          </button>
+        )}
+        <Collapse isOpen={openInv} className="ml-4">
+          {(level === '2' || level === '1') && (
+            <>
+              <button onClick={() => goHome('inventory')} className="btn-side">
+                <FaArchive size={22} className="mr-2"/> Master Inventory
+              </button>
+              <button onClick={() => goHome('movement')} className="btn-side">
+                <MdCompareArrows size={22} className="mr-2 white" /> Master Movement
+              </button>
+            </>
+          )}
+          <button onClick={() => goHome('report-inventory')} className="btn-side">
+            <FaFileArchive size={22} className="mr-2"/> Report Inventory
+          </button>
+        </Collapse>
         <button onClick={() => goHome('report')} className={level === '1' ? "btn-side margin-side" : level === '2' ? "btn-side margin-side1" : "btn-side margin-side2"}>
             <FaFileArchive size={20} className="mr-2"/> Report
         </button>
+        
         <button onClick={() => logout()} className="btn-side">
             <FiLogOut size={20} className="mr-2"/> Logout
         </button>

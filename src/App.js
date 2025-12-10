@@ -28,6 +28,11 @@ import Coba from './pages/alasan'
 import UploadSales from './pages/UploadSales'
 import LogUpload from './pages/LogUpload'
 
+// Inventory
+import MasterMovement from './pages/MasterMovement'
+import MasterInventory from './pages/MasterInventory'
+import ReportInventory from './pages/ReportInventory'
+
 class App extends Component {
 
     componentDidMount(){
@@ -92,6 +97,15 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/logupload">
                     <LogUpload />
+                </PrivateRoute>
+                <PrivateRoute path="/movement">
+                    <MasterMovement />
+                </PrivateRoute>
+                <PrivateRoute path="/inventory">
+                    <MasterInventory />
+                </PrivateRoute>
+                <PrivateRoute path="/report-inventory">
+                    <ReportInventory />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

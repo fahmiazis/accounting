@@ -34,11 +34,11 @@ export default {
     }),
     approve: (token, id, idAct, data) => ({
         type: 'APPROVE',
-        payload: http(token).patch(`/dashboard/approve/${id}/${idAct}`, qs.stringify(data))
+        payload: http(token).patch(`/dashboard/approve/${id === undefined ? 'zero' : id}/${idAct}`, qs.stringify(data))
     }),
     reject: (token, id, idAct, data) => ({
         type: 'REJECT',
-        payload: http(token).patch(`/dashboard/reject/${id}/${idAct}`, qs.stringify(data))
+        payload: http(token).patch(`/dashboard/reject/${id === undefined ? 'zero' : id}/${idAct}`, qs.stringify(data))
     }),
     showDokumen: (token, id) => ({
         type: 'SHOW',

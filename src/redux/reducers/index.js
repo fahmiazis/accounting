@@ -11,6 +11,8 @@ import pic from './pic'
 import dashboard from './dashboard'
 import date from './date'
 import merge from './merge'
+import movement from './movement'
+import inventory from './inventory'
 
 export default combineReducers({
   auth,
@@ -23,5 +25,7 @@ export default combineReducers({
   pic,
   dashboard,
   date,
-  merge
+  merge,
+  movement,
+  inventory,
 })
