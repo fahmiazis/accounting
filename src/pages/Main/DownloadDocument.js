@@ -324,7 +324,7 @@ class DownloadDocument extends Component {
         }
     }
 
-    preparePic = () => {
+    preparePicArea = () => {
         const { dataDepo } = this.props.depo
         const temp = []
         const data = [
