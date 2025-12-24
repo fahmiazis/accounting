@@ -81,5 +81,9 @@ export default {
     getNotifArea: (token) => ({
         type: 'GET_NOTIF_AREA',
         payload: http(token).get(`/dashboard/notif`)
-    })
+    }),
+    downloadDokumen: (token, from, to, nama) => ({
+        type: 'DOWNLOAD_DOKUMEN',
+        payload: httpsync(token).get(`/dashboard/download/document?startDate=${from}&endDate=${to}&namaFile=${encodeURIComponent(nama)}`)
+    }),
 }

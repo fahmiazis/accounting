@@ -6,6 +6,7 @@
   
   html,body{
     height: 100%;
+    background-color: #F2F5F8 !important;
     overflow-y: auto;
   }
   
@@ -137,6 +138,15 @@
     top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+.txtMenu2 {
+    color: black;
+    margin-left: 10%;
+}
+.rowAround {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
 }
 .imgHead {
     height: 550px;

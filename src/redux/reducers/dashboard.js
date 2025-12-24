@@ -492,6 +492,29 @@ export default (state=divisiState, action) => {
                     alertMsg: action.payload.response,
                 };
             }
+            case 'DOWNLOAD_DOKUMEN_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'DOWNLOAD_DOKUMEN_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: false,
+                    alertMsg: 'download dokumen Succesfully'
+                };
+            }
+            case 'DOWNLOAD_DOKUMEN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isError: true,
+                    alertMsg: action.payload.response,
+                };
+            }
             case 'RESET': {
                 return {
                     ...state,

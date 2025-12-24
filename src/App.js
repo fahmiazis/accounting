@@ -6,32 +6,38 @@ import auth from './redux/actions/auth'
 
 import PrivateRoute from './components/PrivateRoute'
 
-import Login from './pages/Login'
-import Home from './pages/Home'
-import Dashboard from './pages/Dashboard'
-import DateClossing from './pages/DateClossing'
-import Dokumen from './pages/Dokumen'
-import MasterEmail from './pages/MasterEmail'
-import MasterPic from './pages/MasterPic'
-import MasterDokumen from './pages/MasterDokumen'
-import MasterAlasan from './pages/MasterAlasan'
-import MasterUser from './pages/MasterUser'
-import MasterDepo from './pages/MasterDepo'
-import MasterDivisi from './pages/MasterDivisi'
-import Report from './pages/Report'
-import tes from './pages/tes'
-import SettingDokumen from './pages/SettingDokumen'
-import LockDepo from './pages/LockDepo'
-import Coba from './pages/alasan'
+// Main
+import Login from './pages/Main/Login'
+import Home from './pages/Main/Home'
+import Dashboard from './pages/Main/Dashboard'
+import Dokumen from './pages/Main/Dokumen'
+import DownloadDocument from './pages/Main/DownloadDocument'
+import Report from './pages/Main/Report'
+import Trial from './pages/Main/Trial'
+import tes from './pages/Main/tes'
+
+// Master Data
+import MasterEmail from './pages/Master/MasterEmail'
+import MasterPic from './pages/Master/MasterPic'
+import MasterDokumen from './pages/Master/MasterDokumen'
+import MasterAlasan from './pages/Master/MasterAlasan'
+import MasterUser from './pages/Master/MasterUser'
+import MasterDepo from './pages/Master/MasterDepo'
+import MasterDivisi from './pages/Master/MasterDivisi'
+
+// Setting Page
+import SettingDokumen from './pages/Setting/SettingDokumen'
+import LockDepo from './pages/Setting/LockDepo'
+import DateClossing from './pages/Setting/DateClossing'
 
 // Upload Sales Tax
-import UploadSales from './pages/UploadSales'
-import LogUpload from './pages/LogUpload'
+import UploadSales from './pages/Sales/UploadSales'
+import LogUpload from './pages/Sales/LogUpload'
 
 // Inventory
-import MasterMovement from './pages/MasterMovement'
-import MasterInventory from './pages/MasterInventory'
-import ReportInventory from './pages/ReportInventory'
+import MasterMovement from './pages/Inventory/MasterMovement'
+import MasterInventory from './pages/Inventory/MasterInventory'
+import ReportInventory from './pages/Inventory/ReportInventory'
 
 class App extends Component {
 
@@ -55,6 +61,9 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path='/dokumen'>
                     <Dokumen />
+                </PrivateRoute>
+                <PrivateRoute path='/download'>
+                    <DownloadDocument />
                 </PrivateRoute>
                 <PrivateRoute path="/email">
                     <MasterEmail />
@@ -90,7 +99,7 @@ class App extends Component {
                     <DateClossing />
                 </PrivateRoute>
                 <PrivateRoute path="/coba">
-                    <Coba />
+                    <Trial />
                 </PrivateRoute>
                 <PrivateRoute path="/uploadsales">
                     <UploadSales />

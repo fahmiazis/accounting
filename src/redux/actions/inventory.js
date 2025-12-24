@@ -37,9 +37,9 @@ export default {
     }),
 
     // Report Inventory
-    uploadRepinv: (token, data) => ({
+    uploadRepinv: (token, data, typeUpload) => ({
         type: 'UPLOAD_DATA_REPINV',
-        payload: http(token).post(`/inventory/report/upload`, data)
+        payload: http(token).post(`/inventory/report/upload?type_upload=${typeUpload === undefined ? 'single' : typeUpload}`, data)
     }),
     updateRepinv: (token, type, data) => ({
         type: 'UPDATE_DATA_REPINV',
