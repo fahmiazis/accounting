@@ -86,4 +86,8 @@ export default {
         type: 'DOWNLOAD_DOKUMEN',
         payload: httpsync(token).get(`/dashboard/download/document?startDate=${from}&endDate=${to}&namaFile=${encodeURIComponent(nama)}`)
     }),
+    getStatistics: (token) => ({
+        type: 'GET_STATISTIC',
+        payload: http(token).get(`/dashboard/statistic`)
+    }),
 }

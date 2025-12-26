@@ -37,7 +37,8 @@ const divisiState = {
     notifSa: [],
     notifKasir: [],
     notif: [],
-    sendArea: null
+    sendArea: null,
+    dataStat: []
 };
 
 export default (state=divisiState, action) => {
@@ -66,6 +67,27 @@ export default (state=divisiState, action) => {
                     isError: true,
                     alertMsg: "Unable connect to server",
                     alertM: action.payload.response.data.message
+                };
+            }
+            case 'GET_STATISTIC_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting ...'
+                };
+            }
+            case 'GET_STATISTIC_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    dataStat: action.payload.data.result
+                };
+            }
+            case 'GET_STATISTIC_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    alertMsg: "Unable connect to server",
                 };
             }
             case 'GET_DASHBOARD_PIC_PENDING': {

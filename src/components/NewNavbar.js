@@ -168,10 +168,10 @@ class NewNavbar extends Component {
               {(!sidebarOpen || isMobile) &&  <span>Home</span>}
             </div>
 
-            <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('dashboard')} >
+            {/* <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('dashboard')} >
               <RiDashboardFill className={styleTrans.icon} size={sidebarOpen && 20} /> 
               {(!sidebarOpen || isMobile) &&  <span>Dashboard</span>}
-            </div>
+            </div> */}
 
             <div href="#" className={styleTrans.menuLink} 
             onClick={() => (level === '2' || level === '1') ? this.toggleDokumen() : this.goRoute('dokumen')}

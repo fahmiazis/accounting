@@ -79,9 +79,9 @@ const SidebarContent = props => {
             <FaHome size={20} className="mr-2"/>
             <text className="txtSide">Home</text>
         </button>
-        <button onClick={() => goHome('dashboard')} className="btn-side">
+        {/* <button onClick={() => goHome('dashboard')} className="btn-side">
             <RiDashboardFill size={20} className="mr-2"/> Dashboard
-        </button>
+        </button> */}
         {level === '2' ? (
           <button onClick={modalOpen} className="btn-side1">
             <div>
