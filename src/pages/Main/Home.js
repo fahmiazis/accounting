@@ -117,8 +117,8 @@ class Home extends Component {
     getChartData = async () => {
         const token = localStorage.getItem('token')
         try {
-            const res = await this.props.getStatistics(token)
-            const {dataStat} = this.props.dashboard
+            await this.props.getStatistics(token)
+            const { dataStat } = this.props.dashboard
             this.setState({ chartData: dataStat })
         } catch (error) {
             console.log(error)
@@ -142,24 +142,38 @@ class Home extends Component {
             labels: chartData.map(item => moment(item.month, 'YYYY-MM').format('MMM YYYY')),
             datasets: [
                 {
-                    label: 'Uploaded',
-                    data: chartData.map(item => parseInt(item.uploaded)),
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    label: 'Pending',
+                    data: chartData.map(item => parseInt(item.pending || 0)),
+                    backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                    borderColor: 'rgba(255, 193, 7, 1)',
                     borderWidth: 1,
                 },
                 {
                     label: 'Approved',
-                    data: chartData.map(item => parseInt(item.approved)),
+                    data: chartData.map(item => parseInt(item.approved || 0)),
                     backgroundColor: 'rgba(75, 192, 192, 0.6)',
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1,
                 },
                 {
                     label: 'Rejected',
-                    data: chartData.map(item => parseInt(item.rejected)),
+                    data: chartData.map(item => parseInt(item.rejected || 0)),
                     backgroundColor: 'rgba(255, 99, 132, 0.6)',
                     borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Late Upload',
+                    data: chartData.map(item => parseInt(item.late || 0)),
+                    backgroundColor: 'rgba(156, 39, 176, 0.6)',
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Revisi',
+                    data: chartData.map(item => parseInt(item.revisi || 0)),
+                    backgroundColor: 'rgba(255, 152, 0, 0.6)',
+                    borderColor: 'rgba(255, 152, 0, 1)',
                     borderWidth: 1,
                 }
             ]
@@ -174,16 +188,16 @@ class Home extends Component {
             labels: chartData.map(item => moment(item.month, 'YYYY-MM').format('MMM YYYY')),
             datasets: [
                 {
-                    label: 'Uploaded',
-                    data: chartData.map(item => parseInt(item.uploaded)),
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    label: 'Pending',
+                    data: chartData.map(item => parseInt(item.pending || 0)),
+                    borderColor: 'rgba(255, 193, 7, 1)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.2)',
                     tension: 0.4,
                     fill: true,
                 },
                 {
                     label: 'Approved',
-                    data: chartData.map(item => parseInt(item.approved)),
+                    data: chartData.map(item => parseInt(item.approved || 0)),
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     tension: 0.4,
@@ -191,9 +205,25 @@ class Home extends Component {
                 },
                 {
                     label: 'Rejected',
-                    data: chartData.map(item => parseInt(item.rejected)),
+                    data: chartData.map(item => parseInt(item.rejected || 0)),
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                },
+                {
+                    label: 'Late Upload',
+                    data: chartData.map(item => parseInt(item.late || 0)),
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                },
+                {
+                    label: 'Revisi',
+                    data: chartData.map(item => parseInt(item.revisi || 0)),
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    backgroundColor: 'rgba(255, 152, 0, 0.2)',
                     tension: 0.4,
                     fill: true,
                 }
@@ -205,24 +235,30 @@ class Home extends Component {
     getDoughnutChartData = () => {
         const { chartData } = this.state
         
-        const totalUploaded = chartData.reduce((sum, item) => sum + parseInt(item.uploaded), 0)
-        const totalApproved = chartData.reduce((sum, item) => sum + parseInt(item.approved), 0)
-        const totalRejected = chartData.reduce((sum, item) => sum + parseInt(item.rejected), 0)
+        const totalPending = chartData.reduce((sum, item) => sum + parseInt(item.pending || 0), 0)
+        const totalApproved = chartData.reduce((sum, item) => sum + parseInt(item.approved || 0), 0)
+        const totalRejected = chartData.reduce((sum, item) => sum + parseInt(item.rejected || 0), 0)
+        const totalLate = chartData.reduce((sum, item) => sum + parseInt(item.late || 0), 0)
+        const totalRevisi = chartData.reduce((sum, item) => sum + parseInt(item.revisi || 0), 0)
         
         return {
-            labels: ['Uploaded', 'Approved', 'Rejected'],
+            labels: ['Pending', 'Approved', 'Rejected', 'Late Upload', 'Revisi'],
             datasets: [
                 {
-                    data: [totalUploaded, totalApproved, totalRejected],
+                    data: [totalPending, totalApproved, totalRejected, totalLate, totalRevisi],
                     backgroundColor: [
-                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 193, 7, 0.6)',
                         'rgba(75, 192, 192, 0.6)',
                         'rgba(255, 99, 132, 0.6)',
+                        'rgba(156, 39, 176, 0.6)',
+                        'rgba(255, 152, 0, 0.6)',
                     ],
                     borderColor: [
-                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 193, 7, 1)',
                         'rgba(75, 192, 192, 1)',
                         'rgba(255, 99, 132, 1)',
+                        'rgba(156, 39, 176, 1)',
+                        'rgba(255, 152, 0, 1)',
                     ],
                     borderWidth: 2,
                 }
@@ -230,7 +266,7 @@ class Home extends Component {
         }
     }
 
-    // Chart options - sangat mudah di-custom!
+    // Chart options
     getBarOptions = () => {
         return {
             responsive: true,
@@ -383,11 +419,8 @@ class Home extends Component {
                     </div> */}
 
                     {/* Chart Section */}
-                    {/* {chartData.length > 0 && (
-                        
-                    )} */}
                     <div style={{ 
-                        marginTop: '30px', 
+                        marginTop: '10px', 
                         padding: '25px', 
                         backgroundColor: '#fff', 
                         borderRadius: '10px',
@@ -463,41 +496,92 @@ class Home extends Component {
                         <div style={{ 
                             marginTop: '30px', 
                             display: 'grid', 
-                            gridTemplateColumns: 'repeat(3, 1fr)', 
-                            gap: '20px' 
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                            gap: '15px' 
                         }}>
+                            {/* Total Upload Card */}
                             <div style={{ 
                                 padding: '20px', 
-                                backgroundColor: '#e3f2fd', 
+                                backgroundColor: '#e8eaf6', 
+                                borderRadius: '8px',
+                                textAlign: 'center',
+                                border: '2px solid #5c6bc0'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', color: '#3f51b5', fontSize: '14px' }}>Total Upload</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#303f9f' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.total_upload || 0), 0)}
+                                </p>
+                                {/* <small style={{ color: '#666' }}>Semua Dokumen</small> */}
+                            </div>
+
+                            {/* Pending Card */}
+                            <div style={{ 
+                                padding: '20px', 
+                                backgroundColor: '#fff8e1', 
                                 borderRadius: '8px',
                                 textAlign: 'center'
                             }}>
-                                <h4 style={{ margin: '0 0 10px 0', color: '#1976d2' }}>Total Uploaded</h4>
-                                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#1565c0' }}>
-                                    {chartData.reduce((sum, item) => sum + parseInt(item.uploaded), 0)}
+                                <h4 style={{ margin: '0 0 10px 0', color: '#f57f17', fontSize: '14px' }}>Pending</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#f57c00' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.pending || 0), 0)}
                                 </p>
+                                {/* <small style={{ color: '#666' }}>Status 1, 2</small> */}
                             </div>
+
+                            {/* Approved Card */}
                             <div style={{ 
                                 padding: '20px', 
                                 backgroundColor: '#e0f2f1', 
                                 borderRadius: '8px',
                                 textAlign: 'center'
                             }}>
-                                <h4 style={{ margin: '0 0 10px 0', color: '#00897b' }}>Total Approved</h4>
-                                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#00695c' }}>
-                                    {chartData.reduce((sum, item) => sum + parseInt(item.approved), 0)}
+                                <h4 style={{ margin: '0 0 10px 0', color: '#00897b', fontSize: '14px' }}>Approved</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#00695c' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.approved || 0), 0)}
                                 </p>
+                                {/* <small style={{ color: '#666' }}>Status 3, 5</small> */}
                             </div>
+
+                            {/* Rejected Card */}
                             <div style={{ 
                                 padding: '20px', 
                                 backgroundColor: '#ffebee', 
                                 borderRadius: '8px',
                                 textAlign: 'center'
                             }}>
-                                <h4 style={{ margin: '0 0 10px 0', color: '#d32f2f' }}>Total Rejected</h4>
-                                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#c62828' }}>
-                                    {chartData.reduce((sum, item) => sum + parseInt(item.rejected), 0)}
+                                <h4 style={{ margin: '0 0 10px 0', color: '#d32f2f', fontSize: '14px' }}>Rejected</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#c62828' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.rejected || 0), 0)}
                                 </p>
+                                {/* <small style={{ color: '#666' }}>Status 0, 6</small> */}
+                            </div>
+
+                            {/* Late Upload Card */}
+                            <div style={{ 
+                                padding: '20px', 
+                                backgroundColor: '#f3e5f5', 
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', color: '#7b1fa2', fontSize: '14px' }}>Late Upload</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#6a1b9a' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.late || 0), 0)}
+                                </p>
+                                {/* <small style={{ color: '#666' }}>Status 4</small> */}
+                            </div>
+
+                            {/* Revisi Card */}
+                            <div style={{ 
+                                padding: '20px', 
+                                backgroundColor: '#fff3e0', 
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', color: '#e65100', fontSize: '14px' }}>Revisi</h4>
+                                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#ef6c00' }}>
+                                    {chartData.reduce((sum, item) => sum + parseInt(item.revisi || 0), 0)}
+                                </p>
+                                {/* <small style={{ color: '#666' }}>Status 7</small> */}
                             </div>
                         </div>
                     </div>
