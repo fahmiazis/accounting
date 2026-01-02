@@ -7,7 +7,7 @@ import { Container, Collapse, Nav, Navbar,
 import logo from "../../assets/img/logo.png"
 import '../../assets/css/style.css'
 import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
-import {AiFillCheckCircle, AiOutlineFileExcel} from 'react-icons/ai'
+import {AiFillCheckCircle, AiOutlineFileExcel, AiOutlineInbox} from 'react-icons/ai'
 import depo from '../../redux/actions/depo'
 import user from '../../redux/actions/user'
 import {connect} from 'react-redux'
@@ -18,6 +18,9 @@ import {default as axios} from 'axios'
 import Sidebar from "../../components/Header";
 import MaterialTitlePanel from "../../components/material_title_panel";
 import SidebarContent from "../../components/sidebar_content";
+import NewNavbar from '../../components/NewNavbar'
+import styleTrans from '../../assets/css/transaksi.module.css'
+import style from '../../assets/css/public.module.css'
 const {REACT_APP_BACKEND_URL} = process.env
 
 const userSchema = Yup.object().shape({
@@ -73,6 +76,14 @@ class MasterUser extends Component {
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
+    }
+
+    prosesSidebar = (val) => {
+        this.setState({sidebarOpen: val})
+    }
+    
+    goRoute = (val) => {
+        this.props.history.push(`/${val}`)
     }
 
     showAlert = () => {
@@ -382,7 +393,125 @@ class MasterUser extends Component {
           };
         return (
             <>
-                <Sidebar {...sidebarProps}>
+                <div className={styleTrans.app}>
+                    <NewNavbar handleSidebar={this.prosesSidebar} handleRoute={this.goRoute} />
+
+                    <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
+                        <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                            <div>{alertMsg}</div>
+                            <div>{alertM}</div>
+                            {alertUpload !== undefined && alertUpload.map(item => {
+                                return (
+                                    <div>{item}</div>
+                                )
+                            })}
+                        </Alert>
+                        <Alert color="danger" className="alertWrong" isOpen={upload}>
+                            <div>{errMsg}</div>
+                        </Alert>
+
+                        <h2 className={styleTrans.pageTitle}>Master User</h2>
+                            
+                        <div className={styleTrans.searchContainer}>
+                            <div>
+                                <text>Show: </text>
+                                <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                <DropdownToggle caret color="light">
+                                    {this.state.limit}
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className="item" onClick={() => this.getDataUser({limit: 50, search: ''})}>50</DropdownItem>
+                                </DropdownMenu>
+                                </ButtonDropdown>
+                                <text className="textEntries">entries</text>
+                            </div>
+                        </div>
+                        <div className={styleTrans.searchContainer}>
+                            <div className="rowCenter">
+                                <Button onClick={this.openModalAdd} color="primary" size="lg">Add</Button>
+                                <Button className='ml-1' disabled={listUser.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                <Button className='ml-1' onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                <Button className='ml-1' onClick={this.ExportMaster} color="success" size="lg">Download</Button>
+                            </div>
+                            <div className="searchEmail">
+                                <text>Search: </text>
+                                <Input 
+                                className="search"
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
+                            </div>
+                        </div>
+
+                        <table className={`${styleTrans.table} ${dataUser.length > 0 ? styleTrans.tableFull : ''}`}>
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input  
+                                        className='mr-2'
+                                        type='checkbox'
+                                        checked={listUser.length === 0 ? false : listUser.length === dataUser.length ? true : false}
+                                        onChange={() => listUser.length === dataUser.length ? this.chekRej('all') : this.chekApp('all')}
+                                        />
+                                    </th>
+                                    <th>No</th>
+                                    <th>User Name</th>
+                                    <th>Kode Depo</th>
+                                    <th>Nama Depo</th>
+                                    <th>User Level</th>
+                                    <th>Status</th>
+                                    <th>Opsi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {dataUser.length !== 0 && dataUser.map(item => {
+                                    return (
+                                    <tr>
+                                        <td>
+                                            <input 
+                                            type='checkbox'
+                                            checked={listUser.find(element => element === item.id) !== undefined ? true : false}
+                                            onChange={listUser.find(element => element === item.id) === undefined ? () => this.chekApp(item.id) : () => this.chekRej(item.id)}
+                                            />
+                                        </td>
+                                        <td scope="row">{(dataUser.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
+                                        <td>{item.username}</td>
+                                        <td>{item.kode_depo === 0 ? "-" : item.kode_depo}</td>
+                                        <td>{item.nama_depo === "null" || item.nama_depo === null ? "-" : item.nama_depo}</td>
+                                        <td>{item.user_level}</td>
+                                        <td>{item.status}</td>
+                                        <td>
+                                            <Button color='success' onClick={()=>this.openModalEdit(this.setState({detail: item}))}>
+                                                Detail
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                    )})}
+                            </tbody>
+                        </table>
+                        {dataUser.length === 0 && (
+                            <div className={style.spinCol}>
+                                <AiOutlineInbox size={50} className='mb-4' />
+                                <div className='textInfo'>Data tidak ditemukan</div>
+                            </div>
+                        )}
+                        <div>
+                            <div className="infoPageEmail">
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                <div className="pageButton">
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* <Sidebar {...sidebarProps}>
                     <MaterialTitlePanel title={contentHeader}>
                         <div className="background-logo">
                             <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
@@ -520,7 +649,7 @@ class MasterUser extends Component {
                             </div>
                         </div>
                     </MaterialTitlePanel>
-                </Sidebar>
+                </Sidebar> */}
                 <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
                     <ModalHeader toggle={this.openModalAdd}>Add Data User</ModalHeader>
                     <Formik

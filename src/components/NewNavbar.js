@@ -267,13 +267,14 @@ class NewNavbar extends Component {
                 {(!sidebarOpen || isMobile) &&  <span>Master User</span>}
               </div>
             </Collapse>
-
-            <div href="#" className={styleTrans.menuLink} 
-            onClick={this.toggleSetting}
-            >
-              <HiDocumentReport className={styleTrans.icon} size={sidebarOpen && 20} /> 
-              {(!sidebarOpen || isMobile) &&  <span>Setting</span>}
-            </div>
+            {(level === '2' || level === '1') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.toggleSetting}
+              >
+                <HiDocumentReport className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Setting</span>}
+              </div>
+            )}
             <Collapse isOpen={this.state.openSetting} className="ml-3 mt-2">
               <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('lock')} >
                 <AiOutlineUnlock className={styleTrans.icon} size={sidebarOpen && 20} /> 

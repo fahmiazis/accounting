@@ -28,6 +28,9 @@ import { FcDocument } from 'react-icons/fc'
 import Sidebar from "../../components/Header";
 import MaterialTitlePanel from "../../components/material_title_panel";
 import SidebarContent from "../../components/sidebar_content";
+import NewNavbar from '../../components/NewNavbar'
+import styleTrans from '../../assets/css/transaksi.module.css'
+import style from '../../assets/css/public.module.css'
 moment.locales('id')
 
 const {REACT_APP_BACKEND_URL} = process.env
@@ -88,9 +91,21 @@ class Dokumen extends Component {
             dataDown: {},
             dataDoc: [],
             time: moment().format('YYYY-MM-DD'),
+            isLoading: false,
+            // upload multiple
+            selectedDocuments: [],
+            multipleFiles: []
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
+    }
+
+    prosesSidebar = (val) => {
+        this.setState({sidebarOpen: val})
+    }
+    
+    goRoute = (val) => {
+        this.props.history.push(`/${val}`)
     }
 
     chekRej = (val) => {
@@ -136,7 +151,7 @@ class Dokumen extends Component {
         await this.props.getDashboard(token, tipe)
         const { active } = this.props.dashboard
         const sear = active.find(({id}) => id === noindex.id)
-        this.setState({doc: active[noindex].doc, aktif: active[noindex]})
+        this.setState({doc: active[noindex].doc, aktif: active[noindex], listMut: [], confirm: 'upload'})
         this.sucUpload()
     }
 
@@ -153,7 +168,7 @@ class Dokumen extends Component {
     }
 
     showAlert = () => {
-        this.setState({alert: true, openModal: false })
+        this.setState({alert: true })
        
          setTimeout(() => {
             this.setState({
@@ -163,7 +178,7 @@ class Dokumen extends Component {
     }
 
     uploadAlert = () => {
-        this.setState({upload: true, openModal: false })
+        this.setState({upload: true })
        
          setTimeout(() => {
             this.setState({
@@ -198,11 +213,24 @@ class Dokumen extends Component {
     
     sendEmailArea = async () => {
         const token = localStorage.getItem('token')
-        const {listMut} = this.state
-        const data = {
-            listMut: listMut
+        const {listMut, doc} = this.state
+        const cekId = []
+        for (let i = 0; i < listMut.length; i++) {
+            const cek = doc.find(item => item.id === listMut[i])
+            if (!cek) {
+                cekId.push(cek)
+            }
         }
-        await this.props.sendEmailArea(token, data)
+
+        if (cekId.length > 0) {
+            this.setState({confirm: 'falseEmail'})
+            this.sucUpload()
+        } else {
+            const data = {
+                listMut: listMut
+            }
+            await this.props.sendEmailArea(token, data)
+        }
     }
 
     sendEmail = async () => {
@@ -273,6 +301,84 @@ class Dokumen extends Component {
             this.props.uploadDocument(token, detail.id, aktif.id, data)
         }
     }
+
+    onSelectDocument = (doc) => {
+        const {selectedDocuments} = this.state
+        const exists = selectedDocuments.find(d => d.id === doc.id)
+        
+        if (exists) {
+            // Remove if already selected
+            this.setState({
+                selectedDocuments: selectedDocuments.filter(d => d.id !== doc.id)
+            })
+        } else {
+            // Add if not selected
+            this.setState({
+                selectedDocuments: [...selectedDocuments, doc]
+            })
+        }
+    }
+
+    // Handler untuk multiple upload
+    onChangeHandlerMultiple = e => {
+        const files = Array.from(e.target.files)
+        const {listMut} = this.state
+        
+        // Validasi jumlah file harus sama dengan jumlah dokumen yang dipilih
+        if (files.length !== listMut.length) {
+            this.setState({ confirm: 'falseUpload' })
+            this.sucUpload()
+        } else {
+            // Validasi semua file
+            let hasError = false
+            let errorMsg = ''
+            
+            for (const file of files) {
+                const {size, type, name} = file
+                
+                if (size >= 100000000) {
+                    errorMsg = "Maximum upload size 100 MB per file"
+                    hasError = true
+                    break
+                } else if (type !== "" && type !== null && 
+                    type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && 
+                    type !== 'application/vnd.ms-excel' && 
+                    type !== 'application/pdf' && 
+                    type !== 'application/x-7z-compressed' && 
+                    type !== 'application/vnd.rar' && 
+                    type !== 'application/zip' && 
+                    type !== 'application/x-zip-compressed' && 
+                    type !== 'application/octet-stream' && 
+                    type !== 'multipart/x-zip' && 
+                    type !== 'application/x-rar-compressed') {
+                    errorMsg = 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'
+                    hasError = true
+                    break
+                }
+            }
+            
+            if (hasError) {
+                this.setState({errMsg: errorMsg})
+                this.uploadAlert()
+            } else {
+                const {aktif, listMut} = this.state
+                const token = localStorage.getItem('token')
+                const data = new FormData()
+                
+                // Append semua file
+                files.forEach(file => {
+                    data.append('document', file)
+                })
+                
+                // Kirim listId sebagai JSON string
+                const listId = listMut.map(id => id)
+                data.append('listId', JSON.stringify(listId))
+                
+                this.props.uploadDocumentMultiple(token, aktif.id, data)
+            }   
+        }
+    }
+
     dropSetting = () => {
         this.setState({settingOpen: !this.state.settingOpen})
     }
@@ -335,7 +441,7 @@ class Dokumen extends Component {
     openProsesPic = (val) => {
        const {dataAll} = this.props.dashboard
        const dok = []
-       const temp = dataAll[val].active[0].doc
+       const temp = dataAll[val].active[0] ? dataAll[val].active[0].doc : []
         for (let i = 0; i < dataAll[val].dokumen.length; i++) {
             dok.push(dataAll[val].dokumen[i].nama_dokumen)
         }
@@ -470,15 +576,17 @@ class Dokumen extends Component {
 
 
     getDataDashboard = async (value) => {
+        this.setState({isLoading: true})
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
         const { page } = this.props.dashboard
         const finalPage = page.currentPage
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
-            setTimeout(() => {
-                this.props.getActivity(token, value === undefined ? 'daily' : value)
-            }, 1000)
+            await this.props.getActivity(token, value === undefined ? 'daily' : value)
+            // setTimeout(() => {
+            //     this.props.getActivity(token, value === undefined ? 'daily' : value)
+            // }, 100)
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             const {tipe} = this.state
@@ -486,9 +594,11 @@ class Dokumen extends Component {
             await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value, })
         }
+        this.setState({isLoading: false})
     }
 
     prepareDokumen = () => {
+        this.setState({isLoading: true})
         const {dataSa, dataKasir} = this.props.dashboard
         const data = []
         const moon = []
@@ -512,11 +622,13 @@ class Dokumen extends Component {
             moon.push(temp)
         }
         this.setState({totalDoc: res, month: moon, moon: moon[0]})
+        this.setState({isLoading: false})
     }
 
     componentDidUpdate () {
         const {isError, isUpload, isGetPic, isApprove, isReject, isUpdate, isSend, sendArea} = this.props.dashboard
         if (isError) {
+            this.setState({isLoading: false})
             this.props.resetError()
             this.showAlert()
         } else if (sendArea === true) {
@@ -570,6 +682,9 @@ class Dokumen extends Component {
         const {notif, notifSa, notifKasir, dataDash, dataActive, active, alertMsg, alertM, dataShow, dataSa, dataKasir, dataDepo, page, dataAll} = this.props.dashboard
         const {dataAlasan} = this.props.alasan
         const names = localStorage.getItem('name')
+        const loadingState = this.state.isLoading
+        const loadingDashboard = this.props.dashboard.isLoading
+        const loadingAll = loadingState || loadingDashboard
 
         const contentHeader =  (
             <div className="navbar">
@@ -718,7 +833,361 @@ class Dokumen extends Component {
 
         return (
             <>
-                <Sidebar {...sidebarProps}>
+                <div className={styleTrans.app}>
+                    <NewNavbar handleSidebar={this.prosesSidebar} handleRoute={this.goRoute} />
+
+                    <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
+
+                        <h2 className={styleTrans.pageTitle}>Verifikasi Dokumen</h2>
+                            
+                        <div className={styleTrans.searchContainer}>
+                            <div className='rowCenter'>
+                                {level === '5' || level === '4' ? (
+                                    <div></div>
+                                ) : (
+                                    <div>
+                                        {/* <text>Jenis: </text> */}
+                                        <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.tipe}
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                            <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                            <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    </div>
+                                )}
+                                {this.state.tipe === 'daily' ? (
+                                    level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                        <div className="dateDash">
+                                            {/* <div>Tanggal Upload: </div> */}
+                                            <div className="inputCalendar">
+                                                <Input value={this.state.time} type="date" onChange={this.chooseTime}/>
+                                            </div>
+                                            {/* <div><FaCalendarAlt size={22} /></div> */}
+                                            {/* <Calendar
+                                            value={this.state.value}
+                                            onChange={this.state.onChange}
+                                            /> */}
+                                        </div>
+                                    ) : (
+                                        <div></div>
+                                    )
+                                ) : (
+                                    level == "6" || level == '1' || level == '2' || level == '3' ? (
+                                    <>
+                                        <div className="dateDash">
+                                            {/* <div>Periode: </div> */}
+                                            <ButtonDropdown className="inputCalendar" isOpen={this.state.periode} toggle={this.dropPeriod}>
+                                                <DropdownToggle caret color="light">
+                                                    {moment(this.state.moon).format('MMMM (YYYY)')}
+                                                </DropdownToggle>
+                                                <DropdownMenu >
+                                                    {this.state.month.length !== 0 && this.state.month.map(item => {
+                                                        return (
+                                                            <DropdownItem className="item" onClick={() => this.getDataMonthly(moment(item))}>{moment(item).format('MMMM (YYYY)')}</DropdownItem>
+                                                        )
+                                                    })}
+                                                </DropdownMenu>
+                                            </ButtonDropdown>
+                                            {/* <div><FaCalendarAlt size={22} /></div> */}
+                                            {/* <Calendar
+                                            value={this.state.value}
+                                            onChange={this.state.onChange}
+                                            /> */}
+                                        </div>
+                                    </>
+                                    ) : (
+                                        <div></div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                        <div className={styleTrans.searchContainer}>
+                            <div className="searchDash">
+                                <div className="secSearch mr-4">
+                                    <text className="mr-2">
+                                        Show: 
+                                    </text>
+                                    { level === '5' || level === '4' ? (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 10})}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 20})}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.setState({limit: 50})}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    ) : (
+                                        <ButtonDropdown className="drop" isOpen={dropOpen} toggle={this.dropDown}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.limit}
+                                        </DropdownToggle>
+                                        <DropdownMenu >
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    )}
+                                </div>
+                                {level === '5' || level === '4' ? (
+                                    <div>
+                                        <text>Jenis: </text>
+                                        <ButtonDropdown className="drop" isOpen={dropOpenNum} toggle={this.dropOpenN}>
+                                        <DropdownToggle caret color="light">
+                                            {this.state.tipe}
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                            <DropdownItem onClick={() => this.getDataDashboard('daily')}>Daily</DropdownItem>
+                                            <DropdownItem onClick={() => this.getDataDashboard('monthly')}>Monthly</DropdownItem>
+                                        </DropdownMenu>
+                                        </ButtonDropdown>
+                                    </div>
+                                ) : (
+                                    <div className="secSearch">
+                                        <text>Search: </text>
+                                        <Input 
+                                        className="search"
+                                        onChange={this.onSearch}
+                                        value={this.state.search}
+                                        onKeyPress={this.onSearch}
+                                        >
+                                            <FaSearch size={20} />
+                                        </Input>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="statusSym">
+                                <div className='mr-1 signbtn'><AiOutlineCheck size={20} className="blue" /><text>  Approve</text></div>
+                                <div className='mr-1 signbtn'><AiOutlineClose size={20} className="red" /><text>  Reject</text></div>
+                                <div className='mr-1 signbtn'><BsCircle size={20} className="green" /><text>  Upload</text></div>
+                                <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
+                                <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
+                            </div>
+                        </div>
+
+                        <table className={`${styleTrans.table} ${((level === '4' || level === '5') && (active ? active.length > 0 : false)) || (dataAll ? dataAll.length > 0 : false) ? styleTrans.tableFull : ''}`}>
+                            <thead>
+                                {level === '4' || level === '5' ? (
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Tanggal Dokumen</th>
+                                        <th>Tanggal Upload</th>
+                                        {dataDash !== undefined && dataDash.map(item => {
+                                            return (
+                                                <th>{(dataDash.indexOf(item) + 1)}</th>
+                                            )
+                                        })}
+                                        <th>Jumlah File Upload</th>
+                                        <th>Persentase</th>
+                                        <th>Status</th>
+                                    </tr>
+                                ) : (
+                                    <tr>
+                                        <th>No</th>
+                                        <th>PIC</th>
+                                        <th>Kode Plant</th>
+                                        <th>Nama Depo</th>
+                                        <th>Tanggal Dokumen</th>
+                                        <th>Tanggal Upload</th>
+                                        {totalDoc.length !== 0 && totalDoc.map(item => {
+                                            return (
+                                                <th>{item + 1}</th>
+                                            )
+                                        })}
+                                        <th>Jumlah File Upload</th>
+                                        <th>Persentase</th>
+                                        <th>Status</th>
+                                    </tr>
+                                )}
+                            </thead>
+                            {level === '4' || level === '5' ? (
+                                <tbody>
+                                    {active !== undefined && active.map(x => {
+                                        return (
+                                        <tr className="danger" onClick={() => this.openProses(active.indexOf(x))}>
+                                            <td>{(active.indexOf(x) + 1)}</td>
+                                            {x.jenis_dokumen == 'monthly' ? (
+                                                <td>{moment(x.createdAt).subtract(1, 'month').format('MMMM YYYY')}</td>
+                                            ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
+                                                <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                            ) : (
+                                                <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                            )}
+                                            {x.jenis_dokumen == 'monthly' ? (
+                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                            ) : (
+                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                            )}
+                                            {dataDash !== undefined && dataDash.map(y => {
+                                                return (
+                                                <td>
+                                                    {x.doc.length === 0 || x.doc[dataDash.indexOf(y)] === undefined ? (
+                                                            <AiOutlineMinus className="black" />
+                                                        ) : (
+                                                            x.doc[dataDash.indexOf(y)].status_dokumen === 1 ? (
+                                                                <BsCircle className="black"/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 2 ? (
+                                                                <BsCircle className="green" />
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 3 ? (
+                                                                <AiOutlineCheck className="blue"/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 0 ? (
+                                                                <AiOutlineClose className="red" />
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 4 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 5 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 6 ? (
+                                                                <MdWatchLater className="red" size={20}/>
+                                                            ) : x.doc[dataDash.indexOf(y)].status_dokumen === 7 ? (
+                                                                <BiRevision className="black" size={20}/>
+                                                            ) : (
+                                                                <AiOutlineMinus className="black" />
+                                                            )
+                                                        )
+                                                    }
+                                                </td>
+                                                )
+                                            })}
+                                            <td>{dataDash.length}</td>
+                                            {x.doc.length === 0 ? (
+                                                <td>0 %</td>
+                                            ) : (
+                                                <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
+                                            )}
+                                            {x.doc.length > 0 ? (
+                                                <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
+                                            ):(
+                                                <td>Belum Upload</td>
+                                            )}
+                                        </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            ) : (
+                                <tbody>
+                                    {dataAll !== undefined && dataAll.map(x => {
+                                        return (
+                                        x !== null ? (
+                                        <tr className="danger" onClick={() => this.openProsesPic(dataAll.indexOf(x))}>
+                                            <td>{(dataAll.indexOf(x) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
+                                            <td>{x.nama_pic_1}</td>
+                                            <td>{x.kode_plant}</td>
+                                            <td>{x.nama_depo}</td>
+                                            {x.active.length > 0 ? (
+                                                x.active[0].jenis_dokumen === 'monthly' ? 
+                                                <td>{moment(x.active[0].createdAt).subtract(1, 'month').format('MMMM, YYYY')}</td>
+                                                : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
+                                                    <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
+                                                :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
+                                            ):(
+                                                <td>-</td>
+                                            )}
+                                            {x.active.length > 0 ? (
+                                                <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
+                                            ):(
+                                                <td>-</td>
+                                            )}
+                                            {x.active.length > 0 ? (
+                                                x.active[0].doc.length > 0 ? (
+                                                    x.active[0].doc.length <= totalDoc.length ? (
+                                                        totalDoc.map(y => {
+                                                            return (
+                                                                <td>
+                                                                    {x.active[0].doc[y] ? (
+                                                                        x.active[0].doc[y].status_dokumen === 1 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <BsCircle className="black"/>
+                                                                        ) : x.active[0].doc[y].status_dokumen === 2 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <BsCircle className="green" />
+                                                                        ) : x.active[0].doc[y].status_dokumen === 3 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <AiOutlineCheck className="blue"/>
+                                                                        ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <AiOutlineClose className="red" />
+                                                                        ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <MdWatchLater className="red" size={20}/>
+                                                                        ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <MdWatchLater className="red" size={20}/>
+                                                                        ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <MdWatchLater className="red" size={20}/>
+                                                                        ) : x.active[0].doc[y].status_dokumen === 7 && x.active[0].doc[y].status_dokumen !== undefined ? (
+                                                                            <BiRevision className="black" size={20}/>
+                                                                        ) : (
+                                                                            <div></div>
+                                                                        )
+                                                                    ): (
+                                                                        <AiOutlineMinus className="black" />
+                                                                    )}
+                                                                </td>
+                                                            )
+                                                        })
+                                                    ) : (
+                                                        x.active[0].doc.map(item => {
+                                                            return (
+                                                                <td>
+                                                                    {item.status_dokumen === 1 ? (
+                                                                        <BsCircle className="black"/>
+                                                                    ) : (
+                                                                        <AiOutlineMinus className="black" />
+                                                                    )}
+                                                                </td>
+                                                            )
+                                                        })
+                                                    )
+                                                ): (
+                                                    totalDoc.map(item => {
+                                                        return (
+                                                            <td><AiOutlineMinus className="black" /></td>
+                                                        )
+                                                    }) 
+                                                )
+                                            ): (
+                                                totalDoc.map(item => {
+                                                    return (
+                                                        <td><AiOutlineMinus className="black" /></td>
+                                                    )
+                                                })
+                                            )}
+                                            <td>{x.dokumen.length}</td>
+                                            {x.active.length > 0 ? (
+                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
+                                            ):(
+                                                <td>0 %</td>
+                                            )}
+                                            {x.active.length > 0 ? (
+                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                            ):(
+                                                <td>Belum Upload</td>
+                                            )}
+                                        </tr>
+                                        ) : (
+                                            <div></div>
+                                        )
+                                        )
+                                    })}
+                                </tbody>
+                            )}
+                        </table>
+                        <div className="infoPage mt-4">
+                            <text>Showing {page.currentPage} of {page.pages} pages</text>
+                            {level == '5' || level == '4' ? (
+                            <div className="pageButton">
+                                <button className="btnPrev" color="info" disabled onClick={this.prev}>Prev</button>
+                                <button className="btnPrev" color="info" disabled onClick={this.next}>Next</button>
+                            </div>
+                            ) : (
+                            <div className="pageButton">
+                                <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                            </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                {/* <Sidebar {...sidebarProps}>
                     <MaterialTitlePanel title={contentHeader}>
                         <div className="background-logo">
                             <Alert color="danger" className="alertWrong" isOpen={upload}>
@@ -756,11 +1225,6 @@ class Dokumen extends Component {
                                                 <div className="inputCalendar">
                                                     <Input value={this.state.time} type="date" onChange={this.chooseTime}/>
                                                 </div>
-                                                {/* <div><FaCalendarAlt size={22} /></div> */}
-                                                {/* <Calendar
-                                                value={this.state.value}
-                                                onChange={this.state.onChange}
-                                                /> */}
                                             </div>
                                         ) : (
                                             <div></div>
@@ -782,11 +1246,6 @@ class Dokumen extends Component {
                                                         })}
                                                     </DropdownMenu>
                                                 </ButtonDropdown>
-                                                {/* <div><FaCalendarAlt size={22} /></div> */}
-                                                {/* <Calendar
-                                                value={this.state.value}
-                                                onChange={this.state.onChange}
-                                                /> */}
                                             </div>
                                         </>
                                         ) : (
@@ -942,33 +1401,6 @@ class Dokumen extends Component {
                                                             {dataDash !== undefined && dataDash.map(y => {
                                                                 return (
                                                                 <td>
-                                                                    {/* {x.doc.length === 0 ? (
-                                                                        <AiOutlineMinus className="black" />
-                                                                    ):(
-                                                                        x.doc.map(item => {
-                                                                            return (
-                                                                                item.status_dokumen === 1 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <BsCircle className="black"/>
-                                                                                ) : item.status_dokumen === 2 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <BsCircle className="green" />
-                                                                                ) : item.status_dokumen === 3 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <AiOutlineCheck className="blue"/>
-                                                                                ) : item.status_dokumen === 0 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <AiOutlineClose className="red" />
-                                                                                ) : item.status_dokumen === 4 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : item.status_dokumen === 5 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : item.status_dokumen === 6 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <MdWatchLater className="red" size={20}/>
-                                                                                ) : item.status_dokumen === 7 && item.dokumen === y.nama_dokumen ? (
-                                                                                    <BiRevision className="black" size={20}/>
-                                                                                ) : (
-                                                                                    <AiOutlineMinus className="black" />
-                                                                                )
-                                                                            )
-                                                                        })
-                                                                    )} */}
                                                                     {x.doc.length === 0 || x.doc[dataDash.indexOf(y)] === undefined ? (
                                                                             <AiOutlineMinus className="black" />
                                                                         ) : (
@@ -1115,7 +1547,7 @@ class Dokumen extends Component {
                                         ): (
                                             <tbody>
                                                 <tr className="danger" onClick={this.openModalProses}>
-                                                    <th scope="row">1</th>
+                                                    <td>1</td>
                                                     <td></td>
                                                     <td></td>
                                                     <td></td>
@@ -1162,96 +1594,108 @@ class Dokumen extends Component {
                             </div>
                         </div>
                     </MaterialTitlePanel>
-                </Sidebar>
-                <Modal isOpen={openModal} size="lg" toggle={this.openModalProses}>
+                </Sidebar> */}
+                <Modal isOpen={openModal} size="xl" toggle={this.openModalProses}>
                     <ModalHeader toggle={this.openModalProses}>Proses Dokumen</ModalHeader>
                     {level === '4' || level === '5' ? (
                             <ModalBody>
                             <div className="modal-dashboard">
-                            {/* <div className='checall ml-3 mb-4'>
-                                <Input
-                                addon
-                                disabled={true}
-                                checked={false}
-                                type="checkbox"
-                                className='mr-1' />
-                                <text>Check All</text>
-                            </div> */}
-                            {dataDoc !== undefined && dataDoc.map(item => {
+                                <div className='mb-4'>
+                                    <p></p>
+                                    <p>Bulk Upload, selected: {listMut.length} document(s)</p>
+                                    <Input
+                                        type="file"
+                                        name="files"
+                                        accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
+                                        multiple
+                                        onChange={this.onChangeHandlerMultiple}
+                                    />
+                                    <small>Please select {listMut.length} file(s)</small>
+                                </div>
+                                {dataDoc !== undefined && dataDoc.map(item => {
                                     return (
-                                <div className="secModal">
-                                    <div className="col-md-6">
-                                        {doc.find(({dokumen}) => dokumen === item) === undefined ? (
-                                            <Input
-                                            addon
-                                            disabled={true}
-                                            checked={false}
-                                            type="checkbox"
-                                            className='mr-1' />
-                                        ) : (
-                                            <Input
-                                            addon
-                                            disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? false : true}
-                                            checked={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) !== undefined ? true : false}
-                                            type="checkbox"
-                                            className='mr-1'
-                                            onClick={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) === undefined ? () => this.chekApp(doc.find(({dokumen}) => dokumen === item).id) : () => this.chekRej(doc.find(({dokumen}) => dokumen === item).id)}
-                                            value={item.no_asset} />
-                                        )}
-                                        <text>{item}</text>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="bsCir">
+                                    <div className="secModal">
+                                        <div className="col-md-6">
                                             {doc.find(({dokumen}) => dokumen === item) === undefined ? (
-                                                <BsDashCircleFill size={23} className="black" />
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 ? (
-                                                <BsCircle className="green" size={25} />
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
-                                                <AiOutlineCheck className="blue" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
-                                                <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
-                                                <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
-                                                <MdWatchLater className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
-                                                <BiRevision className="black" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 ? (
-                                                <AiOutlineClose className="red" size={25}/>
-                                            ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 ? (
-                                                <BsCircle className="black" size={20} />
-                                            ) : (
-                                                <div></div>
-                                            )}
-                                            <AiOutlineFilePdf size={25} className="pdf" />
-                                            {doc.find(({dokumen}) => dokumen === item) === undefined ? (
-                                            <Input
-                                                type="file"
-                                                name="file"
-                                                accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
-                                                onClick={() => this.setState({detail: dataDash.find(({nama_dokumen}) => nama_dokumen === item)})}
-                                                onChange={this.onChangeHandler}
-                                            />
-                                            ) : 
-                                            (
-                                            <div>
-                                                {/* this.setState({file: doc.find(({dokumen}) => dokumen === item).path, fileName: doc.find(({dokumen}) => dokumen === item)} */}
-                                                <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item))}>
-                                                    {doc.find(({dokumen}) => dokumen === item).dokumen}
-                                                </a>
+                                                // <Input
+                                                // addon
+                                                // disabled={true}
+                                                // checked={false}
+                                                // type="checkbox"
+                                                // className='mr-1' />
                                                 <Input
-                                                type="file"
-                                                name="file"
-                                                disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? false : true}
-                                                accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
-                                                onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item)})}
-                                                onChange={this.onEditDokumen}
+                                                addon
+                                                // disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? false : true}
+                                                checked={listMut.find(element => element === dataDash.find(({nama_dokumen}) => nama_dokumen === item).id) !== undefined ? true : false}
+                                                type="checkbox"
+                                                className='mr-1'
+                                                onClick={listMut.find(element => element === dataDash.find(({nama_dokumen}) => nama_dokumen === item).id) === undefined ? () => this.chekApp(dataDash.find(({nama_dokumen}) => nama_dokumen === item).id) : () => this.chekRej(dataDash.find(({nama_dokumen}) => nama_dokumen === item).id)}
+                                                value={item.no_asset} />
+                                            ) : (
+                                                <Input
+                                                addon
+                                                // disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? false : true}
+                                                disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? false : true}
+                                                checked={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) !== undefined ? true : false}
+                                                type="checkbox"
+                                                className='mr-1'
+                                                onClick={listMut.find(element => element === doc.find(({dokumen}) => dokumen === item).id) === undefined ? () => this.chekApp(doc.find(({dokumen}) => dokumen === item).id) : () => this.chekRej(doc.find(({dokumen}) => dokumen === item).id)}
+                                                value={item.no_asset} />
+                                            )}
+                                            <text>{item}</text>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="bsCir">
+                                                {doc.find(({dokumen}) => dokumen === item) === undefined ? (
+                                                    <BsDashCircleFill size={23} className="black" />
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 2 ? (
+                                                    <BsCircle className="green" size={25} />
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
+                                                    <AiOutlineCheck className="blue" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
+                                                    <MdWatchLater className="red" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
+                                                    <BiRevision className="black" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 ? (
+                                                    <AiOutlineClose className="red" size={25}/>
+                                                ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 1 ? (
+                                                    <BsCircle className="black" size={20} />
+                                                ) : (
+                                                    <div></div>
+                                                )}
+                                                <AiOutlineFilePdf size={25} className="pdf" />
+                                                {doc.find(({dokumen}) => dokumen === item) === undefined ? (
+                                                <Input
+                                                    type="file"
+                                                    name="file"
+                                                    accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
+                                                    onClick={() => this.setState({detail: dataDash.find(({nama_dokumen}) => nama_dokumen === item)})}
+                                                    onChange={this.onChangeHandler}
                                                 />
+                                                ) : 
+                                                (
+                                                <div>
+                                                    {/* this.setState({file: doc.find(({dokumen}) => dokumen === item).path, fileName: doc.find(({dokumen}) => dokumen === item)} */}
+                                                    <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item))}>
+                                                        {doc.find(({dokumen}) => dokumen === item).dokumen} {doc.find(({dokumen}) => dokumen === item).id} {dataDash.find(({nama_dokumen}) => nama_dokumen === item).id}
+                                                    </a>
+                                                    <Input
+                                                    type="file"
+                                                    name="file"
+                                                    disabled={doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 || doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? false : true}
+                                                    accept=".xls,.xlsx,.pdf,.rar,.zip,.7z"
+                                                    onClick={() => this.setState({detail: doc.find(({dokumen}) => dokumen === item)})}
+                                                    onChange={this.onEditDokumen}
+                                                    />
+                                                </div>
+                                                )}                                            
                                             </div>
-                                            )}                                            
                                         </div>
                                     </div>
-                                </div>
                                 )
                                 })}
                             </div>
@@ -1264,10 +1708,10 @@ class Dokumen extends Component {
                                     <div className='mr-1 signbtn'><BiRevision size={20} className="black" /><text>  Revisi</text></div>
                                     <div className='mr-1 signbtn'><BsDashCircleFill size={20} className="black" /><text>  Empty</text></div>
                                 </div>
-                                <div className='divfoot'>
-                                    <Button className='btndivfoot mr-2' size='sm' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmailArea}>Send info email</Button>
-                                    <Button className='btndivfoot mr-2' size='sm' color="primary" onClick={this.openModalProses}>Save</Button>
-                                    <Button className='btndivfoot ' color="secondary" size='sm' onClick={this.openModalProses}>Cancel</Button>
+                                <div className='rowCenter'>
+                                    <Button className='mr-2' size='md' color='warning' disabled={listMut.length === 0 ? true : false} onClick={this.sendEmailArea}>Send info email</Button>
+                                    <Button className='mr-2' size='md' color="primary" onClick={this.openModalProses}>Save</Button>
+                                    <Button className='' color="secondary" size='md' onClick={this.openModalProses}>Cancel</Button>
                                 </div>
                             </div>
                     </ModalBody>
@@ -1485,7 +1929,7 @@ class Dokumen extends Component {
                         </Formik>
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.dashboard.isLoading ? true: false} size="sm">
+                <Modal isOpen={loadingAll} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -1495,7 +1939,7 @@ class Dokumen extends Component {
                         </div>
                         </ModalBody>
                 </Modal>
-                <Modal isOpen={this.state.sucupload} toggle={this.sucUpload} size="sm">
+                <Modal isOpen={this.state.sucupload} toggle={this.sucUpload} size="md">
                         <ModalBody>
                         {this.state.confirm === 'sucsend' ? (
                             <div>
@@ -1525,14 +1969,30 @@ class Dokumen extends Component {
                                     <div className="sucUpdate green">Gagal mengirim info email</div>
                                 </div>
                             </div>
-                        ) : (
+                        ) : this.state.confirm === 'falseUpload' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiOutlineClose size={80} className="red" />
+                                    <div className="sucUpdate green">Gagal Upload</div>
+                                    <div className="sucUpdate green">Pastikan pilih {listMut.length} file upload, untuk menyesuaikan dengan file yg dipilih</div>
+                                </div>
+                            </div>
+                        ) : this.state.confirm === 'falseEmail' ? (
+                            <div>
+                                <div className="cekUpdate">
+                                    <AiOutlineClose size={80} className="red" />
+                                    <div className="sucUpdate green">Gagal kirim info email</div>
+                                    <div className="sucUpdate green">Pastikan document yang dipilih telah terupload</div>
+                                </div>
+                            </div>
+                        ) : this.state.confirm === 'upload' ? (
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
                                     <div className="sucUpdate green">Berhasil upload Dokumen</div>
                                 </div>
                             </div>
-                        )}
+                        ) : null}
                         
                         </ModalBody>
                 </Modal>
@@ -1550,6 +2010,7 @@ const mapDispatchToProps = {
     getDashboard: dashboard.getDashboard,
     getActivity: dashboard.getActivity,
     uploadDocument: dashboard.uploadDokumen,
+    uploadDocumentMultiple: dashboard.uploadDokumenMultiple,
     resetError: dashboard.resetError,
     approve: dashboard.approve,
     reject: dashboard.reject,

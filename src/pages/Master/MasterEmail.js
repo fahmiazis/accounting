@@ -9,7 +9,7 @@ import {Formik} from 'formik'
 import * as Yup from 'yup'
 import '../../assets/css/style.css'
 import {FaSearch, FaUserCircle, FaBars} from 'react-icons/fa'
-import {AiOutlineFileExcel, AiFillCheckCircle} from 'react-icons/ai'
+import {AiOutlineFileExcel, AiFillCheckCircle, AiOutlineInbox} from 'react-icons/ai'
 import email from '../../redux/actions/email'
 import {connect} from 'react-redux'
 import auth from '../../redux/actions/auth'
@@ -18,6 +18,9 @@ import {default as axios} from 'axios'
 import Sidebar from "../../components/Header";
 import MaterialTitlePanel from "../../components/material_title_panel";
 import SidebarContent from "../../components/sidebar_content";
+import NewNavbar from '../../components/NewNavbar'
+import styleTrans from '../../assets/css/transaksi.module.css'
+import style from '../../assets/css/public.module.css'
 const {REACT_APP_BACKEND_URL} = process.env
 
 const emailSchema = Yup.object().shape({
@@ -63,6 +66,14 @@ class MasterEmail extends Component {
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
+    }
+
+    prosesSidebar = (val) => {
+        this.setState({sidebarOpen: val})
+    }
+    
+    goRoute = (val) => {
+        this.props.history.push(`/${val}`)
     }
 
     toggle = () => {
@@ -343,7 +354,123 @@ class MasterEmail extends Component {
           };
         return (
             <>
-                <Sidebar {...sidebarProps}>
+                <div className={styleTrans.app}>
+                    <NewNavbar handleSidebar={this.prosesSidebar} handleRoute={this.goRoute} />
+
+                    <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
+                        <Alert color="danger" className="alertWrong" isOpen={alert}>
+                            <div>{alertMsg}</div>
+                            <div>{alertM}</div>
+                            <div>{alertUpload !== undefined && alertUpload.map(item => {
+                                return (
+                                    item
+                                )
+                            })}</div>
+                        </Alert>
+                        <Alert color="danger" className="alertWrong" isOpen={upload}>
+                            <div>{errMsg}</div>
+                        </Alert>
+
+                        <h2 className={styleTrans.pageTitle}>Master Email</h2>
+                            
+                        <div className={styleTrans.searchContainer}>
+                            <div>
+                                <text>Show: </text>
+                                <ButtonDropdown className={style.drop} isOpen={dropOpen} toggle={this.dropDown}>
+                                <DropdownToggle caret color="light">
+                                    {this.state.limit}
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem className={style.item} onClick={() =>this.getDataAlasan({limit: 10, search: ''})}>10</DropdownItem>
+                                    <DropdownItem className={style.item} onClick={() =>this.getDataAlasan({limit: 20, search: ''})}>20</DropdownItem>
+                                    <DropdownItem className={style.item} onClick={() =>this.getDataAlasan({limit: 50, search: ''})}>50</DropdownItem>
+                                </DropdownMenu>
+                                </ButtonDropdown>
+                                <text className={style.textEntries}>entries</text>
+                            </div>
+                        </div>
+                        <div className={styleTrans.searchContainer}>
+                            <div className='rowCenter'>
+                                <Button onClick={this.openModalAdd} color="primary" size="lg" className='mr-1'>Add</Button>
+                                <Button onClick={this.openModalUpload} color="warning" size="lg" className='mr-1'>Upload</Button>
+                                <Button color="success" size="lg" onClick={this.ExportMaster}>Download</Button>
+                            </div>
+                            <div className={style.searchEmail2}>
+                                <text>Search: </text>
+                                <Input 
+                                className={style.search}
+                                onChange={this.onSearch}
+                                value={this.state.search}
+                                onKeyPress={this.onSearch}
+                                >
+                                    <FaSearch size={20} />
+                                </Input>
+                            </div>
+                        </div>
+
+                        <table className={`${styleTrans.table} ${dataEmail.length > 0 ? styleTrans.tableFull : ''}`}>
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode Plant</th>
+                                    <th>AREA</th>
+                                    <th>Email SA/KASIR</th>
+                                    <th>Email AOS</th>
+                                    <th>Email HO PIC</th>
+                                    <th>Email BM</th>
+                                    <th>Email GROM</th>
+                                    <th>Email ROM</th>
+                                    <th>Email HO 1</th>
+                                    <th>Email HO 2</th>
+                                    <th>Email HO 3</th>
+                                    <th>Email HO 4</th>
+                                    <th>Tipe</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            
+                            <tbody>
+                                {dataEmail.length !== 0 && dataEmail.map(item => {
+                                return (
+                                    <tr onClick={()=>this.openModalEdit(item.id, this.setState({detail: item}))}>
+                                        <td scope="row">{(dataEmail.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td>
+                                        <td>{item.kode_plant}</td>
+                                        <td>{item.area}</td>
+                                        <td>{item.email_sa_kasir}</td>
+                                        <td>{item.email_aos}</td>
+                                        <td>{item.email_ho_pic}</td>
+                                        <td>{item.email_bm}</td>
+                                        <td>{item.email_grom}</td>
+                                        <td>{item.email_rom}</td>
+                                        <td>{item.email_ho_1}</td>
+                                        <td>{item.email_ho_2}</td>
+                                        <td>{item.email_ho_3}</td>
+                                        <td>{item.email_ho_4}</td>
+                                        <td>{item.tipe}</td>
+                                        <td>{item.status}</td>
+                                    </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                        {dataEmail.length === 0 && (
+                            <div className={style.spinCol}>
+                                <AiOutlineInbox size={50} className='mb-4' />
+                                <div className='textInfo'>Data tidak ditemukan</div>
+                            </div>
+                        )}
+                        <div>
+                            <div className="infoPageEmail">
+                                <text>Showing {page.currentPage} of {page.pages} pages</text>
+                                <div className="pageButton">
+                                    <button className="btnPrev" color="info" disabled={page.prevLink === null ? true : false} onClick={this.prev}>Prev</button>
+                                    <button className="btnPrev" color="info" disabled={page.nextLink === null ? true : false} onClick={this.next}>Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* <Sidebar {...sidebarProps}>
                     <MaterialTitlePanel title={contentHeader}>
                         <div className="background-logo">
                             <Alert color="danger" className="alertWrong" isOpen={alert}>
@@ -489,7 +616,7 @@ class MasterEmail extends Component {
                             </div>
                         </div>
                     </MaterialTitlePanel>
-                </Sidebar>
+                </Sidebar> */}
                         <Modal toggle={this.openModalAdd} isOpen={this.state.modalAdd}>
                             <ModalHeader toggle={this.openModalAdd}>Add Master Email</ModalHeader>
                             <Formik

@@ -22,6 +22,9 @@ import Sidebar from "../../components/Header";
 import MaterialTitlePanel from "../../components/material_title_panel";
 import SidebarContent from "../../components/sidebar_content";
 import * as XLSX from "xlsx";
+import NewNavbar from '../../components/NewNavbar'
+import styleTrans from '../../assets/css/transaksi.module.css'
+import style from '../../assets/css/public.module.css'
 
 class Report extends Component {
 
@@ -61,6 +64,14 @@ class Report extends Component {
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
+    }
+
+    prosesSidebar = (val) => {
+        this.setState({sidebarOpen: val})
+    }
+    
+    goRoute = (val) => {
+        this.props.history.push(`/${val}`)
     }
 
     toggle = () => {
@@ -528,7 +539,138 @@ class Report extends Component {
           };
         return (
             <>
-            <Sidebar {...sidebarProps}>
+            <div className={styleTrans.app}>
+                <NewNavbar handleSidebar={this.prosesSidebar} handleRoute={this.goRoute} />
+
+                <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
+                    <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                        <div>Report not found</div>
+                    </Alert>
+                    <h2 className={styleTrans.pageTitle}>Report</h2>
+                    <div className='mt-4'>
+                        <div className="headReport">
+                            <text className="col-md-2 fontReport">Jenis</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <ButtonDropdown isOpen={this.state.openType} toggle={this.openTypeFunc}>
+                                    <DropdownToggle caret color="light">
+                                        {type}
+                                    </DropdownToggle>
+                                    <DropdownMenu>
+                                        <DropdownItem onClick={() => this.setState({type: 'daily'})}>
+                                            Daily
+                                        </DropdownItem>
+                                        <DropdownItem onClick={() => this.setState({type: 'monthly'})}>
+                                            Monthly
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                </ButtonDropdown>
+                            </div>
+                        </div>
+                        {type === "daily" ? (
+                        <div className="headReport">
+                            <text className="col-md-2 fontReport">Tanggal Dokumen</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <Input type="date" name="creeatedAt" onChange={this.chooseFrom}/>
+                                <text className="toColon">To</text>
+                                <text className="colon">:</text>
+                                <Input type="date" name="creeatedAt" onChange={this.chooseTo} />
+                            </div>
+                        </div>
+                        ) : type === "monthly" ?(
+                        <div className="headReport">
+                            <text className="col-md-2 fontReport">Periode Dokumen</text>
+                            <div className="optionType col-md-4">
+                                <text className="colon">:</text>
+                                <Input type="select" name="select" onChange={this.chooseFrom}>
+                                    <option value="">-Pilih Period-</option>
+                                    {this.state.month.length !== 0 && this.state.month.map(item => {
+                                        return (
+                                            <option value={moment(item).format('YYYY-MM-DD')}>{moment(item).format('MMMM')}</option>
+                                        )
+                                    })}
+                                </Input>
+                            </div>
+                        </div>
+                        ): (
+                            <div></div>
+                        )}
+                        {level === '3' ? (
+                        <div>
+                            <div className="headReport">
+                                <text className="col-md-2 fontReport">Depo</text>
+                                <div className="optionType col-md-4">
+                                    <text className="colons">:</text>
+                                    <Select
+                                            className="col-md-12"
+                                            options={this.state.options}
+                                            onChange={this.chooseDepo}
+                                            isDisabled={this.state.pic === '' ? false : true}
+                                        />
+                                </div>
+                            </div>
+                            <Button
+                            onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : this.state.kode === '' ? true : false }
+                                >
+                                    Download
+                                </Button>
+                        </div>   
+                        ) : level === '4' || level === '5' ? (
+                                <Button
+                                onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : false }
+                                >
+                                    Download
+                                </Button>
+                        ) : (
+                            <div>
+                                <div className="headReport">
+                                    <text className="col-md-2 fontReport">PIC</text>
+                                    <div className="optionType col-md-4">
+                                        <text className="colons">:</text>
+                                        <Select
+                                            className="col-md-12"
+                                            options={this.state.depo}
+                                            onChange={this.choosePic}
+                                            isDisabled={this.state.kode === '' ? false : true}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="headReport">
+                                    <text className="col-md-2 fontReport">Depo</text>
+                                    <div className="optionType col-md-4">
+                                        <text className="colons">:</text>
+                                        <Select
+                                            className="col-md-12"
+                                            options={this.state.options}
+                                            onChange={this.chooseDepo}
+                                            isDisabled={this.state.pic === '' ? false : true}
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                onClick={this.createReport}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={this.state.from === '' || this.state.to === '' ? true : this.state.pic === '' && this.state.kode !== '' ? false : this.state.pic !== '' && this.state.kode === '' ? false : true }
+                                >
+                                    Download
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+            {/* <Sidebar {...sidebarProps}>
                 <MaterialTitlePanel title={contentHeader}>
                     <div className="background-logo">
                         <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
@@ -660,7 +802,7 @@ class Report extends Component {
                         </div>
                     </div>
                 </MaterialTitlePanel>
-            </Sidebar>
+            </Sidebar> */}
             <Modal isOpen={this.props.dashboard.isLoading ? true: false} size="sm">
                     <ModalBody>
                     <div>

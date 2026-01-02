@@ -32,6 +32,10 @@ export default {
         type: 'UPLOAD_DOKUMEN',
         payload: http(token).post(`/dashboard/upload/${id}/${idAct}`, data)
     }),
+    uploadDokumenMultiple: (token, idAct, data) => ({
+        type: 'UPLOAD_DOKUMEN_MULTIPLE',
+        payload: http(token).post(`/dashboard/upload-multiple/${idAct}`, data)
+    }),
     approve: (token, id, idAct, data) => ({
         type: 'APPROVE',
         payload: http(token).patch(`/dashboard/approve/${id === undefined ? 'zero' : id}/${idAct}`, qs.stringify(data))

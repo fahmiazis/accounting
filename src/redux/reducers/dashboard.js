@@ -106,7 +106,7 @@ export default (state=divisiState, action) => {
                     dataSa: action.payload.data.sa,
                     dataKasir: action.payload.data.kasir,
                     dataDepo: action.payload.data.results.rows,
-                    dataAll: action.payload.data.all,
+                    dataAll: action.payload.data ? action.payload.data.all : [],
                     page: action.payload.data.pageInfo
                 };
             }
@@ -219,7 +219,7 @@ export default (state=divisiState, action) => {
                     isError: false,
                     isGet: true,
                     dataActive: action.payload.data.result.rows[0].doc,
-                    active: action.payload.data.result.rows,
+                    active: action.payload.data.result ? action.payload.data.result.rows : [],
                     alertMsg: 'get activity Succesfully'
                 };
             }
@@ -382,6 +382,31 @@ export default (state=divisiState, action) => {
                 };
             }
             case 'UPLOAD_DOKUMEN_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isUpload: false,
+                    isError: true,
+                    alertMsg: action.payload.response.data.message,
+                };
+            }
+            case 'UPLOAD_DOKUMEN_MULTIPLE_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'UPLOAD_DOKUMEN_MULTIPLE_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isUpload: true,
+                    isError: false,
+                    alertMsg: 'upload dokumen Succesfully'
+                };
+            }
+            case 'UPLOAD_DOKUMEN_MULTIPLE_REJECTED': {
                 return {
                     ...state,
                     isLoading: false,

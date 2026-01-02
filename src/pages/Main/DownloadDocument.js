@@ -69,6 +69,14 @@ class DownloadDocument extends Component {
         this.menuButtonClick = this.menuButtonClick.bind(this);
     }
 
+    prosesSidebar = (val) => {
+        this.setState({sidebarOpen: val})
+    }
+    
+    goRoute = (val) => {
+        this.props.history.push(`/${val}`)
+    }
+
     toggle = () => {
         this.setState({isOpen: !this.state.isOpen})
     }
@@ -565,15 +573,14 @@ class DownloadDocument extends Component {
           };
         return (
             <>
-            <Sidebar {...sidebarProps}>
-                <MaterialTitlePanel title={contentHeader}>
-                    <div className="background-logo">
+                <div className={styleTrans.app}>
+                    <NewNavbar handleSidebar={this.prosesSidebar} handleRoute={this.goRoute} />
+
+                    <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
                         <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
                             <div>Dokumen not found</div>
                         </Alert>
-                        <div className="headMaster mb-4">
-                            <div className="titleDashboard col-md-12">Download Dokumen</div>
-                        </div>
+                        <h2 className={styleTrans.pageTitle}>Download Dokumen</h2>
                         <div className='mt-4'>
                             <div className="headReport">
                                 <text className="col-md-2 fontReport">Nama Dokumen</text>
@@ -634,8 +641,54 @@ class DownloadDocument extends Component {
                             </div>
                         </div>
                     </div>
+                </div>
+            {/* <Sidebar {...sidebarProps}>
+                <MaterialTitlePanel title={contentHeader}>
+                    <div className="background-logo">
+                        <Alert color="danger" className="alertWrong" isOpen={this.state.alert}>
+                            <div>Dokumen not found</div>
+                        </Alert>
+                        <div className="headMaster mb-4">
+                            <div className="titleDashboard col-md-12">Download Dokumen</div>
+                        </div>
+                        <div className='mt-4'>
+                            <div className="headReport">
+                                <text className="col-md-2 fontReport">Nama Dokumen</text>
+                                <div className="optionType col-md-4">
+                                    <text className="colon">:</text>
+                                    <Input 
+                                        type='text' 
+                                        value={this.state.nama_dokumen} 
+                                        name='' 
+                                        onChange={e => this.setState({nama_dokumen: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+                            <div className="headReport">
+                                <text className="col-md-2 fontReport">Tanggal Dokumen</text>
+                                <div className="optionType col-md-4">
+                                    <text className="colon">:</text>
+                                    <Input type="date" name="creeatedAt" onChange={this.chooseFrom}/>
+                                    <text className="toColon">To</text>
+                                    <text className="colon">:</text>
+                                    <Input type="date" name="creeatedAt" onChange={this.chooseTo} />
+                                </div>
+                            </div>
+                            <div>
+                                <Button
+                                onClick={() => this.downloadData()}
+                                color="primary" 
+                                size="lg" 
+                                className="ml-3 mt-3 col-md-1"
+                                disabled={(this.state.from === '' || this.state.to === '' || this.state.nama_dokumen === '') ? true : false}
+                                >
+                                    Download
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </MaterialTitlePanel>
-            </Sidebar>
+            </Sidebar> */}
             <Modal isOpen={this.props.dashboard.isLoading || this.state.isLoading ? true: false} size="sm">
                     <ModalBody>
                     <div>
