@@ -16,9 +16,9 @@ export default {
         type: 'NEXT_DATA',
         payload: http(token).get(`${link}`)
     }),
-    getDashboardPic: (token, tipe, time, search, limit, page) => ({
+    getDashboardPic: (token, tipe, time, search, limit, page, status) => ({
         type: 'GET_DASHBOARD_PIC',
-        payload: http(token).get(`/dashboard/get?tipe=${tipe}&time=${time}&find=${search}&limit=${limit}&page=${page === undefined ? 1 : page}`)
+        payload: http(token).get(`/dashboard/get?tipe=${tipe}&time=${time}&find=${search}&limit=${limit}&page=${page === undefined ? 1 : page}&statusUpload=${status}`)
     }),
     getActivity: (token, search) => ({
         type: 'GET_ACTIVITY',

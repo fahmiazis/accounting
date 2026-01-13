@@ -24,10 +24,10 @@ import NewNavbar from '../../components/NewNavbar'
 import styleTrans from '../../assets/css/transaksi.module.css'
 import style from '../../assets/css/public.module.css'
 const {REACT_APP_BACKEND_URL} = process.env
-const dataType = ['mb51', 'main', 'baso']
-// const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb51', 'main']
+const dataType = ['mb52', 'eds']
+// const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb52', 'eds']
 
-class ReportInventory extends Component {
+class ReportEndStock extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -215,7 +215,7 @@ class ReportInventory extends Component {
 
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
-        if (size >= 500000000) {
+        if (size >= 100000000) {
             this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
         } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
@@ -395,7 +395,7 @@ class ReportInventory extends Component {
         await this.props.deleteRepinv(token, data)
         this.getDataRepinv()
         this.openModalDelete()
-        // this.openModalUpdate()
+        this.openModalUpdate()
         this.setState({confirm: 'delete'})
         this.openConfirm()
     }
@@ -438,8 +438,9 @@ class ReportInventory extends Component {
 
     prosesGenerate = async () => {
         const token = localStorage.getItem("token")
-        const { listInventory, selectMonth, selectYear } = this.state
-        const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
+        const { listInventory, selectMonth } = this.state
+        const year = moment().year(); // misalnya 2025
+        const startOfMonth = moment(`${year}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
         const data = {
             listPlant: listInventory,
             date: startOfMonth.format('YYYY-MM-DD')
@@ -453,8 +454,9 @@ class ReportInventory extends Component {
 
     prosesMerge = async () => {
         const token = localStorage.getItem("token")
-        const { listReport, selectMonth, selectYear } = this.state
-        const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
+        const { listReport, selectMonth } = this.state
+        const year = moment().year(); // misalnya 2025
+        const startOfMonth = moment(`${year}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
         const data = {
             listIds: listReport,
             date: startOfMonth.format('YYYY-MM-DD')
@@ -663,49 +665,13 @@ class ReportInventory extends Component {
             years.push(year);
         }
 
-        // const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb51', 'main']
-        const startOfMonth = moment(`${this.state.selectYear}-${this.state.selectMonth}-01`, "YYYY-M-DD").startOf("month")
+        // const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb52', 'eds']
+        const startOfMonth = moment(`${currentYear}-${this.state.selectMonth}-01`, "YYYY-M-DD").startOf("month")
         const dataStatus = [
             { status: 1, text: 'File Upload' },
             { status: 2, text: 'Output Report' },
             { status: 3, text: 'Merge Output Report' },
         ]
-
-        const contentHeader =  (
-            <div className="navbar">
-                <NavbarBrand
-                    href="#"
-                    onClick={this.menuButtonClick}
-                    >
-                        <FaBars size={20} className="white" />
-                    </NavbarBrand>
-                    <div className="divLogo">
-                        <marquee className='marquee'>
-                            <span>WEB ACCOUNTING</span>
-                        </marquee>
-                        <div className="textLogo">
-                            <FaUserCircle size={24} className="mr-2" />
-                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
-                        </div>
-                    </div>
-            </div>
-        )
-
-        const sidebar = <SidebarContent />
-        const sidebarProps = {
-            sidebar,
-            docked: this.state.docked,
-            sidebarClassName: "custom-sidebar-class",
-            contentId: "custom-sidebar-content-id",
-            open: this.state.open,
-            touch: this.state.touch,
-            shadow: this.state.shadow,
-            pullRight: this.state.pullRight,
-            touchHandleWidth: this.state.touchHandleWidth,
-            dragToggleDistance: this.state.dragToggleDistance,
-            transitions: this.state.transitions,
-            onSetOpen: this.onSetOpen
-          };
         return (
             <>
                 <div className={styleTrans.app}>
@@ -713,7 +679,7 @@ class ReportInventory extends Component {
 
                     <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
 
-                        <h2 className={styleTrans.pageTitle}>Report Inventory</h2>
+                        <h2 className={styleTrans.pageTitle}>Report End Stock</h2>
                             
                         <div className={styleTrans.searchContainer}>
                             <div className='rowCenter'>
@@ -840,7 +806,7 @@ class ReportInventory extends Component {
                                                 <td>{item.pic_kasbank}</td>
                                                 {dataType.map(type => {
                                                     return (
-                                                        <td className={styleTrans.colFile}>{dataRepinv.length === 0 ? '-' : dataRepinv.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataRepinv.find(x => (x.plant === item.plant && x.type === type)).updatedAt).format('DD/MM/YYYY')} - upload by ${dataRepinv.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
+                                                        <td className={styleTrans.colFile}>{dataRepinv.length === 0 ? '-' : dataRepinv.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataRepinv.find(x => (x.plant === item.plant && x.type === type)).createdAt).format('DD/MM/YYYY')} - upload by ${dataRepinv.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
                                                     )
                                                 })}
                                                 <td >{startOfMonth.format('MMMM YYYY')}</td>
@@ -1096,7 +1062,7 @@ class ReportInventory extends Component {
                     </Formik>
                 </Modal>
                 <Modal toggle={this.openModalUpdate} isOpen={this.state.modalUpdate} size='lg'>
-                    <ModalHeader>Update File Uploadss</ModalHeader>
+                    <ModalHeader>Update File Upload</ModalHeader>
                     <ModalBody>
                         <Table>
                             <thead>
@@ -1115,7 +1081,7 @@ class ReportInventory extends Component {
                                         <td>{index + 1}</td>
                                         <td>{item.name}</td>
                                         <td>{item.type}</td>
-                                        <td>{moment(item.updatedAt).format('DD MMMM YYYY hh:mm')}</td>
+                                        <td>{moment(item.createdAt).format('DD MMMM YYYY hh:mm')}</td>
                                         <td>
                                             <Button className='ml-1 mt-1' onClick={() => this.prosesOpen(item, 'update')} color='success'>Update</Button>
                                             <Button className='ml-1 mt-1' onClick={() => this.downloadFile(item)} color='primary'>Download</Button>
@@ -1133,7 +1099,7 @@ class ReportInventory extends Component {
                     </ModalFooter>
                 </Modal>
                 <Modal toggle={this.openModalUpload} isOpen={this.state.modalUpload} size='xl'>
-                    <ModalHeader toggle={this.openModalUpload}>Bulk upload file MB51 / BASO</ModalHeader>
+                    <ModalHeader toggle={this.openModalUpload}>Bulk upload file MB51</ModalHeader>
                     <Formik
                     initialValues={{
                         name: '',
@@ -1174,7 +1140,7 @@ class ReportInventory extends Component {
                                     onBlur={handleBlur("type")}
                                 >
                                     <option>-Pilih Type File-</option>
-                                    {dataType.length !== 0 && dataType.filter(x => x !== 'main').map(item => {
+                                    {dataType.length !== 0 && dataType.filter(x => x === 'mb52').map(item => {
                                         return (
                                             <option value={item}>{item}</option>
                                         )
@@ -1438,5 +1404,5 @@ const mapDispatchToProps = {
     mergeRepinv: inventory.mergeRepinv
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ReportInventory)
+export default connect(mapStateToProps, mapDispatchToProps)(ReportEndStock)
 	

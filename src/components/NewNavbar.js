@@ -49,6 +49,7 @@ class NewNavbar extends Component {
       openSetting: false,
       openInv: false,
       openMut: false,
+      openEndStock: false,
     };
   }
 
@@ -94,7 +95,7 @@ class NewNavbar extends Component {
       console.log(this.state.isLogo)
       const {sidebarOpen} = this.state
       if (sidebarOpen === true) {
-        this.setState({isOpen: false, openDokumen: false, openSetting: false, openMut: false, openInv: false})
+        this.setState({isOpen: false, openDokumen: false, openSetting: false, openMut: false, openInv: false, openEndStock: false})
         this.props.handleSidebar(sidebarOpen)
       } else {
         this.props.handleSidebar(sidebarOpen)
@@ -129,6 +130,10 @@ class NewNavbar extends Component {
 
   toggleInv = () => {
       this.setState({openInv: !this.state.openInv})
+  }
+
+  toggleEndStock = () => {
+      this.setState({openEndStock: !this.state.openEndStock})
   }
 
   toggleMut = () => {
@@ -201,6 +206,22 @@ class NewNavbar extends Component {
                 </div>
               )}
             </Collapse>
+
+             {(level === '2' || level === '1' || level === '3') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.toggleEndStock}
+              >
+                <FaTasks className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>End Stock</span>}
+              </div>
+            )}
+
+            <Collapse isOpen={this.state.openEndStock} className="ml-3 mt-2">
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-endstock')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Report End Stock</span>}
+              </div>
+            </Collapse>
           
             {(level === '2' || level === '1' || level === '3') && (
               <div href="#" className={styleTrans.menuLink} 
@@ -215,7 +236,7 @@ class NewNavbar extends Component {
               {(level === '2' || level === '1') && (
                 <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('inventory')} >
                     <FaArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
-                    {(!sidebarOpen || isMobile) &&  <span>Master Inventory</span>}
+                    {(!sidebarOpen || isMobile) &&  <span>Master Depo Inventory</span>}
                 </div>
               )}
               {(level === '2' || level === '1') && (

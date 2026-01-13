@@ -36,8 +36,11 @@ import LogUpload from './pages/Sales/LogUpload'
 
 // Inventory
 import MasterMovement from './pages/Inventory/MasterMovement'
-import MasterInventory from './pages/Inventory/MasterInventory'
+import MasterAreaInventory from './pages/Inventory/MasterAreaInventory'
 import ReportInventory from './pages/Inventory/ReportInventory'
+
+// End Stock
+import ReportEndstock from './pages/endstock/ReportEndstock'
 
 class App extends Component {
 
@@ -111,10 +114,13 @@ class App extends Component {
                     <MasterMovement />
                 </PrivateRoute>
                 <PrivateRoute path="/inventory">
-                    <MasterInventory />
+                    <MasterAreaInventory />
                 </PrivateRoute>
                 <PrivateRoute path="/report-inventory">
                     <ReportInventory />
+                </PrivateRoute>
+                <PrivateRoute path="/report-endstock">
+                    <ReportEndstock />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

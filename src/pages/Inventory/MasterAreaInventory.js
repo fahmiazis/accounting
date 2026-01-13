@@ -35,7 +35,7 @@ const inventorySchema = Yup.object().shape({
     status_area: Yup.string().required()
 });
 
-class MasterInventory extends Component {
+class MasterAreaInventory extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -375,7 +375,7 @@ class MasterInventory extends Component {
 
                     <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
 
-                        <h2 className={styleTrans.pageTitle}>Master Inventory</h2>
+                        <h2 className={styleTrans.pageTitle}>Master Area Inventory</h2>
                             
                         <div className={styleTrans.searchContainer}>
                             <div>
@@ -1075,5 +1075,5 @@ const mapDispatchToProps = {
     deleteInventory: inventory.deleteInventory
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(MasterInventory)
+export default connect(mapStateToProps, mapDispatchToProps)(MasterAreaInventory)
 	
