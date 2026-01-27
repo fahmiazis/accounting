@@ -50,6 +50,7 @@ class NewNavbar extends Component {
       openInv: false,
       openMut: false,
       openEndStock: false,
+      openSalesConsole: false
     };
   }
 
@@ -95,7 +96,7 @@ class NewNavbar extends Component {
       console.log(this.state.isLogo)
       const {sidebarOpen} = this.state
       if (sidebarOpen === true) {
-        this.setState({isOpen: false, openDokumen: false, openSetting: false, openMut: false, openInv: false, openEndStock: false})
+        this.setState({isOpen: false, openDokumen: false, openSetting: false, openMut: false, openInv: false, openEndStock: false, openSalesConsole: false })
         this.props.handleSidebar(sidebarOpen)
       } else {
         this.props.handleSidebar(sidebarOpen)
@@ -134,6 +135,10 @@ class NewNavbar extends Component {
 
   toggleEndStock = () => {
       this.setState({openEndStock: !this.state.openEndStock})
+  }
+
+  toggleSalesConsole = () => {
+      this.setState({openSalesConsole: !this.state.openSalesConsole})
   }
 
   toggleMut = () => {
@@ -192,6 +197,13 @@ class NewNavbar extends Component {
                 </div>
               )}
 
+              {/* {(level === '3' || level === '2' || level === '1') && (
+                  <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-dokumen')} >
+                    <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                    {(!sidebarOpen || isMobile) &&  <span>Report Document</span>}
+                </div>
+              )} */}
+
               {(level === '2') && (
                   <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('setting/dokumen')} >
                     <RiFileSettingsLine className={styleTrans.icon} size={sidebarOpen && 20} /> 
@@ -207,7 +219,7 @@ class NewNavbar extends Component {
               )}
             </Collapse>
 
-             {(level === '2' || level === '1' || level === '3') && (
+            {(level === '2' || level === '1' || level === '3') && (
               <div href="#" className={styleTrans.menuLink} 
                 onClick={this.toggleEndStock}
               >
@@ -311,6 +323,22 @@ class NewNavbar extends Component {
               <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
               {(!sidebarOpen || isMobile) &&  <span>Report</span>}
             </div>
+
+            {(level === '2' || level === '1') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.toggleSalesConsole}
+              >
+                <FaTasks className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Sales Console</span>}
+              </div>
+            )}
+
+            <Collapse isOpen={this.state.openSalesConsole} className="ml-3 mt-2">
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('sales-console')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Sales Console</span>}
+              </div>
+            </Collapse>
 
             {(level === '2' || level === '1') && (
               <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('uploadsales')} >

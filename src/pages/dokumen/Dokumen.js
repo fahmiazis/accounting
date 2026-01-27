@@ -95,7 +95,8 @@ class Dokumen extends Component {
             // upload multiple
             selectedDocuments: [],
             multipleFiles: [],
-            status: 'uploaded'
+            status: 'uploaded',
+            filter: 'all'
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -103,6 +104,13 @@ class Dokumen extends Component {
 
     handleStatus = (e) => {
         this.setState({ status: e.target.value});
+        setTimeout(() => {
+            this.getDataDashboard()
+        }, 100)
+    }
+
+    handleFilter = (e) => {
+        this.setState({ filter: e.target.value});
         setTimeout(() => {
             this.getDataDashboard()
         }, 100)
@@ -165,10 +173,10 @@ class Dokumen extends Component {
 
     afterAppRej = async () => {
         const token = localStorage.getItem('token')
-        const { noindex, status } = this.state
+        const { noindex, status, filter } = this.state
         const {page} = this.props.dashboard
         const {tipe} = this.state
-        await this.props.getDashboardPic(token, tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage, status)
+        await this.props.getDashboardPic(token, tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, page.currentPage, status, filter)
         await this.props.getAlasan(token, 100, '')
         const {dataAll} = this.props.dashboard
         this.setState({doc: dataAll[noindex].dokumen, act: dataAll[noindex].active})
@@ -564,24 +572,24 @@ class Dokumen extends Component {
 
     chooseTime = async (e) => {
         this.setState({time: e.target.value})
-        const {status} = this.state
+        const {status, filter} = this.state
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
-        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, e.target.value, this.state.search, this.state.limit, 1, status)
+        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, e.target.value, this.state.search, this.state.limit, 1, status, filter)
     }
 
     getDataLimit = async (value) => {
         const token = localStorage.getItem('token')
         const limit = value === undefined ? this.state.limit : value
-        const {status} = this.state
-        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, limit, 1, status)
+        const {status, filter} = this.state
+        await this.props.getDashboardPic(token, this.state.tipe === '' ? 'daily' : this.state.tipe, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, limit, 1, status, filter)
         this.setState({limit: value === undefined ? 10 : value})
     }
 
     getDataMonthly = async (value) => {
-        const {status} = this.state
+        const {status, filter} = this.state
         const token = localStorage.getItem('token')
-        await this.props.getDashboardPic(token, 'monthly', moment(value).format('YYYY-MM-DD'), this.state.search, this.state.limit, 1, status)
+        await this.props.getDashboardPic(token, 'monthly', moment(value).format('YYYY-MM-DD'), this.state.search, this.state.limit, 1, status, filter)
         this.setState({moon: moment(value), time: value})
     }
 
@@ -591,7 +599,7 @@ class Dokumen extends Component {
         const token = localStorage.getItem('token')
         const level = localStorage.getItem('level')
         const { page } = this.props.dashboard
-        const { status } = this.state
+        const { status, filter } = this.state
         const finalPage = page.currentPage
         if (level === '4' || level === '5') {
             await this.props.getDashboard(token, value === undefined ? 'daily' : value)
@@ -602,7 +610,7 @@ class Dokumen extends Component {
             this.setState({tipe: value === undefined ? 'daily' : value})
         } else if (level === '3' || level === '1' || level === '2') {
             const {tipe} = this.state
-            await this.props.getDashboardPic(token, value === undefined ? tipe : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, finalPage, status)
+            await this.props.getDashboardPic(token, value === undefined ? tipe : value, this.state.time === '' ? moment().format('YYYY-MM-DD') : this.state.time, this.state.search, this.state.limit, finalPage, status, filter)
             await this.props.getAlasan(token, 100, '')
             this.setState({tipe: value === undefined ? 'daily' : value, })
         }
@@ -614,16 +622,19 @@ class Dokumen extends Component {
         const {dataSa, dataKasir} = this.props.dashboard
         const data = []
         const moon = []
-        dataSa.map(x => {
-            return (
-                data.push(x !== null ? x.dokumen.length : 0)
-            )
-        })
-        dataKasir.map(x => {
-            return (
-                data.push(x !== null ? x.dokumen.length : 0)
-            )
-        })
+
+        for (let i = 0; i < dataSa.length; i++) {
+            const x = dataSa[i]
+            data.push(x !== null ? x.dokumen.length : 0)
+            data.push(x !== null ? (x.active[0] ? x.active[0].doc.length : 0) : 0)
+        }
+
+        for (let i = 0; i < dataKasir.length; i++) {
+            const x = dataKasir[i]
+            data.push(x !== null ? x.dokumen.length : 0)
+            data.push(x !== null ? (x.active[0] ? x.active[0].doc.length : 0) : 0)
+        }
+
         const res = []
         for (let i = 0; i <= Math.max(...data)-1; i++) {
             res.push(i)
@@ -915,19 +926,33 @@ class Dokumen extends Component {
                                     )
                                 )}
                             </div>
-                            <div>
+                            <div className='rowCenter'>
                                 {(level == "6" || level == '1' || level == '2' || level == '3') && (
-                                    <Input
-                                        type="select"
-                                        name="status"
-                                        value={this.state.status}
-                                        onChange={this.handleStatus}
-                                    >
-                                        <option value="">Pilih Status</option>
-                                        <option value="all">All</option>
-                                        <option value="uploaded">Uploaded</option>
-                                        <option value="not uploaded">Not Uploaded</option>
-                                    </Input>
+                                    <>
+                                        <Input
+                                            type="select"
+                                            name="filter"
+                                            className='mr-3'
+                                            value={this.state.filter}
+                                            onChange={this.handleFilter}
+                                        >
+                                            <option value="">Pilih Filter</option>
+                                            <option value="all">All</option>
+                                            <option value="sa">SA</option>
+                                            <option value="kasir">Kasir</option>
+                                        </Input>
+                                        <Input
+                                            type="select"
+                                            name="status"
+                                            value={this.state.status}
+                                            onChange={this.handleStatus}
+                                        >
+                                            <option value="">Pilih Status</option>
+                                            <option value="all">All</option>
+                                            <option value="uploaded">Uploaded</option>
+                                            <option value="not uploaded">Not Uploaded</option>
+                                        </Input>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -957,6 +982,9 @@ class Dokumen extends Component {
                                             <DropdownItem className="item" onClick={() => this.getDataLimit(10)}>10</DropdownItem>
                                             <DropdownItem className="item" onClick={() => this.getDataLimit(20)}>20</DropdownItem>
                                             <DropdownItem className="item" onClick={() => this.getDataLimit(50)}>50</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(100)}>100</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(200)}>200</DropdownItem>
+                                            <DropdownItem className="item" onClick={() => this.getDataLimit(500)}>500</DropdownItem>
                                         </DropdownMenu>
                                         </ButtonDropdown>
                                     )}
@@ -1035,18 +1063,19 @@ class Dokumen extends Component {
                             {level === '4' || level === '5' ? (
                                 <tbody>
                                     {active !== undefined && active.map(x => {
+                                        const dateMonthly = x.documentDate > x.createdAt ? x.documentDate : x.createdAt
                                         return (
                                         <tr className="danger" onClick={() => this.openProses(active.indexOf(x))}>
                                             <td>{(active.indexOf(x) + 1)}</td>
-                                            {x.jenis_dokumen == 'monthly' ? (
-                                                <td>{moment(x.createdAt).subtract(1, 'month').format('MMMM YYYY')}</td>
+                                            {x.jenis_dokumen === 'monthly' ? (
+                                                <td>{moment(dateMonthly).subtract(1, 'month').format('MMMM YYYY')}</td>
                                             ) : moment(moment(x.createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ? (
                                                 <td>{moment(x.createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
                                             ) : (
                                                 <td>{moment(x.createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
                                             )}
-                                            {x.jenis_dokumen == 'monthly' ? (
-                                                <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
+                                            {x.jenis_dokumen === 'monthly' ? (
+                                                <td>{moment(dateMonthly).format('MMMM YYYY')}</td>
                                             ) : (
                                                 <td>{moment(x.createdAt).format('DD MMMM, YYYY')}</td>
                                             )}
@@ -1300,7 +1329,7 @@ class Dokumen extends Component {
                                                 <div>
                                                     {/* this.setState({file: doc.find(({dokumen}) => dokumen === item).path, fileName: doc.find(({dokumen}) => dokumen === item)} */}
                                                     <a onClick={() => this.showDokumen(doc.find(({dokumen}) => dokumen === item))}>
-                                                        {doc.find(({dokumen}) => dokumen === item).dokumen} {doc.find(({dokumen}) => dokumen === item).id} {dataDash.find(({nama_dokumen}) => nama_dokumen === item).id}
+                                                        {doc.find(({dokumen}) => dokumen === item)?.dokumen} {doc.find(({dokumen}) => dokumen === item)?.id} {dataDash.find(({nama_dokumen}) => nama_dokumen === item)?.id}
                                                     </a>
                                                     <Input
                                                     type="file"

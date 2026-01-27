@@ -13,6 +13,7 @@ import date from './date'
 import merge from './merge'
 import movement from './movement'
 import inventory from './inventory'
+import salesConsole from './salesConsole'
 
 export default combineReducers({
   auth,
@@ -28,4 +29,5 @@ export default combineReducers({
   merge,
   movement,
   inventory,
+  salesConsole
 })

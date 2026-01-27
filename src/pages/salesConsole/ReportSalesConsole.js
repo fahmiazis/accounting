@@ -13,6 +13,7 @@ import * as Yup from 'yup'
 import divisi from '../../redux/actions/divisi'
 import depo from '../../redux/actions/depo'
 import inventory from '../../redux/actions/inventory'
+import salesConsole from '../../redux/actions/salesConsole'
 import {connect} from 'react-redux'
 import auth from '../../redux/actions/auth'
 import {default as axios} from 'axios'
@@ -24,10 +25,10 @@ import NewNavbar from '../../components/NewNavbar'
 import styleTrans from '../../assets/css/transaksi.module.css'
 import style from '../../assets/css/public.module.css'
 const {REACT_APP_BACKEND_URL} = process.env
-const dataType = ['mb51', 'main', 'baso']
+const dataType = ['file-sales-console']
 // const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb51', 'main']
 
-class ReportInventory extends Component {
+class SalesConsole extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -60,7 +61,7 @@ class ReportInventory extends Component {
             search: '',
             modalDelete: false,
             modalGenerate: false,
-            listInventory: [],
+            listSalesConsole: [],
             stateInv: [],
             baseInv: [],
             selectMonth: moment().month() + 1,
@@ -99,15 +100,15 @@ class ReportInventory extends Component {
     }
 
     next = async () => {
-        const { page } = this.props.inventory
+        const { page } = this.props.salesConsole
         const token = localStorage.getItem('token')
-        await this.props.nextPage(token, page.nextLink)
+        await this.props.nextPageSalesConsole(token, page.nextLink)
     }
 
     prev = async () => {
-        const { page } = this.props.inventory
+        const { page } = this.props.salesConsole
         const token = localStorage.getItem('token')
-        await this.props.nextPage(token, page.prevLink)
+        await this.props.nextPageSalesConsole(token, page.prevLink)
     }
 
     uploadAlert = () => {
@@ -144,7 +145,7 @@ class ReportInventory extends Component {
     }
 
     DownloadMaster = () => {
-        const {link} = this.props.inventory
+        const {link} = this.props.salesConsole
         axios({
             url: `${link}`,
             method: 'GET',
@@ -157,11 +158,6 @@ class ReportInventory extends Component {
             document.body.appendChild(link);
             link.click();
         });
-    }
-
-    ExportMaster = () => {
-        const token = localStorage.getItem('token')
-        this.props.exportMaster(token)
     }
 
     dropDown = () => {
@@ -204,19 +200,10 @@ class ReportInventory extends Component {
         this.openModalUpdate()
     }
 
-    addInventory = async (values) => {
-        const token = localStorage.getItem("token")
-        await this.props.addInventory(token, values)
-        this.setState({confirm: 'add'})
-        this.openConfirm()
-        this.getDataRepinv()
-        this.openModalAdd()
-    }
-
     onChangeHandler = e => {
         const {size, type} = e.target.files[0]
-        if (size >= 500000000) {
-            this.setState({errMsg: "Maximum upload size 100 MB"})
+        if (size >= 5000000000) {
+            this.setState({errMsg: "Maximum upload size 5 GB"})
             this.uploadAlert()
         } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
             this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
@@ -226,25 +213,23 @@ class ReportInventory extends Component {
         }
     }
 
-    uploadBulkRepinv = async (val) => {
-        const { listInventory } = this.state
+    uploadBulkSalesConsole = async (val) => {
+        const { listSalesConsole } = this.state
         const token = localStorage.getItem('token')
         const data = new FormData()
         data.append('master', this.state.fileUpload)
         data.append('name', val.name)
         data.append('type', val.type)
-        data.append('plant', listInventory[0])
-        data.append('list', listInventory.toString())
         data.append('date_report', val.date_report)
         const typeUpload = 'bulk'
-        await this.props.uploadRepinv(token, data, typeUpload)
+        await this.props.uploadSalesConsole(token, data, typeUpload)
         this.setState({confirm: 'upload', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataSalesConsole()
         this.openModalUpload()
     }
 
-    uploadRepinv = async (val) => {
+    uploadSalesConsole = async (val) => {
         const token = localStorage.getItem('token')
         const data = new FormData()
         data.append('master', this.state.fileUpload)
@@ -252,14 +237,14 @@ class ReportInventory extends Component {
         data.append('type', val.type)
         data.append('plant', val.plant)
         data.append('date_report', val.date_report)
-        await this.props.uploadRepinv(token, data)
+        await this.props.uploadSalesConsole(token, data)
         this.setState({confirm: 'upload', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataSalesConsole()
         this.openModalAdd()
     }
 
-    updateRepinv = async (val) => {
+    updateSalesConsole = async (val) => {
         const token = localStorage.getItem('token')
         const { detailData } = this.state
 
@@ -271,7 +256,7 @@ class ReportInventory extends Component {
                 plant: val.plant,
                 date_report: val.date_report
             }
-            await this.props.updateRepinv(token, 'update', data)
+            await this.props.updateSalesConsole(token, 'update', data)
         } else {
             const data = new FormData()
             data.append('id', detailData.id)
@@ -280,23 +265,14 @@ class ReportInventory extends Component {
             data.append('plant', val.plant)
             data.append('date_report', val.date_report)
             data.append('master', this.state.fileUpload)
-            await this.props.updateRepinv(token, 'upload', data)
+            await this.props.updateSalesConsole(token, 'upload', data)
         }
 
         this.setState({confirm: 'update', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataSalesConsole()
         this.openModalAdd()
         this.openModalUpdate()
-    }
-
-    editInventory = async (values,id) => {
-        const token = localStorage.getItem("token")
-        await this.props.updateInventory(token, id, values)
-        this.setState({confirm: 'edit'})
-        this.openConfirm()
-        this.getDataRepinv()
-        this.openModalEdit()
     }
 
     openModalDelete = () => {
@@ -308,44 +284,44 @@ class ReportInventory extends Component {
     }
 
     chekApp = (val) => {
-        const { listInventory, stateInv } = this.state
+        const { listSalesConsole, stateInv } = this.state
         if (val === 'all') {
             const data = []
             for (let i = 0; i < stateInv.length; i++) {
                 data.push(stateInv[i].plant)
             }
-            this.setState({listInventory: data})
+            this.setState({listSalesConsole: data})
         } else {
-            listInventory.push(val)
-            this.setState({listInventory: listInventory})
+            listSalesConsole.push(val)
+            this.setState({listSalesConsole: listSalesConsole})
         }
     }
 
     chekRej = (val) => {
-        const {listInventory} = this.state
+        const {listSalesConsole} = this.state
         if (val === 'all') {
             const data = []
-            this.setState({listInventory: data})
+            this.setState({listSalesConsole: data})
         } else {
             const data = []
-            for (let i = 0; i < listInventory.length; i++) {
-                if (listInventory[i] === val) {
+            for (let i = 0; i < listSalesConsole.length; i++) {
+                if (listSalesConsole[i] === val) {
                     data.push()
                 } else {
-                    data.push(listInventory[i])
+                    data.push(listSalesConsole[i])
                 }
             }
-            this.setState({listInventory: data})
+            this.setState({listSalesConsole: data})
         }
     }
 
     reportApp = (val) => {
         const { listReport, stateInv } = this.state
-        const { dataRepinv } = this.props.inventory
+        const { dataSalesConsole } = this.props.salesConsole
         if (val === 'all') {
             const data = []
-            for (let i = 0; i < dataRepinv.length; i++) {
-                data.push(dataRepinv[i].id)
+            for (let i = 0; i < dataSalesConsole.length; i++) {
+                data.push(dataSalesConsole[i].id)
             }
             this.setState({listReport: data})
         } else {
@@ -378,8 +354,8 @@ class ReportInventory extends Component {
         const data = {
             listId: listReport
         }
-        await this.props.deleteRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.deleteSalesConsole(token, data)
+        this.getDataSalesConsole()
         this.openModalDelete()
         this.setState({confirm: 'delete'})
         this.openConfirm()
@@ -392,8 +368,8 @@ class ReportInventory extends Component {
         const data = {
             listId: [idDelete]
         }
-        await this.props.deleteRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.deleteSalesConsole(token, data)
+        this.getDataSalesConsole()
         this.openModalDelete()
         // this.openModalUpdate()
         this.setState({confirm: 'delete'})
@@ -407,17 +383,17 @@ class ReportInventory extends Component {
     }
 
     prosesReport = () => {
-        const { listInventory, typeReport, listReport } = this.state
-        const {dataRepinv} = this.props.inventory
+        const { listSalesConsole, typeReport, listReport } = this.state
+        const {dataSalesConsole} = this.props.salesConsole
         if (parseInt(typeReport) === 1) {
             const cek = []
-            for (let i = 0; i < listInventory.length; i++) {
-                const cekPlant = this.getStatus(listInventory[i])
+            for (let i = 0; i < listSalesConsole.length; i++) {
+                const cekPlant = this.getStatus(listSalesConsole[i])
                 if (cekPlant === 'Full Upload') {
                     cek.push(cekPlant)
                 }
             }
-            if (cek.length === listInventory.length) {
+            if (cek.length === listSalesConsole.length) {
                 this.prosesGenerate()
             } else {
                 this.setState({confirm: 'failGenerate'})
@@ -438,14 +414,14 @@ class ReportInventory extends Component {
 
     prosesGenerate = async () => {
         const token = localStorage.getItem("token")
-        const { listInventory, selectMonth, selectYear } = this.state
+        const { listSalesConsole, selectMonth, selectYear } = this.state
         const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
         const data = {
-            listPlant: listInventory,
+            listPlant: listSalesConsole,
             date: startOfMonth.format('YYYY-MM-DD')
         }
-        await this.props.generateRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.generateSalesConsole(token, data)
+        this.getDataSalesConsole()
         this.openModalGenerate()
         this.setState({confirm: 'generate'})
         this.openConfirm()
@@ -459,8 +435,8 @@ class ReportInventory extends Component {
             listIds: listReport,
             date: startOfMonth.format('YYYY-MM-DD')
         }
-        await this.props.mergeRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.mergeSalesConsole(token, data)
+        this.getDataSalesConsole()
         this.openModalGenerate()
         this.setState({confirm: 'merge'})
         this.openConfirm()
@@ -500,7 +476,7 @@ class ReportInventory extends Component {
       };
 
     componentDidUpdate() {
-        const {isError, isUpload, isExport} = this.props.inventory
+        const {isError, isUpload, isExport} = this.props.salesConsole
         if (isError) {
             this.props.resetError()
             this.showAlert()
@@ -509,7 +485,7 @@ class ReportInventory extends Component {
         //     this.props.resetError()
         //     this.setState({modalUpload: false})
         //     setTimeout(() => {
-        //         this.getDataRepinv()
+        //         this.getDataSalesConsole()
         //     }, 100)
         // }  
         else if (isExport) {
@@ -519,8 +495,7 @@ class ReportInventory extends Component {
     }
 
     componentDidMount() {
-        this.getDataRepinv()
-        this.getDataInventory()
+        this.getDataSalesConsole()
         // this.getDataDepo()
         this.getDataDivisi()
     }
@@ -565,30 +540,15 @@ class ReportInventory extends Component {
         this.setState({stateInv: sort})
     };
 
-
-    getDataInventory = async () => {
-        const token = localStorage.getItem("token")
-        const level = localStorage.getItem("level")
-        const name = localStorage.getItem("name")
-        await this.props.getInventory(token, 1000, '', 1)
-        const { dataInventory } = this.props.inventory
-        if (level === '3') {
-            const cek = dataInventory.filter(x => x.pic_kasbank.toString().toLowerCase() === name.toString().toLowerCase())
-            this.setState({stateInv: cek, baseInv: cek})
-        } else {
-            this.setState({stateInv: dataInventory, baseInv: dataInventory})
-        }
-    }
-
-    getDataRepinv = async (value) => {
+    getDataSalesConsole = async (value) => {
         this.setState({})
         const token = localStorage.getItem("token")
-        const { page } = this.props.inventory
+        const { page } = this.props.salesConsole
         const { selectMonth, typeReport, selectYear } = this.state
         const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getRepinv(token, limit, search, page.currentPage, startOfMonth.format('YYYY-MM-DD'), typeReport)
+        await this.props.getSalesConsole(token, limit, search, page.currentPage, startOfMonth.format('YYYY-MM-DD'), typeReport)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
@@ -596,7 +556,7 @@ class ReportInventory extends Component {
         console.log(e.target.value)
         this.setState({ selectMonth: e.target.value });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataSalesConsole()
         }, 100)
     };
 
@@ -604,14 +564,14 @@ class ReportInventory extends Component {
         console.log(e.target.value)
         this.setState({ selectYear: e.target.value });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataSalesConsole()
         }, 100)
     };
 
     handleType = (e) => {
-        this.setState({ typeReport: e.target.value, listReport: [], listInventory: [] });
+        this.setState({ typeReport: e.target.value, listReport: [], listSalesConsole: [] });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataSalesConsole()
         }, 100)
     }
 
@@ -635,8 +595,8 @@ class ReportInventory extends Component {
     }
 
     getStatus = (plant) => {
-        const {dataRepinv} = this.props.inventory
-        const filesForPlant = dataRepinv.filter(x => x.plant === plant);
+        const {dataSalesConsole} = this.props.salesConsole
+        const filesForPlant = dataSalesConsole.filter(x => x.plant === plant);
         
         if (filesForPlant.length === 0) return 'Belum Upload';
 
@@ -649,8 +609,8 @@ class ReportInventory extends Component {
     }
 
     render() {
-        const {detailData, detail, alert, upload, errMsg, listInventory, stateInv, detailInv, typeModal, listReport} = this.state
-        const {dataRepinv, isGet, alertM, alertMsg, alertUpload, page} = this.props.inventory
+        const {detailData, detail, alert, upload, errMsg, listSalesConsole, stateInv, detailInv, typeModal, listReport} = this.state
+        const {dataSalesConsole, isGet, alertM, alertMsg, alertUpload, page} = this.props.salesConsole
         const {dataDivisi} = this.props.divisi
         const {dataDepo} = this.props.depo
         const level = localStorage.getItem('level')
@@ -670,42 +630,6 @@ class ReportInventory extends Component {
             { status: 2, text: 'Output Report' },
             { status: 3, text: 'Merge Output Report' },
         ]
-
-        const contentHeader =  (
-            <div className="navbar">
-                <NavbarBrand
-                    href="#"
-                    onClick={this.menuButtonClick}
-                    >
-                        <FaBars size={20} className="white" />
-                    </NavbarBrand>
-                    <div className="divLogo">
-                        <marquee className='marquee'>
-                            <span>WEB ACCOUNTING</span>
-                        </marquee>
-                        <div className="textLogo">
-                            <FaUserCircle size={24} className="mr-2" />
-                            <text className="mr-3">{level === '1' ? 'Super admin' : names }</text>
-                        </div>
-                    </div>
-            </div>
-        )
-
-        const sidebar = <SidebarContent />
-        const sidebarProps = {
-            sidebar,
-            docked: this.state.docked,
-            sidebarClassName: "custom-sidebar-class",
-            contentId: "custom-sidebar-content-id",
-            open: this.state.open,
-            touch: this.state.touch,
-            shadow: this.state.shadow,
-            pullRight: this.state.pullRight,
-            touchHandleWidth: this.state.touchHandleWidth,
-            dragToggleDistance: this.state.dragToggleDistance,
-            transitions: this.state.transitions,
-            onSetOpen: this.onSetOpen
-          };
         return (
             <>
                 <div className={styleTrans.app}>
@@ -713,8 +637,29 @@ class ReportInventory extends Component {
 
                     <div className={`${styleTrans.mainContent} ${this.state.sidebarOpen ? styleTrans.collapsedContent : ''}`}>
 
-                        <h2 className={styleTrans.pageTitle}>Report Inventory</h2>
+                        <h2 className={styleTrans.pageTitle}>Sales console</h2>
                             
+                        <div className={styleTrans.searchContainer}>
+                            <div className='rowCenter'>
+                                <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="lg">Upload</Button>
+                                <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                            </div>
+                            {/* <div>
+                                <Input
+                                    type="select"
+                                    name="month"
+                                    value={this.state.typeReport}
+                                    onChange={this.handleType}
+                                >
+                                    <option value="">Pilih Tipe Report</option>
+                                    {dataStatus.map((item, index) => (
+                                        <option key={index} value={item.status}>
+                                            {item.text}
+                                        </option>
+                                    ))}
+                                </Input>
+                            </div> */}
+                        </div>
                         <div className={styleTrans.searchContainer}>
                             <div className='rowCenter'>
                                 <Input
@@ -745,32 +690,6 @@ class ReportInventory extends Component {
                                     ))}
                                 </Input>
                             </div>
-                            <div>
-                                <Input
-                                    type="select"
-                                    name="month"
-                                    value={this.state.typeReport}
-                                    onChange={this.handleType}
-                                >
-                                    <option value="">Pilih Tipe Report</option>
-                                    {dataStatus.map((item, index) => (
-                                        <option key={index} value={item.status}>
-                                            {item.text}
-                                        </option>
-                                    ))}
-                                </Input>
-                            </div>
-                        </div>
-                        <div className={styleTrans.searchContainer}>
-                            <div className='rowCenter'>
-                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerate} color="success" size="lg">Generate</Button>
-                                {parseInt(this.state.typeReport) === 1 && (
-                                    <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="lg">Bulk Upload</Button>
-                                )}
-                                {parseInt(this.state.typeReport) !== 1 && (
-                                    <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
-                                )}
-                            </div>
                             <div className={style.searchEmail2}>
                                 <text>Search: </text>
                                 <Input 
@@ -783,120 +702,19 @@ class ReportInventory extends Component {
                                 </Input>
                             </div>
                         </div>
-                        {parseInt(this.state.typeReport) === 1 ? (
                             <>
-                                <table className={`${styleTrans.table} ${stateInv.length > 0 ? styleTrans.tableFull : ''}`}>
+                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 ? dataSalesConsole.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataSalesConsole).length > 0 ? styleTrans.tableFull : ''}`}>
                                     <thead>
                                         <tr>
                                             <th>
                                                 <input  
                                                 className='mr-2'
                                                 type='checkbox'
-                                                checked={listInventory.length === 0 ? false : listInventory.length === stateInv.length ? true : false}
-                                                onChange={() => listInventory.length === stateInv.length ? this.chekRej('all') : this.chekApp('all')}
+                                                checked={listReport.length === 0 ? false : listReport.length === dataSalesConsole.length ? true : false}
+                                                onChange={() => listReport.length === dataSalesConsole.length ? this.reportRej('all') : this.reportApp('all')}
                                                 />
                                             </th>
                                             <th>No</th>
-                                            <th> 
-                                                {this.state.sortType === 'desc' ? (
-                                                    <FaSortAlphaDown onClick={() => this.sortData('plant', 'asc')} className='mr-1' size={20} />
-                                                ) : (
-                                                    <FaSortAlphaUpAlt onClick={() => this.sortData('plant', 'desc')} className='mr-1' size={20} />
-                                                )}
-                                                PLANT
-                                            </th>
-                                            <th>
-                                                {this.state.sortTypePic === 'desc' ? (
-                                                    <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
-                                                ) : (
-                                                    <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
-                                                )}
-                                                PIC
-                                            </th>
-                                            {dataType.map(type => {
-                                                return (
-                                                    <th>file {type}</th>
-                                                )
-                                            })}
-                                            <th>PERIODE REPORT</th>
-                                            <th>STATUS</th>
-                                            <th>Opsi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {stateInv.length > 0 && stateInv.map((item, index) => {
-                                        return (
-                                            <tr>
-                                                <td>
-                                                    <input 
-                                                    type='checkbox'
-                                                    checked={listInventory.find(element => element === item.plant) !== undefined ? true : false}
-                                                    onChange={listInventory.find(element => element === item.plant) === undefined ? () => this.chekApp(item.plant) : () => this.chekRej(item.plant)}
-                                                    />
-                                                </td>
-                                                {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
-                                                <td className={styleTrans.colNo}>{index + 1}</td>
-                                                <td className={styleTrans.colPlant}>{item.plant}</td>
-                                                <td>{item.pic_kasbank}</td>
-                                                {dataType.map(type => {
-                                                    return (
-                                                        <td className={styleTrans.colFile}>{dataRepinv.length === 0 ? '-' : dataRepinv.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataRepinv.find(x => (x.plant === item.plant && x.type === type)).updatedAt).format('DD/MM/YYYY')} - upload by ${dataRepinv.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
-                                                    )
-                                                })}
-                                                <td >{startOfMonth.format('MMMM YYYY')}</td>
-                                                <td>{this.getStatus(item.plant)}</td>
-                                                <td className={styleTrans.colOpsi}>
-                                                    <Button onClick={() => this.prosesOpen(item, 'add')} color='success' className='ml-1 mt-1'>Upload</Button>
-                                                    {this.getStatus(item.plant) !== 'Belum Upload' && (
-                                                        <Button onClick={() => this.prosesOpenUpdate(item)} color='primary' className='mt-1 ml-1'>Update</Button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                    </tbody>
-                                </table>
-                                {stateInv.length === 0 && (
-                                    <div className={style.spinCol}>
-                                        <AiOutlineInbox size={50} className='mb-4' />
-                                        <div className='textInfo'>Data tidak ditemukan</div>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length > 0 ? styleTrans.tableFull : ''}`}>
-                                    <thead>
-                                        <tr>
-                                            <th>
-                                                <input  
-                                                className='mr-2'
-                                                type='checkbox'
-                                                checked={listReport.length === 0 ? false : listReport.length === dataRepinv.length ? true : false}
-                                                onChange={() => listReport.length === dataRepinv.length ? this.reportRej('all') : this.reportApp('all')}
-                                                />
-                                            </th>
-                                            <th>No</th>
-                                            {parseInt(this.state.typeReport) === 2 && (
-                                                <>
-                                                    <th> 
-                                                        {this.state.sortType === 'desc' ? (
-                                                            <FaSortAlphaDown onClick={() => this.sortData('plant', 'asc')} className='mr-1' size={20} />
-                                                        ) : (
-                                                            <FaSortAlphaUpAlt onClick={() => this.sortData('plant', 'desc')} className='mr-1' size={20} />
-                                                        )}
-                                                        PLANT
-                                                    </th>
-                                                    <th>
-                                                        {this.state.sortTypePic === 'desc' ? (
-                                                            <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
-                                                        ) : (
-                                                            <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
-                                                        )}
-                                                        PIC
-                                                    </th>
-                                                </>
-                                            )}
                                             <th>NAMA</th>
                                             <th>TYPE</th>
                                             <th>PERIODE REPORT</th>
@@ -905,7 +723,7 @@ class ReportInventory extends Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    {dataRepinv.length > 0 && (parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).map((item, index) => {
+                                    {dataSalesConsole.length > 0 && dataSalesConsole.map((item, index) => {
                                         return (
                                             <tr>
                                                 <td>
@@ -917,38 +735,26 @@ class ReportInventory extends Component {
                                                 </td>
                                                 {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                                 <td className={styleTrans.colNo}>{index + 1}</td>
-                                                {parseInt(this.state.typeReport) === 2 && (
-                                                    <>
-                                                        <td className={styleTrans.colPlant}>{item.plant}</td>
-                                                        <td>{stateInv.find(y => y.plant === item.plant) !== undefined ? stateInv.find(y => y.plant === item.plant).pic_kasbank : '-'}</td>
-                                                    </>
-                                                )}
                                                 <td>{item.name}</td>
                                                 <td>{dataStatus.find(x => x.status === item.status).text}</td>
                                                 <td>{startOfMonth.format('MMMM YYYY')}</td>
+                                                <td className={styleTrans.colFile}>{`V - ${moment(item.updatedAt).format('DD/MM/YYYY hh:mm')} - upload by ${item.user_upload}`}</td>
                                                 <td>
-                                                    {parseInt(this.state.typeReport) === 2 ? (
-                                                        'Success Generate'
-                                                    ) : (
-                                                        item.info
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <Button color='warning' onClick={() => this.downloadFile(item)}>Download</Button>
+                                                    <Button className='ml-1 mt-1' color='warning' onClick={() => this.downloadFile(item)}>Download</Button>
+                                                    <Button className='ml-1 mt-1' color='info' onClick={() => this.downloadFile(item)}>Update</Button>
                                                 </td>
                                             </tr>
                                         )
                                     })}
                                     </tbody>
                                 </table>
-                                {(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length === 0 && (
+                                {(parseInt(this.state.typeReport) === 2 ? dataSalesConsole.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataSalesConsole).length === 0 && (
                                     <div className={style.spinCol}>
                                         <AiOutlineInbox size={50} className='mb-4' />
                                         <div className='textInfo'>Data tidak ditemukan</div>
                                     </div>
                                 )}
                             </>
-                        ) }
                         
                         <div>
                             <div className={style.infoPageEmail1}>
@@ -973,7 +779,7 @@ class ReportInventory extends Component {
                         type: typeModal === 'add' ? '' : detailData.type,
                         date_report: typeModal === 'add' ? '' : moment(detailData.date_report).format('YYYY-MM-DD'),
                     }}
-                    onSubmit={(values) => { typeModal === 'add' ? this.uploadRepinv(values) : this.updateRepinv(values)}}
+                    onSubmit={(values) => { typeModal === 'add' ? this.uploadSalesConsole(values) : this.updateSalesConsole(values)}}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                         <ModalBody>
@@ -1109,7 +915,7 @@ class ReportInventory extends Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                {dataRepinv.length > 0 && dataRepinv.filter(x => x.plant === detailInv.plant).map((item, index) => {
+                                {dataSalesConsole.length > 0 && dataSalesConsole.filter(x => x.plant === detailInv.plant).map((item, index) => {
                                     return (
                                     <tr>
                                         <td>{index + 1}</td>
@@ -1133,14 +939,14 @@ class ReportInventory extends Component {
                     </ModalFooter>
                 </Modal>
                 <Modal toggle={this.openModalUpload} isOpen={this.state.modalUpload} size='xl'>
-                    <ModalHeader toggle={this.openModalUpload}>Bulk upload file MB51 / BASO</ModalHeader>
+                    <ModalHeader toggle={this.openModalUpload}>Upload File</ModalHeader>
                     <Formik
                     initialValues={{
                         name: '',
                         type: '',
                         date_report: '',
                     }}
-                    onSubmit={(values) => { this.uploadBulkRepinv(values)}}
+                    onSubmit={(values) => { this.uploadBulkSalesConsole(values)}}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                         <ModalBody>
@@ -1219,69 +1025,12 @@ class ReportInventory extends Component {
                                 ) : null}
                             </div>
                         </div>
-                        <div className="addModalDepo">
-                            <text className="col-md-3">
-                                Plant
-                            </text>
-                        </div>
-                        <div className="addModalDepo">
-                            <Table bordered responsive hover className="tab">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <input  
-                                            className='mr-2'
-                                            type='checkbox'
-                                            checked={listInventory.length === 0 ? false : listInventory.length === stateInv.length ? true : false}
-                                            onChange={() => listInventory.length === stateInv.length ? this.chekRej('all') : this.chekApp('all')}
-                                            />
-                                        </th>
-                                        <th>No</th>
-                                        <th> 
-                                            {this.state.sortType === 'desc' ? (
-                                                <FaSortAlphaDown onClick={() => this.sortData('plant', 'asc')} className='mr-1' size={20} />
-                                            ) : (
-                                                <FaSortAlphaUpAlt onClick={() => this.sortData('plant', 'desc')} className='mr-1' size={20} />
-                                            )}
-                                            PLANT
-                                        </th>
-                                        <th>
-                                            {this.state.sortTypePic === 'desc' ? (
-                                                <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
-                                            ) : (
-                                                <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
-                                            )}
-                                            PIC
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {stateInv.length > 0 && stateInv.map((item, index) => {
-                                    return (
-                                        <tr>
-                                            <td>
-                                                <input 
-                                                type='checkbox'
-                                                checked={listInventory.find(element => element === item.plant) !== undefined ? true : false}
-                                                onChange={listInventory.find(element => element === item.plant) === undefined ? () => this.chekApp(item.plant) : () => this.chekRej(item.plant)}
-                                                />
-                                            </td>
-                                            {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
-                                            <td>{index + 1}</td>
-                                            <td>{item.plant}</td>
-                                            <td>{item.pic_kasbank}</td>
-                                        </tr>
-                                    )
-                                })}
-                                </tbody>
-                            </Table>
-                        </div>
                         <hr/>
                         <div className="foot">
                             <div></div>
                             <div>
                                 <Button 
-                                    disabled={values.name === '' || values.type === '' || this.state.fileUpload === '' || this.state.listInventory.length === 0} 
+                                    disabled={values.name === '' || values.type === '' || this.state.fileUpload === ''} 
                                     className="mr-2" 
                                     onClick={handleSubmit} 
                                     color="primary"
@@ -1310,7 +1059,7 @@ class ReportInventory extends Component {
                         ) : this.state.confirm === 'add' ? (
                             <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Menambahkan Inventory</div>
+                                <div className="sucUpdate green">Berhasil Menambahkan SalesConsole</div>
                             </div>
                         ) : this.state.confirm === 'upload' ?(
                             <div>
@@ -1323,21 +1072,21 @@ class ReportInventory extends Component {
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                <div className="sucUpdate green">Berhasil Delete Data Inventory</div>
+                                <div className="sucUpdate green">Berhasil Delete Data SalesConsole</div>
                             </div>
                             </div>
                         ) : this.state.confirm === 'generate' ?(
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                    <div className="sucUpdate green">Berhasil Generate Report Inventory</div>
+                                    <div className="sucUpdate green">Berhasil Generate Report SalesConsole</div>
                                 </div>
                             </div>
                         ) : this.state.confirm === 'merge' ?(
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                    <div className="sucUpdate green">Berhasil Merge Report Inventory</div>
+                                    <div className="sucUpdate green">Berhasil Merge Report SalesConsole</div>
                                 </div>
                             </div>
                         ) : this.state.confirm === 'failReport' ? (
@@ -1369,7 +1118,7 @@ class ReportInventory extends Component {
                         )}
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.inventory.isLoading ? true: false} size="sm">
+                <Modal isOpen={this.props.salesConsole.isLoading ? true: false} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -1417,26 +1166,21 @@ class ReportInventory extends Component {
 const mapStateToProps = state => ({
     inventory: state.inventory,
     divisi: state.divisi,
-    depo: state.depo
+    depo: state.depo,
+    salesConsole: state.salesConsole
 })
 
 const mapDispatchToProps = {
     logout: auth.logout,
-    addInventory: inventory.addInventory,
-    updateInventory: inventory.updateInventory,
-    getRepinv: inventory.getRepinv,
-    resetError: inventory.resetError,
-    getInventory: inventory.getInventory,
+    getSalesConsole: salesConsole.getSalesConsole,
+    resetError: salesConsole.resetError,
     getDivisi: divisi.getDivisi,
     getDepo: depo.getDepo,
-    uploadRepinv: inventory.uploadRepinv,
-    updateRepinv: inventory.updateRepinv,
-    nextPage: inventory.nextPage,
-    exportMaster: inventory.exportMaster,
-    deleteRepinv: inventory.deleteRepinv,
-    generateRepinv: inventory.generateRepinv,
-    mergeRepinv: inventory.mergeRepinv
+    uploadSalesConsole: salesConsole.uploadSalesConsole,
+    updateSalesConsole: salesConsole.updateSalesConsole,
+    nextPageSalesConsole: salesConsole.nextPageSalesConsole,
+    deleteSalesConsole: salesConsole.deleteSalesConsole,
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ReportInventory)
+export default connect(mapStateToProps, mapDispatchToProps)(SalesConsole)
 	

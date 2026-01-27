@@ -10,11 +10,14 @@ import PrivateRoute from './components/PrivateRoute'
 import Login from './pages/Main/Login'
 import Home from './pages/Main/Home'
 import Dashboard from './pages/Main/Dashboard'
-import Dokumen from './pages/Main/Dokumen'
-import DownloadDocument from './pages/Main/DownloadDocument'
-import Report from './pages/Main/Report'
 import Trial from './pages/Main/Trial'
 import tes from './pages/Main/tes'
+
+// Dokumen
+import Dokumen from './pages/dokumen/Dokumen'
+import DownloadDocument from './pages/dokumen/DownloadDocument'
+import Report from './pages/dokumen/Report'
+import ReportDokumen from './pages/dokumen/ReportDokumen'
 
 // Master Data
 import MasterEmail from './pages/Master/MasterEmail'
@@ -41,6 +44,9 @@ import ReportInventory from './pages/Inventory/ReportInventory'
 
 // End Stock
 import ReportEndstock from './pages/endstock/ReportEndstock'
+
+// Sales Console
+import SalesConsole from './pages/salesConsole/ReportSalesConsole'
 
 class App extends Component {
 
@@ -92,6 +98,9 @@ class App extends Component {
                 <PrivateRoute path="/report">
                     <Report />
                 </PrivateRoute>
+                <PrivateRoute path="/report-dokumen">
+                    <ReportDokumen />
+                </PrivateRoute>
                 <PrivateRoute path="/setting/dokumen">
                     <SettingDokumen />
                 </PrivateRoute>
@@ -121,6 +130,10 @@ class App extends Component {
                 </PrivateRoute>
                 <PrivateRoute path="/report-endstock">
                     <ReportEndstock />
+                </PrivateRoute>
+
+                <PrivateRoute path="/sales-console">
+                    <SalesConsole />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>
