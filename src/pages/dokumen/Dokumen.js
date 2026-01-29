@@ -644,7 +644,7 @@ class Dokumen extends Component {
             console.log(temp)
             moon.push(temp)
         }
-        this.setState({totalDoc: res, month: moon, moon: moon[0]})
+        this.setState({totalDoc: res, month: [moment().add(1, 'month'), ...moon], moon: moon[0]})
         this.setState({isLoading: false})
     }
 
