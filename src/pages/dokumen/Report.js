@@ -125,8 +125,15 @@ class Report extends Component {
     }
 
     componentDidMount() {
+        const moon = []
+        for (let i = 0; i < 3; i++) {
+            const temp = moment().subtract(i, 'month')
+            moon.push(temp)
+        }
+        this.setState({ month: [moment().add(1, 'month'), ...moon], moon: moon[0] })
         this.getDataDepo()
         this.getNotif()
+         
     }
 
     createReportOld = async () => {
@@ -358,11 +365,12 @@ class Report extends Component {
 
     prepareSelect = () => {
         const { dataDepo } = this.props.depo
-        const moon = []
+        
         const temp = [
             {value: '', label: '-Pilih Depo-'},
             {value: 'all', label: 'All'}
         ]
+
         if (dataDepo.length !== 0) {
             dataDepo.map(item => {
                 return (
@@ -371,10 +379,10 @@ class Report extends Component {
             })
             this.setState({options: temp})
         }
-        for (let i = 0; i < 3; i++) {
-            moon.push(moment().subtract(i, 'month'))
-        }
-        this.setState({month: moon, moon: moon[0]})
+
+       
+        
+        
     }
 
     menuButtonClick(ev) {

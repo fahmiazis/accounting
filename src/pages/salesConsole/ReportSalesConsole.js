@@ -24,7 +24,7 @@ import moment from 'moment'
 import NewNavbar from '../../components/NewNavbar'
 import styleTrans from '../../assets/css/transaksi.module.css'
 import style from '../../assets/css/public.module.css'
-const {REACT_APP_BACKEND_URL} = process.env
+const {REACT_APP_BACKEND_URL, REACT_APP_SALES_URL} = process.env
 const dataType = ['file-sales-console']
 // const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb51', 'main']
 
@@ -76,6 +76,8 @@ class SalesConsole extends Component {
             sortType: 'asc',
             sortTypePic: 'asc',
             cameraSource: '',
+            isLoading: false,
+            downloadProgress: null
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -442,11 +444,11 @@ class SalesConsole extends Component {
         this.openConfirm()
     }
 
-    downloadFile = async (val) => {
+    downloadFileOld = async (val) => {
+        this.setState({isLoading: true})
         try {
-          this.setState({isLoading: true})
           const path = val.path.split(/[\\/]/)[2]
-          const url = `${REACT_APP_BACKEND_URL}/${val.status === 1 ? 'masters' : 'exports'}/${path}`;
+          const url = `${REACT_APP_SALES_URL}/${val.status === 1 ? 'masters' : 'exports'}/${path}`;
           const res = await axios.get(url, {
             responseType: "blob",
             // headers: { Authorization: 'Bearer ' + token }
@@ -468,12 +470,100 @@ class SalesConsole extends Component {
           a.click();
           a.remove();
           window.URL.revokeObjectURL(blobUrl);
-          this.setState({isLoading: false})
         } catch (err) {
           console.error(err);
           alert("Download gagal: " + err.message);
         }
-      };
+        this.setState({isLoading: false})
+    };
+
+    downloadFile = async (val) => {
+        this.setState({ isLoading: true, downloadProgress: 0 });
+        
+        // Buat cancel token
+        const cancelTokenSource = axios.CancelToken.source();
+        this.cancelTokenSource = cancelTokenSource;
+        
+        try {
+        const path = val.path.split(/[\\/]/)[2];
+        const url = `${REACT_APP_SALES_URL}/${val.status === 1 ? 'masters' : 'exports'}/${path}`;
+        
+        const startTime = performance.now();
+        
+        const res = await axios.get(url, {
+            responseType: "blob",
+            timeout: 300000, // 5 menit timeout
+            cancelToken: cancelTokenSource.token,
+            
+            // Progress untuk user experience
+            onDownloadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+                const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                this.setState({ downloadProgress: progress });
+                
+                // Log untuk debugging
+                const speed = (progressEvent.loaded / 1024 / 1024) / ((performance.now() - startTime) / 1000);
+                console.log(`Progress: ${progress}% | Speed: ${speed.toFixed(2)} MB/s`);
+            }
+            }
+        });
+        
+        const endTime = performance.now();
+        console.log(`Download selesai dalam ${((endTime - startTime) / 1000).toFixed(2)} detik`);
+
+        // Dapat filename
+        const disposition = res.headers["content-disposition"];
+        let filename = `${val.name}.xlsx`;
+        if (disposition && disposition.includes("filename=")) {
+            filename = disposition.split("filename=")[1].replace(/['"]/g, "").trim();
+        }
+
+        // Download file - lebih aman dengan error handling
+        const blob = new Blob([res.data], { type: res.headers['content-type'] });
+        
+        // Cek ukuran blob
+        console.log(`File size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+        
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup dengan delay
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        // Notifikasi sukses
+        alert(`File ${filename} berhasil didownload!`);
+        
+        } catch (err) {
+        if (axios.isCancel(err)) {
+            console.log('Download dibatalkan');
+            alert('Download dibatalkan');
+        } else if (err.code === 'ECONNABORTED') {
+            console.error('Timeout:', err);
+            alert('Download timeout. File terlalu besar atau koneksi lambat.');
+        } else {
+            console.error('Download error:', err);
+            alert(`Download gagal: ${err.response?.statusText || err.message}`);
+        }
+        } finally {
+        this.setState({ isLoading: false, downloadProgress: 0 });
+        this.cancelTokenSource = null;
+        }
+    };
+
+    // Method untuk cancel download
+    cancelDownload = () => {
+        if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel('User membatalkan download');
+        }
+    };
 
     componentDidUpdate() {
         const {isError, isUpload, isExport} = this.props.salesConsole
@@ -741,7 +831,7 @@ class SalesConsole extends Component {
                                                 <td className={styleTrans.colFile}>{`V - ${moment(item.updatedAt).format('DD/MM/YYYY hh:mm')} - upload by ${item.user_upload}`}</td>
                                                 <td>
                                                     <Button className='ml-1 mt-1' color='warning' onClick={() => this.downloadFile(item)}>Download</Button>
-                                                    <Button className='ml-1 mt-1' color='info' onClick={() => this.downloadFile(item)}>Update</Button>
+                                                    {/* <Button className='ml-1 mt-1' color='info' onClick={() => this.downloadFile(item)}>Update</Button> */}
                                                 </td>
                                             </tr>
                                         )
@@ -1118,15 +1208,24 @@ class SalesConsole extends Component {
                         )}
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.salesConsole.isLoading ? true: false} size="sm">
-                        <ModalBody>
-                        <div>
-                            <div className="cekUpdate">
-                                <Spinner />
-                                <div sucUpdate>Waiting....</div>
-                            </div>
+                <Modal isOpen={this.props.salesConsole.isLoading} size="sm">
+                    <ModalBody>
+                    <div>
+                        <div className="cekUpdate">
+                            <Spinner />
+                            <div sucUpdate>Waiting....</div>
                         </div>
-                        </ModalBody>
+                    </div>
+                    </ModalBody>
+                </Modal>
+                <Modal isOpen={this.state.isLoading} size="sm">
+                    <ModalBody>
+                    <div style={{ marginTop: 10 }}>
+                        <div>Downloading... {this.state.downloadProgress}%</div>
+                        <progress value={this.state.downloadProgress} max="100" style={{ width: '100%' }} />
+                        <button onClick={this.cancelDownload}>Cancel Download</button>
+                    </div>
+                    </ModalBody>
                 </Modal>
                 <Modal isOpen={this.state.modalDelete} size="md" toggle={this.openModalDelete} centered={true}>
                     <ModalBody>

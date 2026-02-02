@@ -303,8 +303,8 @@ class Dokumen extends Component {
         const {size, type, name} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
         const ext = name.split(".")
-        if (size >= 100000000) {
-            this.setState({errMsg: "Maximum upload size 100 MB"})
+        if (size >= 1000000000) {
+            this.setState({errMsg: "Maximum upload size 1000 MB"})
             this.uploadAlert()
         } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
@@ -352,8 +352,8 @@ class Dokumen extends Component {
             for (const file of files) {
                 const {size, type, name} = file
                 
-                if (size >= 100000000) {
-                    errorMsg = "Maximum upload size 100 MB per file"
+                if (size >= 1000000000) {
+                    errorMsg = "Maximum upload size 1000 MB per file"
                     hasError = true
                     break
                 } else if (type !== "" && type !== null && 
@@ -486,8 +486,8 @@ class Dokumen extends Component {
     onEditDokumen = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 100000000) {
-            this.setState({errMsg: "Maximum upload size 100 MB"})
+        if (size >= 1000000000) {
+            this.setState({errMsg: "Maximum upload size 1000 MB"})
             this.uploadAlert()
         } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
@@ -1094,11 +1094,20 @@ class Dokumen extends Component {
                                                             ) : x.doc[dataDash.indexOf(y)].status_dokumen === 0 ? (
                                                                 <AiOutlineClose className="red" />
                                                             ) : x.doc[dataDash.indexOf(y)].status_dokumen === 4 ? (
-                                                                <MdWatchLater className="red" size={20}/>
+                                                                <>
+                                                                    <MdWatchLater className="red" size={20}/>
+                                                                    <BsCircle className="black"/>
+                                                                </>
                                                             ) : x.doc[dataDash.indexOf(y)].status_dokumen === 5 ? (
-                                                                <MdWatchLater className="red" size={20}/>
+                                                                <>
+                                                                    <MdWatchLater className="red" size={20}/>
+                                                                    <AiOutlineCheck className="blue"/>
+                                                                </>
                                                             ) : x.doc[dataDash.indexOf(y)].status_dokumen === 6 ? (
-                                                                <MdWatchLater className="red" size={20}/>
+                                                                <>
+                                                                    <MdWatchLater className="red" size={20}/>
+                                                                    <AiOutlineClose className="red" />
+                                                                </>
                                                             ) : x.doc[dataDash.indexOf(y)].status_dokumen === 7 ? (
                                                                 <BiRevision className="black" size={20}/>
                                                             ) : (
@@ -1113,10 +1122,14 @@ class Dokumen extends Component {
                                             {x.doc.length === 0 ? (
                                                 <td>0 %</td>
                                             ) : (
-                                                <td>{Math.round((x.progress/dataDash.length) * 100)} %</td>
+                                                <td>{Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100)} %</td>
                                             )}
                                             {x.doc.length > 0 ? (
-                                                <td>{Math.round((x.progress/dataDash.length) * 100) === 100 ? 'Done' : Math.round((x.doc.length/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''}</td>
+                                                <td>{
+                                                    Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) === 100 ? 'Done' 
+                                                    : Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''
+                                                    }
+                                                </td>
                                             ):(
                                                 <td>Belum Upload</td>
                                             )}
@@ -1127,6 +1140,7 @@ class Dokumen extends Component {
                             ) : (
                                 <tbody>
                                     {dataAll !== undefined && dataAll.map(x => {
+                                        const dateMonthly = x.active.length > 0 ? (x.active[0].documentDate > x.active[0].createdAt ? x.active[0].documentDate : x.active[0].createdAt) : ''
                                         return (
                                         x !== null ? (
                                         <tr className="danger" onClick={() => this.openProsesPic(dataAll.indexOf(x))}>
@@ -1136,7 +1150,7 @@ class Dokumen extends Component {
                                             <td className='text-uppercase'>{x.nama_depo} {x.active.length > 0 ? `(${x.active[0].tipe})` : ''}</td>
                                             {x.active.length > 0 ? (
                                                 x.active[0].jenis_dokumen === 'monthly' ? 
-                                                <td>{moment(x.active[0].createdAt).subtract(1, 'month').format('MMMM, YYYY')}</td>
+                                                <td>{moment(dateMonthly).subtract(1, 'month').format('MMMM, YYYY')}</td>
                                                 : moment(moment(x.active[0].createdAt).format('YYYY-MM-DD')).utc().format('dddd') === moment.weekdays(0) ?
                                                     <td>{moment(x.active[0].createdAt).subtract(2, 'day').format('DD MMMM, YYYY')}</td>
                                                 :   <td>{moment(x.active[0].createdAt).subtract(1, 'day').format('DD MMMM, YYYY')}</td>
@@ -1144,7 +1158,13 @@ class Dokumen extends Component {
                                                 <td>-</td>
                                             )}
                                             {x.active.length > 0 ? (
-                                                <td>{moment(x.active[0].createdAt).format('DD MMMM, YYYY')}</td>
+                                                <td>
+                                                {
+                                                    x.active[0].jenis_dokumen === 'monthly' ? 
+                                                    moment(dateMonthly).format('DD MMMM, YYYY') : 
+                                                    moment(x.active[0].createdAt).format('DD MMMM, YYYY')
+                                                }
+                                                </td>
                                             ):(
                                                 <td>-</td>
                                             )}
@@ -1164,11 +1184,21 @@ class Dokumen extends Component {
                                                                         ) : x.active[0].doc[y].status_dokumen === 0 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                             <AiOutlineClose className="red" />
                                                                         ) : x.active[0].doc[y].status_dokumen === 4 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                            <MdWatchLater className="red" size={20}/>
+                                                                            <>
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                <BsCircle className="black"/>
+                                                                            </>
                                                                         ) : x.active[0].doc[y].status_dokumen === 5 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                            <MdWatchLater className="red" size={20}/>
+                                                                            <>
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                <AiOutlineCheck className="blue"/>
+                                                                            </>
                                                                         ) : x.active[0].doc[y].status_dokumen === 6 && x.active[0].doc[y].status_dokumen !== undefined ? (
-                                                                            <MdWatchLater className="red" size={20}/>
+                                                                            <>
+                                                                                <MdWatchLater className="red" size={20}/>
+                                                                                <AiOutlineClose className="red" />
+                                                                            </>
+                                                                            
                                                                         ) : x.active[0].doc[y].status_dokumen === 7 && x.active[0].doc[y].status_dokumen !== undefined ? (
                                                                             <BiRevision className="black" size={20}/>
                                                                         ) : (
@@ -1209,12 +1239,12 @@ class Dokumen extends Component {
                                             )}
                                             <td>{x.dokumen.length}</td>
                                             {x.active.length > 0 ? (
-                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100)} %</td>
+                                                <td>{Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100)} %</td>
                                             ):(
                                                 <td>0 %</td>
                                             )}
                                             {x.active.length > 0 ? (
-                                                <td>{Math.round((x.active[0].progress/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                                <td>{Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
                                             ):(
                                                 <td>Belum Upload</td>
                                             )}
@@ -1301,11 +1331,20 @@ class Dokumen extends Component {
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
                                                     <AiOutlineCheck className="blue" size={25}/>
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                    <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <BsCircle className="black"/>
+                                                    </>
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                    <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <AiOutlineCheck className="blue"/>
+                                                    </>
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                    <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <AiOutlineClose className="red" />
+                                                    </>
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
                                                     <BiRevision className="black" size={25}/>
                                                 ) : doc.find(({dokumen}) => dokumen === item).status_dokumen === 0 ? (
@@ -1424,11 +1463,20 @@ class Dokumen extends Component {
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 3 ? (
                                                     <AiOutlineCheck className="blue" size={25}/>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 4 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                    <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <BsCircle className="black"/>
+                                                    </>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 5 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                     <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <AiOutlineCheck className="blue"/>
+                                                    </>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 6 ? (
-                                                    <MdWatchLater className="red" size={25}/>
+                                                    <>
+                                                        <MdWatchLater className="red" size={20}/>
+                                                        <AiOutlineClose className="red" />
+                                                    </>
                                                 ) : act[0].doc.find(({dokumen}) => dokumen === item).status_dokumen === 7 ? (
                                                     <BiRevision className="black" size={25}/>
                                                 ) : (
