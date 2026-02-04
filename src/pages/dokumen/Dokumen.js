@@ -1122,12 +1122,17 @@ class Dokumen extends Component {
                                             {x.doc.length === 0 ? (
                                                 <td>0 %</td>
                                             ) : (
-                                                <td>{Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100)} %</td>
+                                                <td>{Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) > 100 
+                                                    ? 100 : Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100)
+                                                    } %
+                                                </td>
                                             )}
                                             {x.doc.length > 0 ? (
                                                 <td>{
-                                                    Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) === 100 ? 'Done' 
-                                                    : Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) > 0 ? 'Kurang Upload' : ''
+                                                    Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) >= 100 ? 'Done' 
+                                                    : Math.round(((x.doc.length)/dataDash.length) * 100) < 100 ? 'Kurang Upload' 
+                                                    : Math.round(((x.doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/dataDash.length) * 100) < 100 ? 'Proses Verifikasi'
+                                                    : 'Belum Upload'
                                                     }
                                                 </td>
                                             ):(
@@ -1239,12 +1244,22 @@ class Dokumen extends Component {
                                             )}
                                             <td>{x.dokumen.length}</td>
                                             {x.active.length > 0 ? (
-                                                <td>{Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100)} %</td>
+                                                <td>{
+                                                    Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100) > 100 ? 100 :
+                                                    Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100)
+                                                    } %
+                                                </td>
                                             ):(
                                                 <td>0 %</td>
                                             )}
                                             {x.active.length > 0 ? (
-                                                <td>{Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100) === 100 ? 'Done' : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) > 0 ? 'Kurang Upload': 'Belum Upload' }</td>
+                                                <td>{Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100) >= 100 
+                                                    ? 'Done'
+                                                    : Math.round((x.active[0].doc.length/x.dokumen.length) * 100) < 100 
+                                                    ? 'Kurang Upload'
+                                                    : Math.round(((x.active[0].doc.filter(d => d.status_dokumen === 3 || d.status_dokumen === 5).length)/x.dokumen.length) * 100) < 100 
+                                                    ? 'Proses Verifikasi' : 'Belum Upload' }
+                                                </td>
                                             ):(
                                                 <td>Belum Upload</td>
                                             )}
