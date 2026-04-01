@@ -13,6 +13,7 @@ import * as Yup from 'yup'
 import divisi from '../../redux/actions/divisi'
 import depo from '../../redux/actions/depo'
 import inventory from '../../redux/actions/inventory'
+import endstock from '../../redux/actions/endstock'
 import {connect} from 'react-redux'
 import auth from '../../redux/actions/auth'
 import {default as axios} from 'axios'
@@ -24,7 +25,7 @@ import NewNavbar from '../../components/NewNavbar'
 import styleTrans from '../../assets/css/transaksi.module.css'
 import style from '../../assets/css/public.module.css'
 const {REACT_APP_BACKEND_URL} = process.env
-const dataType = ['mb52', 'eds']
+const dataType = ['mb52', 'eds_stock']
 // const dataType = ['saldo_awal', 'saldo_awal_mb5b', 'mb52', 'eds']
 
 class ReportEndStock extends Component {
@@ -209,7 +210,7 @@ class ReportEndStock extends Component {
         await this.props.addInventory(token, values)
         this.setState({confirm: 'add'})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.openModalAdd()
     }
 
@@ -226,7 +227,7 @@ class ReportEndStock extends Component {
         }
     }
 
-    uploadBulkRepinv = async (val) => {
+    uploadBulkEndstock = async (val) => {
         const { listInventory } = this.state
         const token = localStorage.getItem('token')
         const data = new FormData()
@@ -237,14 +238,14 @@ class ReportEndStock extends Component {
         data.append('list', listInventory.toString())
         data.append('date_report', val.date_report)
         const typeUpload = 'bulk'
-        await this.props.uploadRepinv(token, data, typeUpload)
+        await this.props.uploadEndstock(token, data, typeUpload)
         this.setState({confirm: 'upload', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.openModalUpload()
     }
 
-    uploadRepinv = async (val) => {
+    uploadEndstock = async (val) => {
         const token = localStorage.getItem('token')
         const data = new FormData()
         data.append('master', this.state.fileUpload)
@@ -252,14 +253,14 @@ class ReportEndStock extends Component {
         data.append('type', val.type)
         data.append('plant', val.plant)
         data.append('date_report', val.date_report)
-        await this.props.uploadRepinv(token, data)
+        await this.props.uploadEndstock(token, data)
         this.setState({confirm: 'upload', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.openModalAdd()
     }
 
-    updateRepinv = async (val) => {
+    updateEndstock = async (val) => {
         const token = localStorage.getItem('token')
         const { detailData } = this.state
 
@@ -271,7 +272,7 @@ class ReportEndStock extends Component {
                 plant: val.plant,
                 date_report: val.date_report
             }
-            await this.props.updateRepinv(token, 'update', data)
+            await this.props.updateEndstock(token, 'update', data)
         } else {
             const data = new FormData()
             data.append('id', detailData.id)
@@ -280,12 +281,12 @@ class ReportEndStock extends Component {
             data.append('plant', val.plant)
             data.append('date_report', val.date_report)
             data.append('master', this.state.fileUpload)
-            await this.props.updateRepinv(token, 'upload', data)
+            await this.props.updateEndstock(token, 'upload', data)
         }
 
         this.setState({confirm: 'update', fileUpload: ''})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.openModalAdd()
         this.openModalUpdate()
     }
@@ -295,7 +296,7 @@ class ReportEndStock extends Component {
         await this.props.updateInventory(token, id, values)
         this.setState({confirm: 'edit'})
         this.openConfirm()
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.openModalEdit()
     }
 
@@ -341,11 +342,11 @@ class ReportEndStock extends Component {
 
     reportApp = (val) => {
         const { listReport, stateInv } = this.state
-        const { dataRepinv } = this.props.inventory
+        const { dataEndstock } = this.props.endstock
         if (val === 'all') {
             const data = []
-            for (let i = 0; i < dataRepinv.length; i++) {
-                data.push(dataRepinv[i].id)
+            for (let i = 0; i < dataEndstock.length; i++) {
+                data.push(dataEndstock[i].id)
             }
             this.setState({listReport: data})
         } else {
@@ -378,8 +379,8 @@ class ReportEndStock extends Component {
         const data = {
             listId: listReport
         }
-        await this.props.deleteRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.deleteEndstock(token, data)
+        this.getDataEndstock()
         this.openModalDelete()
         this.setState({confirm: 'delete'})
         this.openConfirm()
@@ -392,8 +393,8 @@ class ReportEndStock extends Component {
         const data = {
             listId: [idDelete]
         }
-        await this.props.deleteRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.deleteEndstock(token, data)
+        this.getDataEndstock()
         this.openModalDelete()
         this.openModalUpdate()
         this.setState({confirm: 'delete'})
@@ -408,7 +409,7 @@ class ReportEndStock extends Component {
 
     prosesReport = () => {
         const { listInventory, typeReport, listReport } = this.state
-        const {dataRepinv} = this.props.inventory
+        const {dataEndstock} = this.props.endstock
         if (parseInt(typeReport) === 1) {
             const cek = []
             for (let i = 0; i < listInventory.length; i++) {
@@ -445,8 +446,8 @@ class ReportEndStock extends Component {
             listPlant: listInventory,
             date: startOfMonth.format('YYYY-MM-DD')
         }
-        await this.props.generateRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.generateEndstock(token, data)
+        this.getDataEndstock()
         this.openModalGenerate()
         this.setState({confirm: 'generate'})
         this.openConfirm()
@@ -461,8 +462,8 @@ class ReportEndStock extends Component {
             listIds: listReport,
             date: startOfMonth.format('YYYY-MM-DD')
         }
-        await this.props.mergeRepinv(token, data)
-        this.getDataRepinv()
+        await this.props.mergeEndstock(token, data)
+        this.getDataEndstock()
         this.openModalGenerate()
         this.setState({confirm: 'merge'})
         this.openConfirm()
@@ -511,7 +512,7 @@ class ReportEndStock extends Component {
         //     this.props.resetError()
         //     this.setState({modalUpload: false})
         //     setTimeout(() => {
-        //         this.getDataRepinv()
+        //         this.getDataEndstock()
         //     }, 100)
         // }  
         else if (isExport) {
@@ -521,7 +522,7 @@ class ReportEndStock extends Component {
     }
 
     componentDidMount() {
-        this.getDataRepinv()
+        this.getDataEndstock()
         this.getDataInventory()
         // this.getDataDepo()
         this.getDataDivisi()
@@ -582,7 +583,7 @@ class ReportEndStock extends Component {
         }
     }
 
-    getDataRepinv = async (value) => {
+    getDataEndstock = async (value) => {
         this.setState({})
         const token = localStorage.getItem("token")
         const { page } = this.props.inventory
@@ -590,7 +591,7 @@ class ReportEndStock extends Component {
         const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
         const search = value === undefined ? '' : this.state.search
         const limit = value === undefined ? this.state.limit : value.limit
-        await this.props.getRepinv(token, limit, search, page.currentPage, startOfMonth.format('YYYY-MM-DD'), typeReport)
+        await this.props.getEndstock(token, limit, search, page.currentPage, startOfMonth.format('YYYY-MM-DD'), typeReport)
         this.setState({limit: value === undefined ? 10 : value.limit})
     }
 
@@ -598,7 +599,7 @@ class ReportEndStock extends Component {
         console.log(e.target.value)
         this.setState({ selectMonth: e.target.value });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataEndstock()
         }, 100)
     };
 
@@ -606,14 +607,14 @@ class ReportEndStock extends Component {
         console.log(e.target.value)
         this.setState({ selectYear: e.target.value });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataEndstock()
         }, 100)
     };
 
     handleType = (e) => {
         this.setState({ typeReport: e.target.value, listReport: [], listInventory: [] });
         setTimeout(() => {
-            this.getDataRepinv()
+            this.getDataEndstock()
         }, 100)
     }
 
@@ -637,8 +638,8 @@ class ReportEndStock extends Component {
     }
 
     getStatus = (plant) => {
-        const {dataRepinv} = this.props.inventory
-        const filesForPlant = dataRepinv.filter(x => x.plant === plant);
+        const {dataEndstock} = this.props.endstock
+        const filesForPlant = dataEndstock.filter(x => x.plant === plant);
         
         if (filesForPlant.length === 0) return 'Belum Upload';
 
@@ -652,7 +653,8 @@ class ReportEndStock extends Component {
 
     render() {
         const {detailData, detail, alert, upload, errMsg, listInventory, stateInv, detailInv, typeModal, listReport} = this.state
-        const {dataRepinv, isGet, alertM, alertMsg, alertUpload, page} = this.props.inventory
+        const {isGet, alertM, alertMsg, alertUpload, page} = this.props.inventory
+        const { dataEndstock } = this.props.endstock
         const {dataDivisi} = this.props.divisi
         const {dataDepo} = this.props.depo
         const level = localStorage.getItem('level')
@@ -806,7 +808,7 @@ class ReportEndStock extends Component {
                                                 <td>{item.pic_kasbank}</td>
                                                 {dataType.map(type => {
                                                     return (
-                                                        <td className={styleTrans.colFile}>{dataRepinv.length === 0 ? '-' : dataRepinv.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataRepinv.find(x => (x.plant === item.plant && x.type === type)).createdAt).format('DD/MM/YYYY')} - upload by ${dataRepinv.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
+                                                        <td className={styleTrans.colFile}>{dataEndstock.length === 0 ? '-' : dataEndstock.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataEndstock.find(x => (x.plant === item.plant && x.type === type)).createdAt).format('DD/MM/YYYY')} - upload by ${dataEndstock.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
                                                     )
                                                 })}
                                                 <td >{startOfMonth.format('MMMM YYYY')}</td>
@@ -831,15 +833,15 @@ class ReportEndStock extends Component {
                             </>
                         ) : (
                             <>
-                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length > 0 ? styleTrans.tableFull : ''}`}>
+                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 ? dataEndstock.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataEndstock).length > 0 ? styleTrans.tableFull : ''}`}>
                                     <thead>
                                         <tr>
                                             <th>
                                                 <input  
                                                 className='mr-2'
                                                 type='checkbox'
-                                                checked={listReport.length === 0 ? false : listReport.length === dataRepinv.length ? true : false}
-                                                onChange={() => listReport.length === dataRepinv.length ? this.reportRej('all') : this.reportApp('all')}
+                                                checked={listReport.length === 0 ? false : listReport.length === dataEndstock.length ? true : false}
+                                                onChange={() => listReport.length === dataEndstock.length ? this.reportRej('all') : this.reportApp('all')}
                                                 />
                                             </th>
                                             <th>No</th>
@@ -871,7 +873,7 @@ class ReportEndStock extends Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    {dataRepinv.length > 0 && (parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).map((item, index) => {
+                                    {dataEndstock.length > 0 && (parseInt(this.state.typeReport) === 2 ? dataEndstock.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataEndstock).map((item, index) => {
                                         return (
                                             <tr>
                                                 <td>
@@ -907,7 +909,7 @@ class ReportEndStock extends Component {
                                     })}
                                     </tbody>
                                 </table>
-                                {(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length === 0 && (
+                                {(parseInt(this.state.typeReport) === 2 ? dataEndstock.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataEndstock).length === 0 && (
                                     <div className={style.spinCol}>
                                         <AiOutlineInbox size={50} className='mb-4' />
                                         <div className='textInfo'>Data tidak ditemukan</div>
@@ -939,7 +941,7 @@ class ReportEndStock extends Component {
                         type: typeModal === 'add' ? '' : detailData.type,
                         date_report: typeModal === 'add' ? '' : moment(detailData.date_report).format('YYYY-MM-DD'),
                     }}
-                    onSubmit={(values) => { typeModal === 'add' ? this.uploadRepinv(values) : this.updateRepinv(values)}}
+                    onSubmit={(values) => { typeModal === 'add' ? this.uploadEndstock(values) : this.updateEndstock(values)}}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                         <ModalBody>
@@ -1075,7 +1077,7 @@ class ReportEndStock extends Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                {dataRepinv.length > 0 && dataRepinv.filter(x => x.plant === detailInv.plant).map((item, index) => {
+                                {dataEndstock.length > 0 && dataEndstock.filter(x => x.plant === detailInv.plant).map((item, index) => {
                                     return (
                                     <tr>
                                         <td>{index + 1}</td>
@@ -1106,7 +1108,7 @@ class ReportEndStock extends Component {
                         type: '',
                         date_report: '',
                     }}
-                    onSubmit={(values) => { this.uploadBulkRepinv(values)}}
+                    onSubmit={(values) => { this.uploadBulkEndstock(values)}}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values, errors, touched,}) => (
                         <ModalBody>
@@ -1296,14 +1298,14 @@ class ReportEndStock extends Component {
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                    <div className="sucUpdate green">Berhasil Generate Report Inventory</div>
+                                    <div className="sucUpdate green">Berhasil Generate Report Endstock</div>
                                 </div>
                             </div>
                         ) : this.state.confirm === 'merge' ?(
                             <div>
                                 <div className="cekUpdate">
                                     <AiFillCheckCircle size={80} className="green" />
-                                    <div className="sucUpdate green">Berhasil Merge Report Inventory</div>
+                                    <div className="sucUpdate green">Berhasil Merge Report Endstock</div>
                                 </div>
                             </div>
                         ) : this.state.confirm === 'failReport' ? (
@@ -1335,7 +1337,7 @@ class ReportEndStock extends Component {
                         )}
                     </ModalBody>
                 </Modal>
-                <Modal isOpen={this.props.inventory.isLoading ? true: false} size="sm">
+                <Modal isOpen={this.props.inventory.isLoading || this.props.endstock.isLoading} size="sm">
                         <ModalBody>
                         <div>
                             <div className="cekUpdate">
@@ -1365,7 +1367,7 @@ class ReportEndStock extends Component {
                         <div className='modalApprove'>
                             <div>
                                 <text>
-                                    Anda yakin untuk proses report inventory ?
+                                    Anda yakin untuk proses report endstock ?
                                 </text>
                             </div>
                             <div className='btnApproveIo'>
@@ -1382,6 +1384,7 @@ class ReportEndStock extends Component {
 
 const mapStateToProps = state => ({
     inventory: state.inventory,
+    endstock: state.endstock,
     divisi: state.divisi,
     depo: state.depo
 })
@@ -1390,18 +1393,18 @@ const mapDispatchToProps = {
     logout: auth.logout,
     addInventory: inventory.addInventory,
     updateInventory: inventory.updateInventory,
-    getRepinv: inventory.getRepinv,
     resetError: inventory.resetError,
     getInventory: inventory.getInventory,
     getDivisi: divisi.getDivisi,
     getDepo: depo.getDepo,
-    uploadRepinv: inventory.uploadRepinv,
-    updateRepinv: inventory.updateRepinv,
     nextPage: inventory.nextPage,
     exportMaster: inventory.exportMaster,
-    deleteRepinv: inventory.deleteRepinv,
-    generateRepinv: inventory.generateRepinv,
-    mergeRepinv: inventory.mergeRepinv
+    getEndstock: endstock.getEndstock,
+    uploadEndstock: endstock.uploadEndstock,
+    updateEndstock: endstock.updateEndstock,
+    deleteEndstock: endstock.deleteEndstock,
+    generateEndstock: endstock.generateEndstock,
+    mergeEndstock: endstock.mergeEndstock
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ReportEndStock)

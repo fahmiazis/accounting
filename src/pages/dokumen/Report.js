@@ -132,7 +132,7 @@ class Report extends Component {
         }
         this.setState({ month: [moment().add(1, 'month'), ...moon], moon: moon[0] })
         this.getDataDepo()
-        this.getNotif()
+        // this.getNotif()
          
     }
 

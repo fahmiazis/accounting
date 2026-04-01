@@ -428,7 +428,7 @@ class ReportDokumen extends Component {
 
     componentDidMount(){
         this.getDataDashboard()
-        this.getNotif()
+        // this.getNotif()
     }
 
     openProses = (value) => {

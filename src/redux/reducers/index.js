@@ -13,6 +13,7 @@ import date from './date'
 import merge from './merge'
 import movement from './movement'
 import inventory from './inventory'
+import endstock from './endstock'
 import salesConsole from './salesConsole'
 
 export default combineReducers({
@@ -29,5 +30,6 @@ export default combineReducers({
   merge,
   movement,
   inventory,
+  endstock,
   salesConsole
 })

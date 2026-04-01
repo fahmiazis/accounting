@@ -75,7 +75,7 @@ class Account extends Component {
     }
 
     componentDidMount() {
-        this.getNotif()
+        // this.getNotif()
     }
 
     goPage = (val) => {

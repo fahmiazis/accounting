@@ -218,7 +218,14 @@ class ReportInventory extends Component {
         if (size >= 500000000) {
             this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
+        } else if (
+            type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            && type !== 'application/vnd.ms-excel'
+            // && type !== 'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
+            // && type !== 'application/vnd.ms-excel.template.macroEnabled.12'
+            // && type !== 'application/vnd.ms-excel.addin.macroEnabled.12'
+            // && type !== 'application/vnd.ms-excel.sheet.macroEnabled.12'
+        ) {
             this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
             this.uploadAlert()
         } else {
@@ -344,9 +351,18 @@ class ReportInventory extends Component {
         const { dataRepinv } = this.props.inventory
         if (val === 'all') {
             const data = []
-            for (let i = 0; i < dataRepinv.length; i++) {
-                data.push(dataRepinv[i].id)
+            const rawData = (parseInt(this.state.typeReport) === 2 
+                ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                : dataRepinv.filter((x) => {
+                    const part = x.info?.split(',')
+                    const dataPlant = part ? part[part.length - 1].trim() : ''
+                    const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                    return (cek && x)
+                }))
+            for (let i = 0; i < rawData.length; i++) {
+                data.push(rawData[i].id)
             }
+            console.log(data)
             this.setState({listReport: data})
         } else {
             listReport.push(val)
@@ -539,7 +555,7 @@ class ReportInventory extends Component {
         const cekFilter = baseInv.filter(x =>
             (x.plant.toLowerCase().includes(search.toLowerCase())) ||
             (x.area.toLowerCase().includes(search.toLowerCase())) ||
-            (x.pic_kasbank.toLowerCase().includes(search.toLowerCase())) ||
+            (x.pic_inv.toLowerCase().includes(search.toLowerCase())) ||
             (x.profit_center.toLowerCase().includes(search.toLowerCase())) ||
             (x.kode_dist.toLowerCase().includes(search.toLowerCase())) 
         );
@@ -573,8 +589,9 @@ class ReportInventory extends Component {
         await this.props.getInventory(token, 1000, '', 1)
         const { dataInventory } = this.props.inventory
         if (level === '3') {
-            const cek = dataInventory.filter(x => x.pic_kasbank.toString().toLowerCase() === name.toString().toLowerCase())
+            const cek = dataInventory.filter(x => x.pic_inv.toString().toLowerCase() === name.toString().toLowerCase())
             this.setState({stateInv: cek, baseInv: cek})
+            console.log(cek)
         } else {
             this.setState({stateInv: dataInventory, baseInv: dataInventory})
         }
@@ -807,9 +824,9 @@ class ReportInventory extends Component {
                                             </th>
                                             <th>
                                                 {this.state.sortTypePic === 'desc' ? (
-                                                    <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
+                                                    <FaSortAlphaDown onClick={() => this.sortData('pic_inv', 'asc')} className='mr-1' size={20} />
                                                 ) : (
-                                                    <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
+                                                    <FaSortAlphaUpAlt onClick={() => this.sortData('pic_inv', 'desc')} className='mr-1' size={20} />
                                                 )}
                                                 PIC
                                             </th>
@@ -837,7 +854,7 @@ class ReportInventory extends Component {
                                                 {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                                 <td className={styleTrans.colNo}>{index + 1}</td>
                                                 <td className={styleTrans.colPlant}>{item.plant}</td>
-                                                <td>{item.pic_kasbank}</td>
+                                                <td>{item.pic_inv}</td>
                                                 {dataType.map(type => {
                                                     return (
                                                         <td className={styleTrans.colFile}>{dataRepinv.length === 0 ? '-' : dataRepinv.find(x => (x.plant === item.plant && x.type === type)) === undefined ? '-' : `V - ${moment(dataRepinv.find(x => (x.plant === item.plant && x.type === type)).updatedAt).format('DD/MM/YYYY')} - upload by ${dataRepinv.find(x => (x.plant === item.plant && x.type === type)).user_upload}`}</td>
@@ -865,15 +882,36 @@ class ReportInventory extends Component {
                             </>
                         ) : (
                             <>
-                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length > 0 ? styleTrans.tableFull : ''}`}>
+                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 
+                                    ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                                    : dataRepinv.filter((x) => {
+                                        const part = x.info?.split(',')
+                                        const dataPlant = part ? part[part.length - 1].trim() : ''
+                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                        return (cek && x)
+                                    })).length > 0 ? styleTrans.tableFull : ''}`}>
                                     <thead>
                                         <tr>
                                             <th>
                                                 <input  
                                                 className='mr-2'
                                                 type='checkbox'
-                                                checked={listReport.length === 0 ? false : listReport.length === dataRepinv.length ? true : false}
-                                                onChange={() => listReport.length === dataRepinv.length ? this.reportRej('all') : this.reportApp('all')}
+                                                checked={listReport.length === 0 ? false : listReport.length === (parseInt(this.state.typeReport) === 2 
+                                                    ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                                                    : dataRepinv.filter((x) => {
+                                                        const part = x.info?.split(',')
+                                                        const dataPlant = part ? part[part.length - 1].trim() : ''
+                                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                                        return (cek && x)
+                                                    })).length ? true : false}
+                                                onChange={() => listReport.length === (parseInt(this.state.typeReport) === 2 
+                                                    ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                                                    : dataRepinv.filter((x) => {
+                                                        const part = x.info?.split(',')
+                                                        const dataPlant = part ? part[part.length - 1].trim() : ''
+                                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                                        return (cek && x)
+                                                    })).length ? this.reportRej('all') : this.reportApp('all')}
                                                 />
                                             </th>
                                             <th>No</th>
@@ -889,9 +927,9 @@ class ReportInventory extends Component {
                                                     </th>
                                                     <th>
                                                         {this.state.sortTypePic === 'desc' ? (
-                                                            <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
+                                                            <FaSortAlphaDown onClick={() => this.sortData('pic_inv', 'asc')} className='mr-1' size={20} />
                                                         ) : (
-                                                            <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
+                                                            <FaSortAlphaUpAlt onClick={() => this.sortData('pic_inv', 'desc')} className='mr-1' size={20} />
                                                         )}
                                                         PIC
                                                     </th>
@@ -905,7 +943,14 @@ class ReportInventory extends Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    {dataRepinv.length > 0 && (parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).map((item, index) => {
+                                    {dataRepinv.length > 0 && 
+                                    (parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                                    : dataRepinv.filter((x) => {
+                                        const part = x.info?.split(',')
+                                        const dataPlant = part ? part[part.length - 1].trim() : ''
+                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                        return (cek && x)
+                                    })).map((item, index) => {
                                         return (
                                             <tr>
                                                 <td>
@@ -920,7 +965,7 @@ class ReportInventory extends Component {
                                                 {parseInt(this.state.typeReport) === 2 && (
                                                     <>
                                                         <td className={styleTrans.colPlant}>{item.plant}</td>
-                                                        <td>{stateInv.find(y => y.plant === item.plant) !== undefined ? stateInv.find(y => y.plant === item.plant).pic_kasbank : '-'}</td>
+                                                        <td>{stateInv.find(y => y.plant === item.plant) !== undefined ? stateInv.find(y => y.plant === item.plant).pic_inv : '-'}</td>
                                                     </>
                                                 )}
                                                 <td>{item.name}</td>
@@ -1247,9 +1292,9 @@ class ReportInventory extends Component {
                                         </th>
                                         <th>
                                             {this.state.sortTypePic === 'desc' ? (
-                                                <FaSortAlphaDown onClick={() => this.sortData('pic_kasbank', 'asc')} className='mr-1' size={20} />
+                                                <FaSortAlphaDown onClick={() => this.sortData('pic_inv', 'asc')} className='mr-1' size={20} />
                                             ) : (
-                                                <FaSortAlphaUpAlt onClick={() => this.sortData('pic_kasbank', 'desc')} className='mr-1' size={20} />
+                                                <FaSortAlphaUpAlt onClick={() => this.sortData('pic_inv', 'desc')} className='mr-1' size={20} />
                                             )}
                                             PIC
                                         </th>
@@ -1269,7 +1314,7 @@ class ReportInventory extends Component {
                                             {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                             <td>{index + 1}</td>
                                             <td>{item.plant}</td>
-                                            <td>{item.pic_kasbank}</td>
+                                            <td>{item.pic_inv}</td>
                                         </tr>
                                     )
                                 })}

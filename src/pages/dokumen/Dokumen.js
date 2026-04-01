@@ -303,8 +303,8 @@ class Dokumen extends Component {
         const {size, type, name} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
         const ext = name.split(".")
-        if (size >= 1000000000) {
-            this.setState({errMsg: "Maximum upload size 1000 MB"})
+        if (size >= 2000000000) {
+            this.setState({errMsg: "Maximum upload size 2000 MB"})
             this.uploadAlert()
         } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})
@@ -352,8 +352,8 @@ class Dokumen extends Component {
             for (const file of files) {
                 const {size, type, name} = file
                 
-                if (size >= 1000000000) {
-                    errorMsg = "Maximum upload size 1000 MB per file"
+                if (size >= 2000000000) {
+                    errorMsg = "Maximum upload size 2000 MB per file"
                     hasError = true
                     break
                 } else if (type !== "" && type !== null && 
@@ -436,7 +436,7 @@ class Dokumen extends Component {
 
     componentDidMount(){
         this.getDataDashboard()
-        this.getNotif()
+        // this.getNotif()
     }
 
     openProses = (value) => {
@@ -486,8 +486,8 @@ class Dokumen extends Component {
     onEditDokumen = e => {
         const {size, type} = e.target.files[0]
         this.setState({fileUpload: e.target.files[0]})
-        if (size >= 1000000000) {
-            this.setState({errMsg: "Maximum upload size 1000 MB"})
+        if (size >= 2000000000) {
+            this.setState({errMsg: "Maximum upload size 2000 MB"})
             this.uploadAlert()
         } else if (type !== "" && type !== null && type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/pdf' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed') {
             this.setState({errMsg: 'Invalid file type. Only excel, pdf, zip, rar, and 7z files are allowed.'})

@@ -129,7 +129,7 @@ class DownloadDocument extends Component {
 
     componentDidMount() {
         this.getDataDepo()
-        this.getNotif()
+        // this.getNotif()
     }
 
     createReportOld = async () => {

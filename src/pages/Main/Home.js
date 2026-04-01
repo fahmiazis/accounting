@@ -93,7 +93,7 @@ class Home extends Component {
     }
 
     componentDidMount(){
-        this.getNotif()
+        // this.getNotif()
         this.getChartData()
     }
 

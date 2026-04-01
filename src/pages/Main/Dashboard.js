@@ -223,7 +223,7 @@ class Dashboard extends Component {
 
     componentDidMount(){
         this.getDataDashboard()
-        this.getNotif()
+        // this.getNotif()
     }
 
     showDok = async (value) => {

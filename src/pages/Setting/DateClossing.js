@@ -220,7 +220,7 @@ class DateClossing extends Component {
     componentDidMount() {
         this.getDataDate()
         this.prepareDay()
-        this.getNotif()
+        // this.getNotif()
     }
 
     onSearch = (e) => {

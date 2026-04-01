@@ -218,7 +218,7 @@ class SettingDokumen extends Component {
     componentDidMount() {
         this.getDataDokumen()
         this.getDataDivisi()
-        this.getNotif()
+        // this.getNotif()
     }
 
     getDataDokumen = async (value) => {
