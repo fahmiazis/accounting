@@ -41,12 +41,19 @@ import LogUpload from './pages/Sales/LogUpload'
 import MasterMovement from './pages/Inventory/MasterMovement'
 import MasterAreaInventory from './pages/Inventory/MasterAreaInventory'
 import ReportInventory from './pages/Inventory/ReportInventory'
+import ReportMb51 from './pages/Inventory/ReportMb51'
 
 // End Stock
 import ReportEndstock from './pages/endstock/ReportEndstock'
 
 // Sales Console
 import SalesConsole from './pages/salesConsole/ReportSalesConsole'
+
+//PNL
+import ReportPnl from './pages/pnl/ReportPnl'
+
+//Jurnal kasbank
+import ReportJurnalKasbank from './pages/jurnalKasbank/ReportJurnalKasbank'
 
 class App extends Component {
 
@@ -119,6 +126,8 @@ class App extends Component {
                 <PrivateRoute path="/logupload">
                     <LogUpload />
                 </PrivateRoute>
+
+                {/* Inventory */}
                 <PrivateRoute path="/movement">
                     <MasterMovement />
                 </PrivateRoute>
@@ -128,12 +137,24 @@ class App extends Component {
                 <PrivateRoute path="/report-inventory">
                     <ReportInventory />
                 </PrivateRoute>
+                <PrivateRoute path="/report-mb51">
+                    <ReportMb51 />
+                </PrivateRoute>
+                
                 <PrivateRoute path="/report-endstock">
                     <ReportEndstock />
                 </PrivateRoute>
 
                 <PrivateRoute path="/sales-console">
                     <SalesConsole />
+                </PrivateRoute>
+
+                <PrivateRoute path="/report-pnl">
+                    <ReportPnl />
+                </PrivateRoute>
+
+                <PrivateRoute path="/report-jurnal-kasbank">
+                    <ReportJurnalKasbank />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

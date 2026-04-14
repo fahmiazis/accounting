@@ -15,6 +15,9 @@ import movement from './movement'
 import inventory from './inventory'
 import endstock from './endstock'
 import salesConsole from './salesConsole'
+import pnl from './pnl'
+import jurnal from './jurnal_kasbank'
+import mb51 from './mb51'
 
 export default combineReducers({
   auth,
@@ -31,5 +34,8 @@ export default combineReducers({
   movement,
   inventory,
   endstock,
-  salesConsole
+  salesConsole,
+  pnl,
+  jurnal,
+  mb51
 })

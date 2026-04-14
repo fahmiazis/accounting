@@ -50,7 +50,9 @@ class NewNavbar extends Component {
       openInv: false,
       openMut: false,
       openEndStock: false,
-      openSalesConsole: false
+      openSalesConsole: false,
+      openPnl: false,
+      openJurnalKasbank: false
     };
   }
 
@@ -135,6 +137,14 @@ class NewNavbar extends Component {
 
   toggleEndStock = () => {
       this.setState({openEndStock: !this.state.openEndStock})
+  }
+
+  togglePnl = () => {
+      this.setState({openPnl: !this.state.openPnl})
+  }
+
+  toggleJurnalKasbank = () => {
+      this.setState({openJurnalKasbank: !this.state.openJurnalKasbank})
   }
 
   toggleSalesConsole = () => {
@@ -261,6 +271,26 @@ class NewNavbar extends Component {
                 <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
                 {(!sidebarOpen || isMobile) &&  <span>Report Inventory</span>}
               </div>
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-mb51')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Report MB51</span>}
+              </div>
+            </Collapse>
+
+            {(level === '1') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.toggleJurnalKasbank}
+              >
+                <FaTasks className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Jurnal Kasbank</span>}
+              </div>
+            )}
+
+            <Collapse isOpen={this.state.openJurnalKasbank} className="ml-3 mt-2">
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-jurnal-kasbank')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Report Jurnal Kasbank</span>}
+              </div>
             </Collapse>
 
 
@@ -300,6 +330,23 @@ class NewNavbar extends Component {
                 {(!sidebarOpen || isMobile) &&  <span>Master User</span>}
               </div>
             </Collapse>
+
+            {/* {(level === '2' || level === '1' || level === '3') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.togglePnl}
+              >
+                <FaTasks className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>PnL</span>}
+              </div>
+            )}
+
+            <Collapse isOpen={this.state.openPnl} className="ml-3 mt-2">
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-pnl')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Report PnL</span>}
+              </div>
+            </Collapse> */}
+
             {(level === '2' || level === '1') && (
               <div href="#" className={styleTrans.menuLink} 
                 onClick={this.toggleSetting}
