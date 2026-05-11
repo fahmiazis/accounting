@@ -18,6 +18,7 @@ import salesConsole from './salesConsole'
 import pnl from './pnl'
 import jurnal from './jurnal_kasbank'
 import mb51 from './mb51'
+import sales_tax from './sales_tax'
 
 export default combineReducers({
   auth,
@@ -37,5 +38,6 @@ export default combineReducers({
   salesConsole,
   pnl,
   jurnal,
-  mb51
+  mb51,
+  sales_tax
 })

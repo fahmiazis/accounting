@@ -55,6 +55,9 @@ import ReportPnl from './pages/pnl/ReportPnl'
 //Jurnal kasbank
 import ReportJurnalKasbank from './pages/jurnalKasbank/ReportJurnalKasbank'
 
+//Jurnal kasbank
+import ReportSalesTax from './pages/salesTax/ReportSalesTax'
+
 class App extends Component {
 
     componentDidMount(){
@@ -155,6 +158,10 @@ class App extends Component {
 
                 <PrivateRoute path="/report-jurnal-kasbank">
                     <ReportJurnalKasbank />
+                </PrivateRoute>
+
+                <PrivateRoute path="/report-sales-tax">
+                    <ReportSalesTax />
                 </PrivateRoute>
             </Switch>
         </BrowserRouter>

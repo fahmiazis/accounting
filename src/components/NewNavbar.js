@@ -52,7 +52,8 @@ class NewNavbar extends Component {
       openEndStock: false,
       openSalesConsole: false,
       openPnl: false,
-      openJurnalKasbank: false
+      openJurnalKasbank: false,
+      openSalesTax: false,
     };
   }
 
@@ -149,6 +150,10 @@ class NewNavbar extends Component {
 
   toggleSalesConsole = () => {
       this.setState({openSalesConsole: !this.state.openSalesConsole})
+  }
+
+  toggleSalesTax = () => {
+      this.setState({openSalesTax: !this.state.openSalesTax})
   }
 
   toggleMut = () => {
@@ -383,16 +388,32 @@ class NewNavbar extends Component {
             <Collapse isOpen={this.state.openSalesConsole} className="ml-3 mt-2">
               <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('sales-console')} >
                 <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
-                {(!sidebarOpen || isMobile) &&  <span>Sales Console</span>}
+                {(!sidebarOpen || isMobile) &&  <span>Sales Tax</span>}
               </div>
             </Collapse>
 
-            {(level === '2' || level === '1') && (
+              {(level === '2' || level === '1' || level === '3') && (
+              <div href="#" className={styleTrans.menuLink} 
+                onClick={this.toggleSalesTax}
+              >
+                <FaTasks className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Sales Tax</span>}
+              </div>
+            )}
+
+            <Collapse isOpen={this.state.openSalesTax} className="ml-3 mt-2">
+              <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('report-sales-tax')} >
+                <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
+                {(!sidebarOpen || isMobile) &&  <span>Report Sales Tax</span>}
+              </div>
+            </Collapse>
+
+            {/* {(level === '2' || level === '1') && (
               <div href="#" className={styleTrans.menuLink} onClick={() => this.goRoute('uploadsales')} >
                 <FaFileArchive className={styleTrans.icon} size={sidebarOpen && 20} /> 
                 {(!sidebarOpen || isMobile) &&  <span>Upload Sales Tax</span>}
               </div>
-            )}
+            )} */}
             
           </div>
         </div>
