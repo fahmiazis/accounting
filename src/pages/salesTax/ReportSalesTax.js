@@ -60,7 +60,8 @@ class ReportSalesTax extends Component {
       detailInv:     {},
       detailData:    {},
       typeModal:     '',  // 'add' | 'update'
-      fileUpload:    '',
+      fileUpload:    '',   // single file (upload per plant)
+      fileUploads:   [],   // multiple files (bulk upload)
       errMsg:        '',
       idDelete:      null,
       confirm:       '',
@@ -196,7 +197,18 @@ class ReportSalesTax extends Component {
   openModalUpdate = () => this.setState(p => ({ modalUpdate:   !p.modalUpdate }))
   openModalUpload = () => this.setState(p => ({ modalUpload:   !p.modalUpload }))
   openModalDelete = () => this.setState(p => ({ modalDelete:   !p.modalDelete }))
-  openModalGenerate = () => this.setState(p => ({ modalGenerate: !p.modalGenerate }))
+  openModalGenerate = () => {
+    // Kalau lagi running jangan bisa ditutup
+    if (this.state.mergeStatus === 'running') return
+    this.setState(p => ({
+      modalGenerate:   !p.modalGenerate,
+      mergeProgress:   [],
+      mergePercentage: 0,
+      mergeStatus:     '',
+      mergeResult:     null,
+      mergeError:      ''
+    }))
+  }
   openConfirm     = () => this.setState(p => ({ modalConfirm:  !p.modalConfirm }))
 
   // buka upload single per plant (sama kayak endstock prosesOpen)
@@ -222,18 +234,45 @@ class ReportSalesTax extends Component {
   // ─── File input ────────────────────────────────────────────────────────────
   onChangeHandler = (e) => {
     if (!e.target.files || !e.target.files[0]) return
-    const { size, type } = e.target.files[0]
+    const { size, name } = e.target.files[0]
+    const validExt = ['.xlsx', '.xls', '.xlsb', '.xlsm']
+    const extOk    = validExt.some(ext => name.toLowerCase().endsWith(ext))
     if (size >= 100000000) {
       this.setState({ errMsg: 'Maximum upload size 100 MB' })
-    } else if (
-      type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' &&
-      type !== 'application/vnd.ms-excel' &&
-      type !== 'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
-    ) {
-      this.setState({ errMsg: 'Invalid file type. Only excel files are allowed.' })
+    } else if (!extOk) {
+      this.setState({ errMsg: 'Format tidak valid. Gunakan .xlsx, .xls, .xlsb, atau .xlsm' })
     } else {
       this.setState({ fileUpload: e.target.files[0], errMsg: '' })
     }
+  }
+
+  // Handler untuk bulk upload — multiple files sekaligus
+  onChangeBulkHandler = (e) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const files = Array.from(e.target.files)
+    const { listInventory } = this.state
+
+    // Validasi jumlah file == jumlah plant yang diceklis
+    if (files.length !== listInventory.length) {
+      this.setState({ errMsg: `Jumlah file (${files.length}) harus sama dengan jumlah plant yang dipilih (${listInventory.length})` })
+      return
+    }
+
+    // Validasi tiap file: format & ukuran
+    const validExt    = ['.xlsx', '.xls', '.xlsb', '.xlsm']
+    const invalidSize = files.filter(f => f.size >= 100000000)
+    const invalidType = files.filter(f => !validExt.some(ext => f.name.toLowerCase().endsWith(ext)))
+
+    if (invalidSize.length > 0) {
+      this.setState({ errMsg: `File berikut melebihi 100MB: ${invalidSize.map(f => f.name).join(', ')}` })
+      return
+    }
+    if (invalidType.length > 0) {
+      this.setState({ errMsg: `Format tidak valid (.xlsx/.xls/.xlsb/.xlsm): ${invalidType.map(f => f.name).join(', ')}` })
+      return
+    }
+
+    this.setState({ fileUploads: files, errMsg: '' })
   }
 
   // ─── Upload single ─────────────────────────────────────────────────────────
@@ -253,16 +292,19 @@ class ReportSalesTax extends Component {
 
   // ─── Bulk upload ───────────────────────────────────────────────────────────
   uploadBulkSalesTax = async (values) => {
-    const { listInventory } = this.state
+    const { listInventory, fileUploads } = this.state
     const token = localStorage.getItem('token')
     const data  = new FormData()
-    data.append('master', this.state.fileUpload)
+
+    // Append semua file sekaligus dengan fieldname 'master'
+    fileUploads.forEach(file => data.append('master', file))
+
     data.append('name', values.name)
-    data.append('plant', listInventory[0])
-    data.append('list', listInventory.toString())
+    data.append('list', listInventory.toString())  // "PLANT1,PLANT2,..."
     data.append('date_report', values.date_report)
+
     await this.props.uploadSalesTax(token, data, 'bulk')
-    this.setState({ confirm: 'upload', fileUpload: '' })
+    this.setState({ confirm: 'upload', fileUploads: [], fileUpload: '' })
     this.openConfirm()
     this.getDataSalesTax()
     this.openModalUpload()
@@ -314,44 +356,41 @@ class ReportSalesTax extends Component {
     this.openConfirm()
   }
 
-  // ─── prosesReport (tombol Generate) — cek dulu status, baru merge ──────────
+  // ─── Tombol Generate: validasi dulu, kalau valid buka modal + langsung SSE ──
+  // Dipanggil dari tombol Ya di modal konfirmasi
   prosesReport = () => {
     const { listInventory, typeReport, listReport } = this.state
-    const { dataSalesTax } = this.props.sales_tax
+
+    // Validasi
     if (parseInt(typeReport) === 1) {
-      // Cek semua plant yang dipilih sudah upload file
-      const cek = listInventory.filter(plant => this.getStatus(plant) === 'Sudah Upload')
-      if (cek.length === listInventory.length) {
-        this.prosesMerge()
-      } else {
-        this.setState({ confirm: 'failGenerate' })
+      const belumUpload = listInventory.filter(plant => this.getStatus(plant) !== 'Sudah Upload')
+      if (belumUpload.length > 0) {
+        this.setState({ confirm: 'failGenerate', modalGenerate: false })
         this.openConfirm()
+        return
       }
     } else if (parseInt(typeReport) === 2) {
-      if (listReport.length > 1) {
-        this.prosesMergeSelected()
-      } else {
-        this.setState({ confirm: 'failMerge' })
+      if (listReport.length < 2) {
+        this.setState({ confirm: 'failMerge', modalGenerate: false })
         this.openConfirm()
+        return
       }
     } else {
-      this.setState({ confirm: 'failReport' })
+      this.setState({ confirm: 'failReport', modalGenerate: false })
       this.openConfirm()
+      return
     }
-  }
 
-  // ─── Merge semua file bulan ini (dari typeReport=1) ────────────────────────
-  prosesMerge = () => {
-    this.setState({ mergeProgress: [], mergePercentage: 0, mergeStatus: 'running', mergeResult: null, mergeError: '' })
-    this.openModalGenerate()
-    this._runMergeSSE()
-  }
-
-  // ─── Merge dari selected report (typeReport=2) — placeholder ───────────────
-  prosesMergeSelected = () => {
-    this.setState({ mergeProgress: [], mergePercentage: 0, mergeStatus: 'running', mergeResult: null, mergeError: '' })
-    this.openModalGenerate()
-    this._runMergeSSE()
+    // Validasi lolos — langsung set running + jalankan SSE tanpa klik tambahan
+    this.setState({
+      mergeProgress:   [],
+      mergePercentage: 0,
+      mergeStatus:     'running',
+      mergeResult:     null,
+      mergeError:      ''
+    }, () => {
+      this._runMergeSSE()
+    })
   }
 
   _runMergeSSE = () => {
@@ -821,10 +860,47 @@ class ReportSalesTax extends Component {
                   </div>
                 </div>
                 <div className='addModalDepo'>
-                  <text className='col-md-3'>Upload</text>
+                  <text className='col-md-3'>Upload File</text>
                   <div className='col-md-9'>
-                    <Input type='file' name='file' accept='.xls,.xlsx,.xlsb' onChange={this.onChangeHandler} />
-                    {fileUpload === '' && <text className='txtError'>{errors.type}</text>}
+                    <Input
+                      type='file'
+                      name='file'
+                      accept='.xls,.xlsx,.xlsb'
+                      multiple
+                      disabled={listInventory.length === 0}
+                      onChange={this.onChangeBulkHandler}
+                    />
+                    {listInventory.length === 0 && (
+                      <text className='txtError'>Pilih plant terlebih dahulu sebelum upload file</text>
+                    )}
+                    {errMsg && <text className='txtError'>{errMsg}</text>}
+                    {this.state.fileUploads.length > 0 && listInventory.length > 0 && (
+                      <div className='mt-2'>
+                        <small className='text-muted d-block mb-1'>
+                          <strong>Mapping file → plant (urutan harus sesuai):</strong>
+                        </small>
+                        <table className='table table-sm table-bordered' style={{ fontSize: '12px' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: '40px' }}>No</th>
+                              <th>Plant</th>
+                              <th>File</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {listInventory.map((plant, i) => (
+                              <tr key={plant}>
+                                <td>{i + 1}</td>
+                                <td><strong>{plant}</strong></td>
+                                <td style={{ color: this.state.fileUploads[i] ? 'green' : 'red' }}>
+                                  {this.state.fileUploads[i] ? this.state.fileUploads[i].name : '— belum ada file —'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className='addModalDepo'>
@@ -880,7 +956,14 @@ class ReportSalesTax extends Component {
                   <div />
                   <div>
                     <Button
-                      disabled={values.name === '' || values.date_report === '' || fileUpload === '' || listInventory.length === 0}
+                      disabled={
+                        values.name === '' ||
+                        values.date_report === '' ||
+                        this.state.fileUploads.length === 0 ||
+                        listInventory.length === 0 ||
+                        this.state.fileUploads.length !== listInventory.length ||
+                        !!errMsg
+                      }
                       className='mr-2'
                       onClick={handleSubmit}
                       color='primary'
@@ -893,8 +976,8 @@ class ReportSalesTax extends Component {
           </Formik>
         </Modal>
 
-        {/* ════ Modal Konfirmasi Generate/Merge ════ */}
-        <Modal isOpen={this.state.modalGenerate} size='md' toggle={mergeStatus === '' ? this.openModalGenerate : undefined} centered>
+        {/* ════ Modal Konfirmasi + Progress Merge ════ */}
+        <Modal isOpen={this.state.modalGenerate} size='md' toggle={mergeStatus === 'running' ? undefined : this.openModalGenerate} centered>
           {mergeStatus === '' && (
             <ModalBody>
               <div className='modalApprove'>
