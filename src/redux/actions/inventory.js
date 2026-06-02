@@ -65,6 +65,14 @@ export default {
         type: 'MERGE_REPINV',
         payload: http(token).patch(`/inventory/report/merge`, data)
     }),
+    generateGroupingMb51: (token, data) => ({
+        type: 'GENERATE_GROUPING_MB51',
+        payload: http(token).patch(`/inventory/mb51-grouping/generate`, data)
+    }),
+    mergeGroupingMb51: (token, data) => ({
+        type: 'MERGE_GROUPING_MB51',
+        payload: http(token).patch(`/inventory/mb51-grouping/merge`, data)
+    }),
     nextPageRepinv: (token, link) => ({
         type: 'NEXT_DATA_REPINV',
         payload: http(token).get(`${link}`)

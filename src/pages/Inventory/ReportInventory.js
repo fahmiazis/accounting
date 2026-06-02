@@ -221,10 +221,10 @@ class ReportInventory extends Component {
         } else if (
             type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
             && type !== 'application/vnd.ms-excel'
-            // && type !== 'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
-            // && type !== 'application/vnd.ms-excel.template.macroEnabled.12'
-            // && type !== 'application/vnd.ms-excel.addin.macroEnabled.12'
-            // && type !== 'application/vnd.ms-excel.sheet.macroEnabled.12'
+            && type !== 'application/vnd.ms-excel.sheet.binary.macroEnabled.12'
+            && type !== 'application/vnd.ms-excel.template.macroEnabled.12'
+            && type !== 'application/vnd.ms-excel.addin.macroEnabled.12'
+            && type !== 'application/vnd.ms-excel.sheet.macroEnabled.12'
         ) {
             this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
             this.uploadAlert()
@@ -314,6 +314,10 @@ class ReportInventory extends Component {
         this.setState({modalGenerate: !this.state.modalGenerate})
     }
 
+    openModalGenerateMb51 = () => {
+        this.setState({modalGenerateMb51: !this.state.modalGenerateMb51})
+    }
+
     chekApp = (val) => {
         const { listInventory, stateInv } = this.state
         if (val === 'all') {
@@ -351,12 +355,12 @@ class ReportInventory extends Component {
         const { dataRepinv } = this.props.inventory
         if (val === 'all') {
             const data = []
-            const rawData = (parseInt(this.state.typeReport) === 2 
+            const rawData = ((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) 
                 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
                 : dataRepinv.filter((x) => {
                     const part = x.info?.split(',')
                     const dataPlant = part ? part[part.length - 1].trim() : ''
-                    const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                    const cek = (parseInt(this.state.typeReport) === 3 || parseInt(this.state.typeReport) === 5) && stateInv.find(y => y.plant === dataPlant)
                     return (cek && x)
                 }))
             for (let i = 0; i < rawData.length; i++) {
@@ -478,6 +482,65 @@ class ReportInventory extends Component {
         await this.props.mergeRepinv(token, data)
         this.getDataRepinv()
         this.openModalGenerate()
+        this.setState({confirm: 'merge'})
+        this.openConfirm()
+    }
+
+    prosesGrouping = () => {
+        const { listInventory, typeReport, listReport } = this.state
+        if (parseInt(typeReport) === 1) {
+            const cek = []
+            for (let i = 0; i < listInventory.length; i++) {
+                const cekPlant = this.getStatus(listInventory[i], 'grouping')
+                if (cekPlant === 'Full Upload') {
+                    cek.push(cekPlant)
+                }
+            }
+            if (cek.length === listInventory.length) {
+                this.prosesGenerateGrouping()
+            } else {
+                this.setState({confirm: 'failGenerate'})
+                this.openConfirm()
+            }
+        } else if (parseInt(typeReport) === 4) {
+            if (listReport.length > 1) {
+                this.prosesMergeGrouping()
+            } else {
+                this.setState({confirm: 'failMerge'})
+                this.openConfirm()
+            }
+        } else {
+            this.setState({confirm: 'failReport'})
+            this.openConfirm()
+        }
+    }
+
+    prosesGenerateGrouping = async () => {
+        const token = localStorage.getItem("token")
+        const { listInventory, selectMonth, selectYear } = this.state
+        const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
+        const data = {
+            listPlant: listInventory,
+            date: startOfMonth.format('YYYY-MM-DD')
+        }
+        await this.props.generateGroupingMb51(token, data)
+        this.getDataRepinv()
+        this.openModalGenerateMb51()
+        this.setState({confirm: 'generate'})
+        this.openConfirm()
+    }
+
+    prosesMergeGrouping = async () => {
+        const token = localStorage.getItem("token")
+        const { listReport, selectMonth, selectYear } = this.state
+        const startOfMonth = moment(`${selectYear}-${selectMonth}-01`, "YYYY-M-DD").startOf("month");
+        const data = {
+            listIds: listReport,
+            date: startOfMonth.format('YYYY-MM-DD')
+        }
+        await this.props.mergeGroupingMb51(token, data)
+        this.getDataRepinv()
+        this.openModalGenerateMb51()
         this.setState({confirm: 'merge'})
         this.openConfirm()
     }
@@ -651,7 +714,7 @@ class ReportInventory extends Component {
         this.setState({ open });
     }
 
-    getStatus = (plant) => {
+    getStatus = (plant, type) => {
         const {dataRepinv} = this.props.inventory
         const filesForPlant = dataRepinv.filter(x => x.plant === plant);
         
@@ -659,7 +722,12 @@ class ReportInventory extends Component {
 
         // cek apakah semua type ada
         const uploadedTypes = filesForPlant.map(x => x.type);
-        const missing = dataType.filter(type => !uploadedTypes.includes(type) && type !== 'baso');
+        let missing = []
+        if (type === 'grouping') {
+            missing = dataType.filter(type => !uploadedTypes.includes(type) && type !== 'baso' && type !== 'main');
+        } else {
+            missing = dataType.filter(type => !uploadedTypes.includes(type) && type !== 'baso');
+        }
 
         if (missing.length === 0) return 'Full Upload';
         return 'Kurang Upload';
@@ -684,8 +752,10 @@ class ReportInventory extends Component {
         const startOfMonth = moment(`${this.state.selectYear}-${this.state.selectMonth}-01`, "YYYY-M-DD").startOf("month")
         const dataStatus = [
             { status: 1, text: 'File Upload' },
-            { status: 2, text: 'Output Report' },
-            { status: 3, text: 'Merge Output Report' },
+            { status: 2, text: 'Output Report KK INV' },
+            { status: 3, text: 'Merge Output Report KK INV' },
+            { status: 4, text: 'Output Grouping MB51' },
+            { status: 5, text: 'Merge Output Grouping MB51' },
         ]
 
         const contentHeader =  (
@@ -780,12 +850,13 @@ class ReportInventory extends Component {
                         </div>
                         <div className={styleTrans.searchContainer}>
                             <div className='rowCenter'>
-                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerate} color="success" size="lg">Generate</Button>
+                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerate} color="success" size="md">Generate KK INV</Button>
+                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerateMb51} color="primary" size="md">Generate Grouping MB51</Button>
                                 {parseInt(this.state.typeReport) === 1 && (
-                                    <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="lg">Bulk Upload</Button>
+                                    <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="md">Bulk Upload</Button>
                                 )}
                                 {parseInt(this.state.typeReport) !== 1 && (
-                                    <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                    <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="md">Delete</Button>
                                 )}
                             </div>
                             <div className={style.searchEmail2}>
@@ -882,12 +953,12 @@ class ReportInventory extends Component {
                             </>
                         ) : (
                             <>
-                                <table className={`${styleTrans.table} ${(parseInt(this.state.typeReport) === 2 
+                                <table className={`${styleTrans.table} ${((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4)
                                     ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
                                     : dataRepinv.filter((x) => {
                                         const part = x.info?.split(',')
                                         const dataPlant = part ? part[part.length - 1].trim() : ''
-                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                        const cek = (parseInt(this.state.typeReport) === 3 || parseInt(this.state.typeReport) === 5) && stateInv.find(y => y.plant === dataPlant)
                                         return (cek && x)
                                     })).length > 0 ? styleTrans.tableFull : ''}`}>
                                     <thead>
@@ -896,26 +967,26 @@ class ReportInventory extends Component {
                                                 <input  
                                                 className='mr-2'
                                                 type='checkbox'
-                                                checked={listReport.length === 0 ? false : listReport.length === (parseInt(this.state.typeReport) === 2 
+                                                checked={listReport.length === 0 ? false : listReport.length === ((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) 
                                                     ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
                                                     : dataRepinv.filter((x) => {
                                                         const part = x.info?.split(',')
                                                         const dataPlant = part ? part[part.length - 1].trim() : ''
-                                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                                        const cek = (parseInt(this.state.typeReport) === 3 || parseInt(this.state.typeReport) === 5) && stateInv.find(y => y.plant === dataPlant)
                                                         return (cek && x)
                                                     })).length ? true : false}
-                                                onChange={() => listReport.length === (parseInt(this.state.typeReport) === 2 
+                                                onChange={() => listReport.length === ((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) 
                                                     ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
                                                     : dataRepinv.filter((x) => {
                                                         const part = x.info?.split(',')
                                                         const dataPlant = part ? part[part.length - 1].trim() : ''
-                                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                                        const cek = (parseInt(this.state.typeReport) === 3 || parseInt(this.state.typeReport) === 5) && stateInv.find(y => y.plant === dataPlant)
                                                         return (cek && x)
                                                     })).length ? this.reportRej('all') : this.reportApp('all')}
                                                 />
                                             </th>
                                             <th>No</th>
-                                            {parseInt(this.state.typeReport) === 2 && (
+                                            {(parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) && (
                                                 <>
                                                     <th> 
                                                         {this.state.sortType === 'desc' ? (
@@ -944,11 +1015,11 @@ class ReportInventory extends Component {
                                     </thead>
                                     <tbody>
                                     {dataRepinv.length > 0 && 
-                                    (parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
+                                    ((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) 
                                     : dataRepinv.filter((x) => {
                                         const part = x.info?.split(',')
                                         const dataPlant = part ? part[part.length - 1].trim() : ''
-                                        const cek = parseInt(this.state.typeReport) === 3 && stateInv.find(y => y.plant === dataPlant)
+                                        const cek = (parseInt(this.state.typeReport) === 3 || parseInt(this.state.typeReport) === 5) && stateInv.find(y => y.plant === dataPlant)
                                         return (cek && x)
                                     })).map((item, index) => {
                                         return (
@@ -962,7 +1033,7 @@ class ReportInventory extends Component {
                                                 </td>
                                                 {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                                 <td className={styleTrans.colNo}>{index + 1}</td>
-                                                {parseInt(this.state.typeReport) === 2 && (
+                                                {(parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) && (
                                                     <>
                                                         <td className={styleTrans.colPlant}>{item.plant}</td>
                                                         <td>{stateInv.find(y => y.plant === item.plant) !== undefined ? stateInv.find(y => y.plant === item.plant).pic_inv : '-'}</td>
@@ -972,7 +1043,7 @@ class ReportInventory extends Component {
                                                 <td>{dataStatus.find(x => x.status === item.status).text}</td>
                                                 <td>{startOfMonth.format('MMMM YYYY')}</td>
                                                 <td>
-                                                    {parseInt(this.state.typeReport) === 2 ? (
+                                                    {(parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) ? (
                                                         'Success Generate'
                                                     ) : (
                                                         item.info
@@ -986,7 +1057,7 @@ class ReportInventory extends Component {
                                     })}
                                     </tbody>
                                 </table>
-                                {(parseInt(this.state.typeReport) === 2 ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length === 0 && (
+                                {((parseInt(this.state.typeReport) === 2 || parseInt(this.state.typeReport) === 4) ? dataRepinv.filter(x => stateInv.find(y => y.plant === x.plant) !== undefined) : dataRepinv).length === 0 && (
                                     <div className={style.spinCol}>
                                         <AiOutlineInbox size={50} className='mb-4' />
                                         <div className='textInfo'>Data tidak ditemukan</div>
@@ -1108,7 +1179,7 @@ class ReportInventory extends Component {
                                 <Input
                                     type="file"
                                     name="file"
-                                    accept=".xls,.xlsx"
+                                    accept=".xls,.xlsx,.xlsb"
                                     onChange={this.onChangeHandler}
                                 />
                                 {this.state.fileUpload === '' && typeModal === 'add' ? (
@@ -1256,7 +1327,7 @@ class ReportInventory extends Component {
                                 <Input
                                     type="file"
                                     name="file"
-                                    accept=".xls,.xlsx"
+                                    accept=".xls,.xlsx,.xlsb"
                                     onChange={this.onChangeHandler}
                                 />
                                 {this.state.fileUpload === '' && typeModal === 'add' ? (
@@ -1454,6 +1525,21 @@ class ReportInventory extends Component {
                         </div>
                     </ModalBody>
                 </Modal>
+                <Modal isOpen={this.state.modalGenerateMb51} size="md" toggle={this.openModalGenerateMb51} centered={true}>
+                    <ModalBody>
+                        <div className='modalApprove'>
+                            <div>
+                                <text>
+                                    Anda yakin untuk proses grouping MB51 ?
+                                </text>
+                            </div>
+                            <div className='btnApproveIo'>
+                                <Button color="primary" className='mr-2' onClick={this.prosesGrouping}>Ya</Button>
+                                <Button color="secondary" onClick={this.openModalGenerateMb51}>Tidak</Button>
+                            </div>
+                        </div>
+                    </ModalBody>
+                </Modal>
             </>
         )
     }
@@ -1480,7 +1566,9 @@ const mapDispatchToProps = {
     exportMaster: inventory.exportMaster,
     deleteRepinv: inventory.deleteRepinv,
     generateRepinv: inventory.generateRepinv,
-    mergeRepinv: inventory.mergeRepinv
+    mergeRepinv: inventory.mergeRepinv,
+    generateGroupingMb51: inventory.generateGroupingMb51,
+    mergeGroupingMb51: inventory.mergeGroupingMb51
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ReportInventory)

@@ -21,6 +21,8 @@ const inventoryState = {
     link: '',
     isGenerate: null,
     isMerge: null,
+    isGenerateMb51: null,
+    isMergeMb51: null,
     isUpdateRepinv: null,
 };
 
@@ -392,6 +394,52 @@ export default (state=inventoryState, action) => {
                     isMerge: false,
                 };
             }
+            case 'GENERATE_GROUPING_MB51_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'GENERATE_GROUPING_MB51_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGenerateMb51: true,
+                    isError: false,
+                    alertMsg: 'upload master Succesfully'
+                };
+            }
+            case 'GENERATE_GROUPING_MB51_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isGenerateMb51: false,
+                };
+            }
+            case 'MERGE_GROUPING_MB51_PENDING': {
+                return {
+                    ...state,
+                    isLoading: true,
+                    alertMsg: 'Waiting....'
+                };
+            }
+            case 'MERGE_GROUPING_MB51_FULFILLED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isMergeMb51: true,
+                    isError: false,
+                    alertMsg: 'upload master Succesfully'
+                };
+            }
+            case 'MERGE_GROUPING_MB51_REJECTED': {
+                return {
+                    ...state,
+                    isLoading: false,
+                    isMergeMb51: false,
+                };
+            }
             case 'RESET_INVENTORY': {
                 return {
                     ...state,
@@ -400,6 +448,8 @@ export default (state=inventoryState, action) => {
                     isExport: false,
                     isGenerate: null,
                     isMerge: null,
+                    isGenerateMb51: null,
+                    isMergeMb51: null,
                     isUpdateRepinv: null,
                 }
             }
