@@ -616,11 +616,11 @@ class ReportInventory extends Component {
         console.log('masuk search inv')
         const {search, baseInv} = this.state
         const cekFilter = baseInv.filter(x =>
-            (x.plant.toLowerCase().includes(search.toLowerCase())) ||
-            (x.area.toLowerCase().includes(search.toLowerCase())) ||
-            (x.pic_inv.toLowerCase().includes(search.toLowerCase())) ||
-            (x.profit_center.toLowerCase().includes(search.toLowerCase())) ||
-            (x.kode_dist.toLowerCase().includes(search.toLowerCase())) 
+            (x.plant && x.plant.toLowerCase().includes(search.toLowerCase())) ||
+            (x.area && x.area.toLowerCase().includes(search.toLowerCase())) ||
+            (x.pic_inv && x.pic_inv.toLowerCase().includes(search.toLowerCase())) ||
+            (x.profit_center && x.profit_center.toLowerCase().includes(search.toLowerCase())) ||
+            (x.kode_dist && x.kode_dist.toLowerCase().includes(search.toLowerCase())) 
         );
         this.setState({stateInv: search === '' ? baseInv : cekFilter});
     }
@@ -924,7 +924,7 @@ class ReportInventory extends Component {
                                                 </td>
                                                 {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                                 <td className={styleTrans.colNo}>{index + 1}</td>
-                                                <td className={styleTrans.colPlant}>{item.plant}</td>
+                                                <td className={styleTrans.colPlant}>{item.plant} - {item.area}</td>
                                                 <td>{item.pic_inv}</td>
                                                 {dataType.map(type => {
                                                     return (

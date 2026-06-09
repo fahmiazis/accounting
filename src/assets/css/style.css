@@ -679,3 +679,7 @@
   justify-content: center;
   flex-direction: column;
 }
+.rowGeneral {
+  display: flex;
+  flex-direction: row;
+}

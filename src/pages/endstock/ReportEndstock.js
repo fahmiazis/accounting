@@ -76,6 +76,7 @@ class ReportEndStock extends Component {
             sortType: 'asc',
             sortTypePic: 'asc',
             cameraSource: '',
+            filter: 'all'
         }
         this.onSetOpen = this.onSetOpen.bind(this);
         this.menuButtonClick = this.menuButtonClick.bind(this);
@@ -215,12 +216,13 @@ class ReportEndStock extends Component {
     }
 
     onChangeHandler = e => {
+        console.log(e.target.files[0])
         const {size, type} = e.target.files[0]
         if (size >= 100000000) {
             this.setState({errMsg: "Maximum upload size 100 MB"})
             this.uploadAlert()
-        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' ){
-            this.setState({errMsg: 'Invalid file type. Only excel files are allowed.'})
+        } else if (type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && type !== 'application/vnd.ms-excel' && type !== 'application/x-7z-compressed' && type !== 'application/vnd.rar' && type !== 'application/zip' && type !== 'application/x-zip-compressed' && type !== 'application/octet-stream' && type !== 'multipart/x-zip' && type !== 'application/x-rar-compressed'){
+            this.setState({errMsg: 'Invalid file type. Only excel, zip, and rar files are allowed.'})
             this.uploadAlert()
         } else {
             this.setState({fileUpload: e.target.files[0]})
@@ -540,13 +542,22 @@ class ReportEndStock extends Component {
         console.log('masuk search inv')
         const {search, baseInv} = this.state
         const cekFilter = baseInv.filter(x =>
-            (x.plant.toLowerCase().includes(search.toLowerCase())) ||
-            (x.area.toLowerCase().includes(search.toLowerCase())) ||
-            (x.pic_kasbank.toLowerCase().includes(search.toLowerCase())) ||
-            (x.profit_center.toLowerCase().includes(search.toLowerCase())) ||
-            (x.kode_dist.toLowerCase().includes(search.toLowerCase())) 
+            (x.plant && x.plant.toLowerCase().includes(search.toLowerCase())) ||
+            (x.area && x.area.toLowerCase().includes(search.toLowerCase())) ||
+            (x.pic_inv && x.pic_inv.toLowerCase().includes(search.toLowerCase())) ||
+            (x.profit_center && x.profit_center.toLowerCase().includes(search.toLowerCase())) ||
+            (x.kode_dist && x.kode_dist.toLowerCase().includes(search.toLowerCase())) 
         );
-        this.setState({stateInv: search === '' ? baseInv : cekFilter});
+        this.setState({stateInv: search === '' ? baseInv : cekFilter, filter: 'all'});
+    }
+
+    handleFilter = (e) => {
+        const val = e.target.value
+        const {baseInv} = this.state
+        const cekFilter = baseInv.filter(x =>
+            (x.status_area && x.status_area.toLowerCase().includes(val.toLowerCase()))
+        );
+        this.setState({stateInv: val === 'all' ? baseInv : cekFilter, filter: val, search: ''});
     }
 
     sortData = (key, order) => {
@@ -638,14 +649,16 @@ class ReportEndStock extends Component {
     }
 
     getStatus = (plant) => {
+        const { baseInv } = this.state
         const {dataEndstock} = this.props.endstock
+        const cekStatus = baseInv.find(x => x.plant === plant).status_area
         const filesForPlant = dataEndstock.filter(x => x.plant === plant);
         
         if (filesForPlant.length === 0) return 'Belum Upload';
 
         // cek apakah semua type ada
         const uploadedTypes = filesForPlant.map(x => x.type);
-        const missing = dataType.filter(type => !uploadedTypes.includes(type));
+        const missing = dataType.filter(type => !uploadedTypes.includes(type) && ((cekStatus === 'SAP' && type !== 'eds_stock') || (cekStatus === 'EDS' && type !== 'mb52')));
 
         if (missing.length === 0) return 'Full Upload';
         return 'Kurang Upload';
@@ -685,6 +698,32 @@ class ReportEndStock extends Component {
                             
                         <div className={styleTrans.searchContainer}>
                             <div className='rowCenter'>
+                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerate} color="success" size="lg">Generate</Button>
+                                {parseInt(this.state.typeReport) === 1 && (
+                                    <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="lg">Bulk Upload</Button>
+                                )}
+                                {parseInt(this.state.typeReport) !== 1 && (
+                                    <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
+                                )}
+                            </div>
+                            <div className='rowGeneral'>
+                                <Input
+                                    type="select"
+                                    name="month"
+                                    value={this.state.typeReport}
+                                    onChange={this.handleType}
+                                >
+                                    <option value="">Pilih Tipe Report</option>
+                                    {dataStatus.map((item, index) => (
+                                        <option key={index} value={item.status}>
+                                            {item.text}
+                                        </option>
+                                    ))}
+                                </Input>
+                            </div>
+                        </div>
+                        <div className={styleTrans.searchContainer}>
+                            <div className='rowCenter'>
                                 <Input
                                     type="select"
                                     name="month"
@@ -712,32 +751,18 @@ class ReportEndStock extends Component {
                                         </option>
                                     ))}
                                 </Input>
-                            </div>
-                            <div>
                                 <Input
                                     type="select"
-                                    name="month"
-                                    value={this.state.typeReport}
-                                    onChange={this.handleType}
+                                    name="filter"
+                                    className='ml-3'
+                                    value={this.state.filter}
+                                    onChange={this.handleFilter}
                                 >
-                                    <option value="">Pilih Tipe Report</option>
-                                    {dataStatus.map((item, index) => (
-                                        <option key={index} value={item.status}>
-                                            {item.text}
-                                        </option>
-                                    ))}
+                                    <option value="">Pilih Filter</option>
+                                    <option value="all">All</option>
+                                    <option value="eds">EDS</option>
+                                    <option value="sap">SAP</option>
                                 </Input>
-                            </div>
-                        </div>
-                        <div className={styleTrans.searchContainer}>
-                            <div className='rowCenter'>
-                                <Button className='ml-1' disabled={(listInventory.length === 0 && listReport.length === 0) ? true : false} onClick={this.openModalGenerate} color="success" size="lg">Generate</Button>
-                                {parseInt(this.state.typeReport) === 1 && (
-                                    <Button className='ml-1'  onClick={this.openModalUpload} color="warning" size="lg">Bulk Upload</Button>
-                                )}
-                                {parseInt(this.state.typeReport) !== 1 && (
-                                    <Button className='ml-1' disabled={listReport.length === 0 ? true : false} onClick={this.openModalDelete} color="danger" size="lg">Delete</Button>
-                                )}
                             </div>
                             <div className={style.searchEmail2}>
                                 <text>Search: </text>
@@ -804,7 +829,7 @@ class ReportEndStock extends Component {
                                                 </td>
                                                 {/* <td>{(stateInv.indexOf(item) + (((page.currentPage - 1) * page.limitPerPage) + 1))}</td> */}
                                                 <td className={styleTrans.colNo}>{index + 1}</td>
-                                                <td className={styleTrans.colPlant}>{item.plant}</td>
+                                                <td className={styleTrans.colPlant}>{item.plant} - {item.area}</td>
                                                 <td>{item.pic_kasbank}</td>
                                                 {dataType.map(type => {
                                                     return (
@@ -1142,7 +1167,7 @@ class ReportEndStock extends Component {
                                     onBlur={handleBlur("type")}
                                 >
                                     <option>-Pilih Type File-</option>
-                                    {dataType.length !== 0 && dataType.filter(x => x === 'mb52').map(item => {
+                                    {dataType.length !== 0 && dataType.map(item => {
                                         return (
                                             <option value={item}>{item}</option>
                                         )
@@ -1179,7 +1204,7 @@ class ReportEndStock extends Component {
                                 <Input
                                     type="file"
                                     name="file"
-                                    accept=".xls,.xlsx"
+                                    accept=".xls,.xlsx,.zip,.rar"
                                     onChange={this.onChangeHandler}
                                 />
                                 {this.state.fileUpload === '' && typeModal === 'add' ? (
